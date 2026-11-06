@@ -1,0 +1,196 @@
+# ISP Management System (SaaS)
+
+Multi-tenant ISP billing & management platform. Full product plan: [PLAN.md](PLAN.md).
+
+- `backend/` — Express 5 + TypeScript + MongoDB (Mongoose)
+- `frontend/` — Next.js 16 (App Router) + Tailwind CSS 4
+
+## Requirements
+
+- Node.js 22+ and pnpm 11
+- MongoDB 6+ running as a **replica set** (the app uses transactions; a standalone server will fail on signup)
+
+## 1. MongoDB
+
+Choose one:
+
+**A. MongoDB Atlas (easiest).** Create a free cluster at https://www.mongodb.com/atlas. Atlas clusters
+are replica sets already. Put the connection string in `backend/.env` → `DB_URL`.
+
+**B. Local install (Windows).**
+
+1. Install MongoDB Community Server (as a Windows service) and `mongosh`.
+2. Open `C:\Program Files\MongoDB\Server\<version>\bin\mongod.cfg` as administrator and add:
+   ```yaml
+   replication:
+     replSetName: rs0
+   ```
+3. Restart the service (PowerShell as administrator): `Restart-Service MongoDB`
+4. Initialise the replica set once: `mongosh --eval "rs.initiate()"`
+5. Keep the default `DB_URL=mongodb://localhost:27017/isp?replicaSet=rs0`.
+
+## 2. Backend
+
+```bash
+cd backend
+pnpm install
+cp .env.example .env        # first time only — then set secrets (see below)
+pnpm seed                   # creates plans + super admin (SUPER_ADMIN_EMAIL / PASSWORD)
+pnpm dev                    # http://localhost:5000/api/v1/health
+```
+
+Generate secrets for `.env`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Use separate values for `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` and `ENCRYPTION_KEY`.
+
+Other scripts: `pnpm test` (Vitest + in-memory MongoDB), `pnpm typecheck`, `pnpm build && pnpm start`.
+
+## 3. Frontend
+
+```bash
+cd frontend
+pnpm install
+cp .env.example .env.local  # first time only
+pnpm dev                    # http://localhost:3000
+```
+
+Open http://localhost:3000/signup to create an ISP account (starts a 14-day trial).
+
+## API (Phase 0)
+
+| Method | Path | Auth |
+|---|---|---|
+| GET | `/api/v1/health` | — |
+| GET | `/api/v1/public/plans` | — |
+| POST | `/api/v1/auth/signup` | — |
+| POST | `/api/v1/auth/login` | — (`identifier` = phone or email) |
+| POST | `/api/v1/auth/refresh-token` | `rt` cookie |
+| POST | `/api/v1/auth/logout` | — |
+| POST | `/api/v1/auth/logout-all` | Bearer |
+| GET | `/api/v1/auth/me` | Bearer |
+| POST | `/api/v1/auth/change-password` | Bearer |
+| POST | `/api/v1/auth/admin/login` · `/admin/refresh-token` · `/admin/logout` | — / `prt` cookie |
+| GET | `/api/v1/auth/admin/me` | Bearer (platform) |
+| GET | `/api/v1/users/permissions` | Bearer |
+| GET/POST | `/api/v1/users` | `staff.manage` |
+| GET/PATCH/DELETE | `/api/v1/users/:id` | `staff.manage` |
+
+### Phase 1 — ISP core
+
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/api/v1/dashboard` | `dashboard.view` |
+| GET · POST · PATCH/DELETE `:id` | `/api/v1/zones` | read: any · write: `zone.manage` |
+| GET · POST · GET/PATCH/DELETE `:id` | `/api/v1/routers` | `router.view` / `router.manage` |
+| POST | `/api/v1/routers/:id/test` | `router.view` |
+| GET | `/api/v1/routers/:id/profiles` · `/active` | `router.view` |
+| GET · POST · PATCH/DELETE `:id` | `/api/v1/packages` | read: any · write: `package.manage` |
+| GET | `/api/v1/customers?search&status&zone&package&expiring=3&page&limit` | `customer.view` |
+| POST · GET/PATCH `:id` · DELETE `:id` | `/api/v1/customers` | `customer.create` / `.view` / `.edit` / `.delete` |
+| PATCH | `/api/v1/customers/:id/enable` · `/disable` | `customer.enable_disable` |
+| POST | `/api/v1/customers/:id/kick` | `customer.kick` |
+| GET | `/api/v1/customers/:id/live` | `customer.view` |
+| POST · GET | `/api/v1/customers/:id/sync` · `/credentials` | `customer.edit` |
+| POST | `/api/v1/payments/recharge` | `payment.recharge` |
+| GET | `/api/v1/payments?from&to&method&customer` · `/payments/:id` (receipt) | `payment.view` |
+| GET · PATCH | `/api/v1/settings` | read: any · write: `setting.manage` |
+
+### MikroTik setup
+
+1. `/ip service enable api` (or `api-ssl` on 8729) and restrict "Available From" to the server's IP.
+2. Create an API user group with policies `read,write,api,policy,test,sensitive` and a user in it
+   (`sensitive` lets the panel read existing PPP passwords when importing from MikroTik).
+3. Create PPP profiles (e.g. `10M`) — packages map to these names.
+4. In the panel: Network → Routers → Add → **Test**.
+
+The server must reach the router's API port. Without a public IP use a VPN (planned: WireGuard, PLAN.md Flow 5).
+
+### Background jobs
+
+`RUN_JOBS=true` runs, in-process (node-cron, Asia/Dhaka):
+- every 15 min — disable customers whose expiry + grace days passed, and kick their sessions
+- every 10 min — retry customers whose router sync failed
+- daily 10:00 — expiry reminder SMS (once per billing period)
+
+Enable it in **one** process only.
+
+### Phase 2 — communication & reports
+
+| Method | Path | Permission |
+|---|---|---|
+| GET · PUT `:event` | `/api/v1/sms/templates` | `sms.view` / `sms.template` |
+| POST | `/api/v1/sms/send` — `{ message, target: {type:"numbers"\|"customers"\|"filter", ...} }` | `sms.send` |
+| GET | `/api/v1/sms/logs` · `/sms/balance` | `sms.view` |
+| GET · POST · GET/PATCH `:id` | `/api/v1/tickets` (+ `/counts`, `/assignees`) | `ticket.view` / `.create` |
+| PATCH | `/api/v1/tickets/:id/assign` · `/status` | `ticket.assign` / `ticket.solve` |
+| POST | `/api/v1/tickets/:id/comments` | `ticket.view` |
+| GET | `/api/v1/reports/:type?format=xlsx` — collection, due, expiring, expired, new-customers, left-customers, package-wise | `report.view` (+ `report.export`) |
+| GET | `/api/v1/customers/export` · `/customers/import/template` | `customer.export` / `customer.import` |
+| POST | `/api/v1/customers/import[?commit=true]` (multipart `file`) | `customer.import` |
+| GET · POST | `/api/v1/customers/import/mikrotik/:routerId` | `customer.import` |
+| GET · PATCH | `/api/v1/notifications` · `/:id/read` · `/read-all` | logged-in user |
+| GET | `/api/v1/activity-logs` | `activity_log.view` |
+| POST | `/api/v1/admin/companies/:id/sms-credits` | super admin / finance |
+
+**SMS:** set `SMS_PROVIDER=http` and `SMS_HTTP_URL` (see `backend/.env.example`). Each ISP gets 50 free credits at
+signup; ISPs buy more under My Subscription (or super admin adds them). Bangla SMS = 70 characters per credit.
+
+### Phase 3 — payments (SaaS billing + customer bill payment)
+
+Two independent layers, each with **SSLCommerz, bKash, Stripe and Manual (TrxID)** — every method can be switched on/off:
+
+| Who pays whom | Where it's configured | Money goes to |
+|---|---|---|
+| ISP → platform (subscription, SMS credits) | Super admin → `/admin/gateways` | Platform merchant account |
+| Customer → ISP (monthly bill) | ISP admin → Settings → Payment gateways | ISP's own merchant account |
+
+- Credentials are entered in the panel and stored AES-encrypted; they are never returned in clear text.
+- Nagad / Rocket / cards / net banking are available inside SSLCommerz's checkout page.
+- Stripe charges subscriptions in **USD** (plan `priceUSD`); local gateways use **BDT**.
+- Every result is re-verified server-side (SSLCommerz validation API, bKash execute/status, Stripe session retrieve);
+  duplicate IPN/webhook/redirects are idempotent.
+- Customers pay at **`/pay/<isp-slug>`** (customer ID or username + registered mobile). A paid bill runs the normal
+  recharge: extends expiry, reconnects on MikroTik, sends the payment SMS. SMS templates can use `{pay_link}`.
+- Manual payments wait as *pending review*: ISP staff approve customer payments under Billing → Online Payments;
+  super admin approves subscription payments under `/admin/payments`. A TrxID can be claimed once.
+- Subscription lifecycle (hourly): trial ended → suspended · period ended → past due (writable for `graceDays`)
+  → suspended. Suspended ISPs can still pay and are reactivated immediately.
+
+**Callback URLs** (set `API_PUBLIC_URL` to your public API address):
+
+| Gateway | URL |
+|---|---|
+| SSLCommerz success/fail/cancel | `{API_PUBLIC_URL}/api/v1/pg/sslcommerz/return` (sent automatically) |
+| SSLCommerz IPN | `{API_PUBLIC_URL}/api/v1/pg/sslcommerz/ipn` (sent automatically; also set it in the merchant panel) |
+| bKash callback | `{API_PUBLIC_URL}/api/v1/pg/bkash/callback` (sent automatically) |
+| Stripe webhook | `{API_PUBLIC_URL}/api/v1/pg/stripe/webhook/platform` or `/webhook/<companyId>` — event `checkout.session.completed` |
+
+| Method | Path | Permission |
+|---|---|---|
+| GET · POST | `/api/v1/billing` · `/billing/checkout` · `/billing/sms-credits` | `subscription.manage` (owner) |
+| GET · PUT `:gateway` | `/api/v1/settings/payment-gateways` | `setting.manage` |
+| GET · POST `:id/approve` · `:id/reject` | `/api/v1/online-payments` | `payment.view` / `payment.recharge` |
+| GET · POST `lookup` · POST `checkout` · GET `status/:tranId` | `/api/v1/public/pay/:slug` | public (rate-limited) |
+| GET · PUT `:gateway` | `/api/v1/admin/gateways` | super admin |
+| GET · POST `:id/review` | `/api/v1/admin/payments` | super admin / finance |
+| GET · PATCH | `/api/v1/admin/settings` (SMS credit price, grace days) | super admin |
+
+Also in Phase 3: `POST /auth/forgot-password` · `/auth/reset-password` (SMS OTP), `GET/PATCH /settings/company`,
+`POST /billing/coupon` (preview), `GET/POST/PATCH /admin/coupons`. Public pages: `/pricing`, `/terms`, `/privacy`,
+`/refund-policy`, `/contact` — set `NEXT_PUBLIC_LEGAL_NAME`, `NEXT_PUBLIC_SUPPORT_*`, `NEXT_PUBLIC_OFFICE_ADDRESS` in `frontend/.env.local`.
+
+Response shape: `{ success, message, meta?, data }`; errors: `{ success: false, message, errors?: [{ path, message }] }`.
+
+## Architecture notes
+
+- **Tenant isolation:** `tenantPlugin` (`backend/src/app/plugins/tenant.plugin.ts`) adds `company` to tenant
+  models and, inside an authenticated request, forces every query to the user's company (AsyncLocalStorage).
+- **Auth:** 15-minute access token (memory on the client) + 30-day httpOnly refresh cookie. Bumping a
+  user's `tokenVersion` (password change, deactivation, logout-all) invalidates all their sessions.
+- **Permissions:** `backend/src/app/constants/permissions.ts`; middleware `authorize("customer.create")`.
+- **Read-only when unpaid:** suspended companies or expired trials get `402` on writes.
+- **Express 5** forwards async errors to the error handler, so no `catchAsync` wrapper is needed.
