@@ -1377,6 +1377,16 @@ main → deploy staging (auto) → production (manual approve)
 
 **🎯 Milestone: Internal Beta — ২-৩টা ISP-কে ফ্রিতে দিয়ে test**
 
+**Beta-র প্রস্তুতি (deployment):**
+- [x] PM2 config: API ×2 (cluster) + আলাদা worker ×1 (cron) + web — `deploy/ecosystem.config.js`
+- [x] Nginx config (app/www/root → Next.js, api → Express) + certbot — `deploy/nginx/`
+- [x] Zero-downtime deploy script, MongoDB backup script (১৪ দিন), mongod replica set + auth config
+- [x] Production config guard (example secret, http URL, localhost CORS থাকলে server চালু হয় না)
+- [x] Health check-এ DB status (503 when down)
+- [x] ধাপে ধাপে বাংলা guide — `DEPLOY.md`
+- [ ] আসল VPS-এ deploy + আসল MikroTik/SMS/gateway দিয়ে test
+- [ ] Off-site backup (rclone), uptime monitor
+
 ### Phase 3 — SaaS Billing (সপ্তাহ ১০–১২)
 - [x] Plan/Subscription/Invoice module (invoice-based renew, সব gateway-তে একই নিয়ম)
 - [x] **Stripe** Checkout (one-time, USD) + signed webhook — [ ] auto-recurring Stripe Billing + customer portal

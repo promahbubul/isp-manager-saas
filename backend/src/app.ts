@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import mongoose from "mongoose";
 import config from "./app/config";
 import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
 import { notFound } from "./app/middlewares/notFound";
@@ -19,8 +20,18 @@ app.use("/api/v1/pg/stripe/webhook", express.raw({ type: "application/json", lim
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/api/v1/health", (_req, res) => {
-  res.json({ success: true, message: "OK", data: { uptime: process.uptime() } });
+// For uptime monitors / load balancers: 503 when MongoDB is not reachable.
+app.get("/api/v1/health", async (_req, res) => {
+  let db = "down";
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.db!.admin().ping();
+      db = "up";
+    }
+  } catch {
+    db = "down";
+  }
+  res.status(db === "up" ? 200 : 503).json({ success: db === "up", message: db === "up" ? "OK" : "Database unavailable", data: { uptime: process.uptime(), db } });
 });
 
 app.use("/api/v1", apiLimiter, routes);

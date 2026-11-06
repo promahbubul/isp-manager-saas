@@ -1,0 +1,19 @@
+# /etc/mongod.conf for a single VPS: replica set (needed for transactions) + auth,
+# listening on localhost only. See DEPLOY.md step 3.
+storage:
+  dbPath: /var/lib/mongodb
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/log/mongodb/mongod.log
+net:
+  port: 27017
+  bindIp: 127.0.0.1
+replication:
+  replSetName: rs0
+security:
+  authorization: enabled
+  # a replica set with auth needs a keyfile, even with one member:
+  #   sudo openssl rand -base64 756 | sudo tee /etc/mongod-keyfile >/dev/null
+  #   sudo chmod 400 /etc/mongod-keyfile && sudo chown mongodb:mongodb /etc/mongod-keyfile
+  keyFile: /etc/mongod-keyfile

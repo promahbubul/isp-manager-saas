@@ -1,6 +1,7 @@
 # ISP Management System (SaaS)
 
 Multi-tenant ISP billing & management platform. Full product plan: [PLAN.md](PLAN.md).
+Production setup (VPS + PM2 + Nginx): [DEPLOY.md](DEPLOY.md).
 
 - `backend/` — Express 5 + TypeScript + MongoDB (Mongoose)
 - `frontend/` — Next.js 16 (App Router) + Tailwind CSS 4
@@ -47,7 +48,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 Use separate values for `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` and `ENCRYPTION_KEY`.
 
-Other scripts: `pnpm test` (Vitest + in-memory MongoDB), `pnpm typecheck`, `pnpm build && pnpm start`.
+Other scripts: `pnpm test` (Vitest + in-memory MongoDB), `pnpm typecheck`, `pnpm build && pnpm start`,
+`pnpm dev:worker` / `pnpm start:worker` (cron jobs in a separate process — set `RUN_JOBS=false` on the API then).
 
 ## 3. Frontend
 

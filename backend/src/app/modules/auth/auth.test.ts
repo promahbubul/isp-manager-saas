@@ -148,3 +148,11 @@ describe("public plans", () => {
     expect(slugs).toEqual(["starter", "growth", "pro", "enterprise"]);
   });
 });
+
+describe("health", () => {
+  it("reports the database status", async () => {
+    const res = await api().get("/api/v1/health");
+    expect(res.status).toBe(200);
+    expect(res.body.data.db).toBe("up");
+  });
+});

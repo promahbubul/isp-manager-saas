@@ -43,6 +43,24 @@ if (!parsed.success) {
 }
 const env = parsed.data;
 
+/** Refuse to boot production with unsafe or development-only settings. */
+if (env.NODE_ENV === "production") {
+  const problems: string[] = [];
+  const weak = (v: string) => /change-me|^0+$/.test(v);
+  if (weak(env.JWT_ACCESS_SECRET) || weak(env.JWT_REFRESH_SECRET)) problems.push("JWT secrets are still the example values");
+  if (/^0+$/.test(env.ENCRYPTION_KEY)) problems.push("ENCRYPTION_KEY is still the example value");
+  if (env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET) problems.push("JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ");
+  if (!env.API_PUBLIC_URL.startsWith("https://")) problems.push("API_PUBLIC_URL must be https (payment gateways call it)");
+  if (!env.APP_URL.startsWith("https://")) problems.push("APP_URL must be https");
+  if (env.CORS_ORIGINS.includes("localhost")) problems.push("CORS_ORIGINS still contains localhost");
+  if (env.SUPER_ADMIN_PASSWORD === "ChangeMe@123") problems.push("SUPER_ADMIN_PASSWORD is the example value");
+  if (problems.length) {
+    console.error("❌ Unsafe production config:\n - " + problems.join("\n - "));
+    process.exit(1);
+  }
+  if (env.SMS_PROVIDER === "log") console.warn("⚠️  SMS_PROVIDER=log — SMS (including password-reset codes) will NOT be sent");
+}
+
 const config = {
   env: env.NODE_ENV,
   isProd: env.NODE_ENV === "production",

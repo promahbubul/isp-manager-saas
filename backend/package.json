@@ -10,7 +10,10 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "seed": "ts-node-dev --transpile-only src/scripts/seed.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev:worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
+    "start:worker": "node dist/worker.js",
+    "seed:prod": "node dist/scripts/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -41,5 +44,8 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.10"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
