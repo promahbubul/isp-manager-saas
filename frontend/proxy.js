@@ -35,12 +35,12 @@ function portalRewrite(request) {
  * Our own hosts are listed in NEXT_PUBLIC_APP_HOSTS so they are never looked up.
  */
 const APP_HOSTS = new Set((process.env.NEXT_PUBLIC_APP_HOSTS ?? "localhost,127.0.0.1").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean));
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || `${(process.env.BACKEND_URL || "http://localhost:5000").replace(/\/+$/, "")}/api/v1`;
 const domainCache = new Map(); // host → { slug, at }
 
 async function customDomainRewrite(request) {
   const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
-  if (!host || APP_HOSTS.has(host) || (ROOT_DOMAIN && (host === ROOT_DOMAIN || host.endsWith(`.${ROOT_DOMAIN}`)))) return null;
+  if (!host || APP_HOSTS.has(host) || host.endsWith(".vercel.app") || (ROOT_DOMAIN && (host === ROOT_DOMAIN || host.endsWith(`.${ROOT_DOMAIN}`)))) return null;
   let hit = domainCache.get(host);
   if (!hit || Date.now() - hit.at > 5 * 60_000) {
     try {
@@ -90,5 +90,5 @@ export async function proxy(request) {
 
 export const config = {
   // Everything except Next.js internals and static files (the subdomain rewrite needs "/" too).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw\\.js|offline\\.html|icons/|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
+  matcher: ["/((?!api/v1/|uploads/|_next/static|_next/image|favicon.ico|sw\\.js|offline\\.html|icons/|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
 };

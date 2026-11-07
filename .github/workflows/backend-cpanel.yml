@@ -1,0 +1,60 @@
+# Backend → cPanel (Node.js app) over FTPS.
+# Runs on every push to main that touches backend/. Needs these repo secrets:
+#   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   (cPanel FTP account whose folder = the Node.js "Application root")
+# After a dependency change (package.json), press "Run NPM Install" once in cPanel → Setup Node.js App.
+name: Deploy backend (cPanel)
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend-cpanel.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: backend-cpanel
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+
+      # What goes to the server: compiled code + package.json (cPanel installs node_modules itself).
+      - name: Prepare upload folder
+        run: |
+          mkdir -p ../upload/tmp
+          cp -r dist package.json ../upload/
+          date > ../upload/tmp/restart.txt   # Passenger restarts the app when this file changes
+
+      - name: Upload over FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./upload/
+          server-dir: ./
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/node_modules/**

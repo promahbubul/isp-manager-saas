@@ -21,6 +21,8 @@ const envSchema = z.object({
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i, "ENCRYPTION_KEY must be 64 hex chars (32 bytes)"),
   TRIAL_DAYS: z.coerce.number().int().positive().default(365),
+  /** how many reverse proxies sit in front of the app (Nginx = 1; Vercel rewrite + cPanel = 2) */
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(1),
   /** run cron jobs in this process — enable in exactly one instance */
   RUN_JOBS: z.enum(["true", "false"]).default("true"),
   /** "log" prints instead of sending; "http" calls SMS_HTTP_URL */
@@ -95,6 +97,7 @@ const config = {
   dbUrl: env.DB_URL,
   corsOrigins: env.CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean),
   cookieDomain: env.COOKIE_DOMAIN || undefined,
+  trustProxy: env.TRUST_PROXY,
   apiPublicUrl: env.API_PUBLIC_URL.replace(/\/$/, ""),
   appUrl: env.APP_URL.replace(/\/$/, ""),
   jwt: {

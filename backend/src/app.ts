@@ -18,7 +18,7 @@ fs.mkdirSync(`${UPLOAD_DIR}/logos`, { recursive: true });
 
 const app = express();
 
-app.set("trust proxy", 1); // behind Nginx/Cloudflare
+app.set("trust proxy", config.trustProxy); // number of proxies in front (TRUST_PROXY)
 app.disable("x-powered-by");
 app.use(requestLogger);
 app.use(helmet());

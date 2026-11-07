@@ -230,7 +230,7 @@ function ApiKeysCard() {
   return (
     <FeatureCard title="API keys" query={q}>
       <p className="mb-4 text-sm text-zinc-600">
-        For your website, accounting software or payment kiosk. Base URL: <code>{process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"}/public-api/v1</code>, header <code>X-API-Key</code>. Endpoints: GET /customers, GET /customers/:id, POST /customers/:id/recharge, GET /payments, GET /packages.
+        For your website, accounting software or payment kiosk. Base URL: <code>https://&lt;your API domain&gt;/api/v1/public-api/v1</code>, header <code>X-API-Key</code>. Endpoints: GET /customers, GET /customers/:id, POST /customers/:id/recharge, GET /payments, GET /packages.
       </p>
       {shown && (
         <div className="mb-4 rounded bg-amber-50 p-3 text-sm">

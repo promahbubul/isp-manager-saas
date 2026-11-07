@@ -1,6 +1,12 @@
 import axios from "axios";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+/**
+ * Browser: "/api/v1" on our own domain (next.config.mjs forwards it to BACKEND_URL).
+ * Server (server components, routes, proxy): call the backend directly.
+ * NEXT_PUBLIC_API_URL still overrides both if set.
+ */
+const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:5000").replace(/\/+$/, "");
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window === "undefined" ? `${BACKEND_URL}/api/v1` : "/api/v1");
 
 /**
  * Access token lives in memory only (never localStorage).
