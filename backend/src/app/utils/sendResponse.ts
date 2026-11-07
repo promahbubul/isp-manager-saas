@@ -1,6 +1,7 @@
 import { Response } from "express";
 
-export type PaginationMeta = { page: number; limit: number; total: number; totalPages: number };
+/** page = 0 in cursor mode; pass nextCursor back as ?cursor= for the next page */
+export type PaginationMeta = { page: number; limit: number; total: number; totalPages: number; count?: number; hasMore?: boolean; nextCursor?: string | null };
 
 type Payload<T> = {
   statusCode?: number;

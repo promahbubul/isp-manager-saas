@@ -1,0 +1,10 @@
+# Append to /etc/freeradius/3.0/clients.conf — one block per MikroTik that uses RADIUS.
+# ipaddr = the address the router's RADIUS packets come from: its public IP, or its VPN
+# tunnel IP (10.200.x.x WireGuard / 10.201.x.x SSTP). Use a long random secret per router
+# and the same secret in MikroTik: /radius add service=ppp address=<server> secret=<secret>
+client speednet-core {
+	ipaddr = 10.200.0.2
+	secret = CHANGE_ME_router_secret
+	shortname = speednet-core
+	nas_type = other
+}

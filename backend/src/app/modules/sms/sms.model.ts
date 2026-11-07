@@ -75,7 +75,7 @@ const logSchema = new Schema<ISmsLog>(
   { timestamps: true },
 );
 logSchema.plugin(tenantPlugin);
-logSchema.index({ company: 1, createdAt: -1 });
+logSchema.index({ company: 1, createdAt: -1, _id: -1 });
 logSchema.index({ company: 1, customer: 1, event: 1, createdAt: -1 });
 export const SmsLog = model<ISmsLog>("SmsLog", logSchema);
 

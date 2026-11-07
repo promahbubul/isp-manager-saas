@@ -30,7 +30,7 @@ export default function AdminSupportTicketPage() {
         subtitle={`Opened ${formatDateTime(t.createdAt)}`}
         actions={
           <>
-            <Link href="/admin/support" className="self-center text-sm text-purple-700 hover:underline">
+            <Link href="/admin/support" className="self-center text-sm text-primary-700 hover:underline">
               ← All tickets
             </Link>
             {t.status === "closed" ? (
@@ -65,10 +65,10 @@ export default function AdminSupportTicketPage() {
         <Card title="Details">
           <InfoList
             items={[
-              { label: "ISP", value: t.company ? <Link className="text-purple-700 hover:underline" href={`/admin/companies/${t.company._id}`}>{t.company.name}</Link> : "—" },
+              { label: "ISP", value: t.company ? <Link className="text-primary-700 hover:underline" href={`/admin/companies/${t.company._id}`}>{t.company.name}</Link> : "—" },
               { label: "ISP status", value: t.company?.status },
               { label: "Opened by", value: t.openedBy ? `${t.openedBy.name} (${t.openedBy.role})` : "—" },
-              { label: "Mobile", value: t.openedBy?.phone ? <a className="text-purple-700" href={`tel:${t.openedBy.phone}`}>{t.openedBy.phone}</a> : "—" },
+              { label: "Mobile", value: t.openedBy?.phone ? <a className="text-primary-700" href={`tel:${t.openedBy.phone}`}>{t.openedBy.phone}</a> : "—" },
               { label: "Category", value: supportCategoryLabel[t.category] },
               { label: "Priority", value: <Badge color={PRIORITY_COLOR[t.priority]}>{t.priority}</Badge> },
               { label: "Status", value: <Badge color={st?.color}>{t.status === "open" ? "Waiting for us" : st?.label}</Badge> },

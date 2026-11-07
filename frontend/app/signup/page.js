@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import AuthCard from "@/components/auth/AuthCard";
 import { ContainerButton, LabelWithInput } from "@/components/ui";
 import { applyFieldErrors, getErrorMessage } from "@/lib/api";
@@ -50,7 +50,7 @@ export default function SignupPage() {
       footer={
         <>
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-purple-700 hover:underline">
+          <Link href="/login" className="font-semibold text-primary-700 hover:underline">
             Log in
           </Link>
         </>

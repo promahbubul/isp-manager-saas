@@ -250,8 +250,53 @@ API চালু হওয়ার সময় সব peer আবার যো
   প্রতিটা domain-এর SSL: সহজ উপায় **Caddy** on-demand TLS — `ask https://api.yourdomain.com/api/v1/public/domain-check`
   দিলে শুধু verified domain-এর জন্যই certificate নেয়। Nginx রাখতে চাইলে প্রতি domain-এ `certbot --nginx -d my.isp.com`।
 
+### SSTP VPN (RouterOS 6 router-এর জন্য)
+accel-ppp (বা যেকোনো SSTP server যেটা `chap-secrets` file পড়ে) চালাও, port 443। `backend/.env`:
+```
+SSTP_ENABLED=true
+SSTP_HOST=vpn.yourdomain.com
+SSTP_SECRETS_FILE=/etc/ppp/chap-secrets   # deploy user-এর লেখার অনুমতি লাগবে
+```
+আলাদা IP (`10.201.0.0/16`) ব্যবহার হয়। Router page-এ Use VPN → 2 (SSTP) চাপলে script আসে।
+
+### RADIUS (ঐচ্ছিক — বড় ISP-দের জন্য)
+RADIUS চালু করলে কাস্টমারের username/password router-এ থাকে না; প্রতিবার login-এ router FreeRADIUS-কে, আর FreeRADIUS
+আমাদের API-কে জিজ্ঞেস করে (bill দেওয়া আছে কিনা, speed কত)। Accounting থেকে BTRC IP log আরও নিখুঁত হয়।
+```bash
+sudo apt install freeradius freeradius-rest
+sudo cp deploy/freeradius/mods-available/rest /etc/freeradius/3.0/mods-available/rest
+sudo cp deploy/freeradius/sites-available/isp-manager /etc/freeradius/3.0/sites-available/
+sudo ln -sf ../mods-available/rest /etc/freeradius/3.0/mods-enabled/rest
+sudo ln -sf ../sites-available/isp-manager /etc/freeradius/3.0/sites-enabled/isp-manager
+sudo rm -f /etc/freeradius/3.0/sites-enabled/default /etc/freeradius/3.0/sites-enabled/inner-tunnel
+# rest file-এ CHANGE_ME_RADIUS_API_SECRET বদলাও (backend .env-এর RADIUS_API_SECRET)
+sudo mkdir -p /etc/freeradius/3.0/clients.d && sudo chown deploy:freerad /etc/freeradius/3.0/clients.d
+echo '$INCLUDE clients.d/isp-manager.conf' | sudo tee -a /etc/freeradius/3.0/clients.conf
+sudo ufw allow 1812:1813/udp
+sudo systemctl restart freeradius
+```
+`backend/.env`: `RADIUS_API_SECRET=<২৪+ অক্ষর>`, `RADIUS_HOST=<server IP যেটা router দেখে>`,
+`RADIUS_CLIENTS_FILE=/etc/freeradius/3.0/clients.d/isp-manager.conf`। ISP Routers page-এ **Use RADIUS** চাপলে
+MikroTik script পাবে; নতুন router যোগ হলে `sudo systemctl restart freeradius` (অথবা ঘণ্টায় একবার cron-এ)।
+ডিবাগ: `sudo freeradius -X`।
+
+### OLT (ফাইবার ONU signal)
+কোনো server setting লাগে না। ISP Network → OLTs-এ OLT-এর IP আর SNMP read community দেয়। OLT server থেকে
+UDP 161-এ পৌঁছাতে হবে (সাধারণত router-এর VPN tunnel দিয়ে)। Huawei GPON-এর জন্য তৈরি profile আছে; BDCOM profile
+আসল device-এ যাচাই করতে হবে; অন্য ব্র্যান্ডে "Other brand" বেছে OID দিতে হয়।
+
+### Email (SMTP)
+Super admin → Settings → Email (SMTP)-এ host/port/user/password দাও, Send test চাপো। এতে ISP-রা রাত ৯টায়
+daily summary আর subscription reminder email পায়।
+
 ### ISP-এর নিজের SMS gateway, WhatsApp, API key
 এগুলো ISP নিজেই Settings → Integrations থেকে চালু করে (plan-এ থাকলে)। Server-এ কিছু করতে হয় না।
+
+### Log আর index
+- Log JSON line হিসেবে আসে (`pm2 logs isp-api`)। প্রতিটা response-এ `X-Request-Id` থাকে; কেউ error-এর কথা বললে
+  সেই id দিয়ে log খুঁজুন। বেশি/কম log: `backend/.env`-এ `LOG_LEVEL=info|warn|debug`।
+- Production-এ index নিজে থেকে তৈরি হয় না; `deploy.sh` প্রতিবার `syncIndexes.js` চালায় (হাতে: `pnpm db:indexes:prod`)।
+- Load balancer/uptime monitor-এর জন্য `GET /api/v1/health/ready` (DB আর shutdown দুটোই দেখে)।
 
 ## আপডেট
 

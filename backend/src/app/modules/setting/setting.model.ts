@@ -10,6 +10,9 @@ export interface ISetting {
     autoDisable: boolean;
   };
   receipt: { header?: string; footer?: string };
+  notifications: { dailySummaryEmail: boolean };
+  /** hours to solve a complaint, by priority (SLA) */
+  ticket: { slaHours: { low: number; medium: number; high: number } };
   sms: {
     /** which events send an SMS automatically */
     autoEvents: {
@@ -33,6 +36,14 @@ const settingSchema = new Schema<ISetting>(
       autoDisable: { type: Boolean, default: true },
     },
     receipt: { header: String, footer: String },
+    notifications: { dailySummaryEmail: { type: Boolean, default: true } },
+    ticket: {
+      slaHours: {
+        low: { type: Number, default: 72, min: 1, max: 720 },
+        medium: { type: Number, default: 24, min: 1, max: 720 },
+        high: { type: Number, default: 6, min: 1, max: 720 },
+      },
+    },
     sms: {
       autoEvents: {
         welcome: on,

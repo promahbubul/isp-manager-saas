@@ -45,6 +45,19 @@ const envSchema = z.object({
   WG_APPLY: z.enum(["true", "false"]).default("false"),
   /** folder for uploaded logos (served at /uploads) */
   UPLOAD_DIR: z.string().optional(),
+  /** SSTP VPN (RouterOS 6 routers have no WireGuard) — needs accel-ppp or similar on the server */
+  SSTP_ENABLED: z.enum(["true", "false"]).default("false"),
+  /** public host routers dial (port 443) */
+  SSTP_HOST: z.string().optional(),
+  SSTP_SUBNET: z.string().regex(/^\d+\.\d+\.0\.0\/16$/).default("10.201.0.0/16"),
+  /** chap-secrets file the SSTP server reads; rewritten when routers change (needs write access) */
+  SSTP_SECRETS_FILE: z.string().optional(),
+  /** shared secret FreeRADIUS (rlm_rest) sends as X-Radius-Secret; empty = RADIUS API off */
+  RADIUS_API_SECRET: z.string().min(24).optional(),
+  /** address routers send RADIUS packets to (this server's public or VPN IP) */
+  RADIUS_HOST: z.string().optional(),
+  /** FreeRADIUS clients file we rewrite with every RADIUS router (needs write access) */
+  RADIUS_CLIENTS_FILE: z.string().optional(),
   SUPER_ADMIN_EMAIL: z.email().optional(),
   SUPER_ADMIN_PASSWORD: z.string().min(8).optional(),
 });
@@ -103,6 +116,13 @@ const config = {
     senderId: env.SMS_SENDER_ID,
   },
   superAdmin: { email: env.SUPER_ADMIN_EMAIL, password: env.SUPER_ADMIN_PASSWORD },
+  sstp: {
+    enabled: env.SSTP_ENABLED === "true",
+    host: env.SSTP_HOST,
+    subnet: env.SSTP_SUBNET,
+    secretsFile: env.SSTP_SECRETS_FILE,
+  },
+  radius: { apiSecret: env.RADIUS_API_SECRET, host: env.RADIUS_HOST, clientsFile: env.RADIUS_CLIENTS_FILE },
   uploadDir: path.resolve(env.UPLOAD_DIR ?? path.join(process.cwd(), "uploads")),
   wireguard: {
     enabled: env.WG_ENABLED === "true",

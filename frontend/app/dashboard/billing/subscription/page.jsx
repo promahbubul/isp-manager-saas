@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import MethodPicker from "@/components/payment/MethodPicker";
 import { Badge, Button, Card, ErrorBox, Input, Loading, Modal, PageHeader, StatusBadge, Table } from "@/components/ui";
 import { api, getErrorMessage } from "@/lib/api";
@@ -73,7 +73,7 @@ function PayDialog({ open, onClose, title, methods, amountFor, submit, children,
           {amount && (
             <p className="text-lg font-semibold">
               Total: {money(amount.value, amount.currency)}
-              {applied && <span className="ml-2 text-sm font-normal text-slate-500 line-through">{money(base.value, base.currency)}</span>}
+              {applied && <span className="ml-2 text-sm font-normal text-zinc-500 line-through">{money(base.value, base.currency)}</span>}
             </p>
           )}
           <div className="flex justify-end">
@@ -128,17 +128,17 @@ function SubscriptionContent() {
         <div className="flex flex-wrap items-center gap-6">
           <div>
             <p className="text-2xl font-bold">{current?.name ?? "—"}</p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-zinc-500">
               <StatusBadge status={subscription?.status === "trialing" ? "pending" : subscription?.status === "active" ? "active" : "expired"} />{" "}
               {subscription?.status === "trialing" ? `Trial until ${formatDate(company.trialEndsAt)}` : `Paid until ${formatDate(subscription?.currentPeriodEnd)}`}
             </p>
           </div>
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-zinc-600">
             Customers {company.usage.customers}/{limit(current?.limits?.customers)} · Routers {company.usage.routers}/{limit(current?.limits?.routers)} · Staff{" "}
             {company.usage.staff}/{limit(current?.limits?.staff)}
           </div>
           <div className="ml-auto text-right">
-            <p className="text-sm text-slate-500">SMS balance</p>
+            <p className="text-sm text-zinc-500">SMS balance</p>
             <p className="text-xl font-bold">{company.smsBalance}</p>
             <Button size="sm" variant="secondary" onClick={() => setSmsOpen(true)}>
               Buy SMS credits
@@ -159,9 +159,9 @@ function SubscriptionContent() {
 
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Plans</h3>
-        <div className="flex rounded-md border border-slate-300 bg-white p-0.5">
+        <div className="flex rounded-md border border-zinc-300 bg-white p-0.5">
           {["monthly", "yearly"].map((i) => (
-            <button key={i} type="button" onClick={() => setBillingInterval(i)} className={`cursor-pointer rounded px-3 py-1 text-sm capitalize ${billingInterval === i ? "bg-purple-600 text-white" : "text-slate-600"}`}>
+            <button key={i} type="button" onClick={() => setBillingInterval(i)} className={`cursor-pointer rounded px-3 py-1 text-sm capitalize ${billingInterval === i ? "bg-primary-600 text-white" : "text-zinc-600"}`}>
               {i} {i === "yearly" && <span className="text-xs">(2 months free)</span>}
             </button>
           ))}
@@ -172,18 +172,18 @@ function SubscriptionContent() {
           const price = p.priceBDT[billingInterval];
           const isCurrent = current?._id === p._id && subscription?.status === "active";
           return (
-            <div key={p._id} className={`flex flex-col rounded-lg border bg-white p-5 ${isCurrent ? "border-purple-600 ring-2 ring-purple-200" : "border-slate-200"}`}>
+            <div key={p._id} className={`flex flex-col rounded-lg border bg-white p-5 ${isCurrent ? "border-primary-600 ring-2 ring-primary-200" : "border-zinc-200"}`}>
               <div className="flex items-center justify-between">
                 <h4 className="text-lg font-bold">{p.name}</h4>
                 {isCurrent && <Badge color="purple">current</Badge>}
               </div>
-              <p className="mt-1 text-sm text-slate-500">{p.description}</p>
+              <p className="mt-1 text-sm text-zinc-500">{p.description}</p>
               <p className="mt-4 text-3xl font-extrabold">
                 {price > 0 ? taka(price) : "Custom"}
-                {price > 0 && <span className="text-sm font-normal text-slate-500">/{billingInterval === "monthly" ? "mo" : "yr"}</span>}
+                {price > 0 && <span className="text-sm font-normal text-zinc-500">/{billingInterval === "monthly" ? "mo" : "yr"}</span>}
               </p>
-              {price > 0 && p.priceUSD[billingInterval] > 0 && <p className="text-xs text-slate-500">or ${p.priceUSD[billingInterval]} by card</p>}
-              <ul className="mt-4 flex-1 space-y-1 text-sm text-slate-700">
+              {price > 0 && p.priceUSD[billingInterval] > 0 && <p className="text-xs text-zinc-500">or ${p.priceUSD[billingInterval]} by card</p>}
+              <ul className="mt-4 flex-1 space-y-1 text-sm text-zinc-700">
                 <li>✓ {limit(p.limits.customers)} customers</li>
                 <li>✓ {limit(p.limits.routers)} router(s)</li>
                 <li>✓ {limit(p.limits.staff)} staff</li>

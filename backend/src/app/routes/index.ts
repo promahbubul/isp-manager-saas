@@ -26,6 +26,11 @@ import { ownGatewayRoutes } from "../modules/sms/ownGateway";
 import { apiKeyRoutes, publicApiRoutes } from "../modules/apiKey/apiKey";
 import { customDomainRoutes, publicDomainRoutes } from "../modules/company/customDomain";
 import { analyticsRoutes } from "../modules/report/analytics";
+import { customerExtraRoutes } from "../modules/customer/customer.extras";
+import { routerSyncRoutes } from "../modules/router/routerSync";
+import { publicContentRoutes } from "../modules/content/content";
+import { radiusRoutes } from "../modules/radius/radius.routes";
+import { oltRoutes } from "../modules/olt/olt";
 import { whatsappRoutes } from "../modules/sms/whatsapp";
 import { collectionRoutes, employeeRoutes } from "../modules/employee/employee.routes";
 import adminRoutes from "../modules/admin/admin.routes";
@@ -44,8 +49,10 @@ const moduleRoutes: { path: string; route: Router }[] = [
   { path: "/users", route: userRoutes },
   { path: "/dashboard", route: dashboardRoutes },
   { path: "/zones", route: zoneRoutes },
+  { path: "/routers", route: routerSyncRoutes },
   { path: "/routers", route: routerRoutes },
   { path: "/packages", route: packageRoutes },
+  { path: "/customers", route: customerExtraRoutes },
   { path: "/customers", route: customerRoutes },
   { path: "/payments", route: paymentRoutes },
   { path: "/settings/payment-gateways", route: tenantGatewayRoutes },
@@ -54,6 +61,9 @@ const moduleRoutes: { path: string; route: Router }[] = [
   { path: "/settings/api-keys", route: apiKeyRoutes },
   { path: "/settings/custom-domain", route: customDomainRoutes },
   { path: "/public", route: publicDomainRoutes },
+  { path: "/public/content", route: publicContentRoutes },
+  { path: "/radius", route: radiusRoutes },
+  { path: "/olts", route: oltRoutes },
   { path: "/analytics", route: analyticsRoutes },
   { path: "/public-api/v1", route: publicApiRoutes },
   { path: "/settings", route: settingRoutes },

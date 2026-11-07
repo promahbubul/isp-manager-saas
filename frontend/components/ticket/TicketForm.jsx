@@ -32,11 +32,11 @@ function CustomerPicker({ value, onChange, initial }) {
 
   if (value && picked) {
     return (
-      <div className="flex items-center justify-between rounded-md border border-slate-300 px-3 py-2">
+      <div className="flex items-center justify-between rounded-md border border-zinc-300 px-3 py-2">
         <span>
-          {picked.name} <span className="text-slate-500">({picked.customerId})</span>
+          {picked.name} <span className="text-zinc-500">({picked.customerId})</span>
         </span>
-        <button type="button" className="cursor-pointer text-sm text-purple-700" onClick={() => { onChange(""); setPicked(null); }}>
+        <button type="button" className="cursor-pointer text-sm text-primary-700" onClick={() => { onChange(""); setPicked(null); }}>
           change
         </button>
       </div>
@@ -44,9 +44,9 @@ function CustomerPicker({ value, onChange, initial }) {
   }
   return (
     <div>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer (optional)" className="w-full rounded-md border border-slate-300 px-3 py-2" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer (optional)" className="w-full rounded-md border border-zinc-300 px-3 py-2" />
       {(results.data?.data ?? []).map((c) => (
-        <button key={c._id} type="button" onClick={() => { setPicked(c); onChange(c._id); }} className="block w-full cursor-pointer px-3 py-1.5 text-left text-sm hover:bg-purple-50">
+        <button key={c._id} type="button" onClick={() => { setPicked(c); onChange(c._id); }} className="block w-full cursor-pointer px-3 py-1.5 text-left text-sm hover:bg-primary-50">
           {c.name} · {c.customerId} · {c.phone}
         </button>
       ))}
@@ -70,7 +70,7 @@ export default function TicketForm({ customer, onDone }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <p className="mb-1 text-sm font-semibold text-slate-700">Customer</p>
+        <p className="mb-1 text-sm font-semibold text-zinc-700">Customer</p>
         <CustomerPicker value={customerId} onChange={setCustomerId} initial={customer} />
       </div>
       <Input label="Subject" required className="sm:col-span-2" error={e.subject?.message} {...register("subject")} />

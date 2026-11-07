@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import GatewaySettings from "@/components/payment/GatewaySettings";
 import { Button, Card, ErrorBox, Loading, PageHeader } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -22,12 +22,12 @@ export default function PaymentGatewaysPage() {
       <PageHeader title="Payment gateways" subtitle="How your customers can pay their bills online. Money goes straight to your merchant account." />
       <Card title="Your customer payment link">
         <div className="flex flex-wrap items-center gap-3">
-          <code className="rounded bg-slate-100 px-3 py-2 text-sm">{payLink}</code>
+          <code className="rounded bg-zinc-100 px-3 py-2 text-sm">{payLink}</code>
           <Button size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(payLink).then(() => toast.success("Copied"))}>
             Copy
           </Button>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-zinc-500">
           Customers enter their customer ID (or PPPoE username) and mobile number, then pay with any method you turned on. Paid bills are
           recharged and reconnected automatically. Add <code>{"{pay_link}"}</code> to your SMS templates.
         </p>

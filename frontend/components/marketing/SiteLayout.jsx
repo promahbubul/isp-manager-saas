@@ -3,22 +3,28 @@ import { site } from "@/lib/site";
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-slate-800 bg-slate-900 text-white">
+    <header className="border-b border-zinc-800 bg-zinc-900 text-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-2xl font-extrabold italic text-purple-400">
+        <Link href="/" className="text-2xl font-extrabold italic text-primary-400">
           {site.name}
         </Link>
         <nav className="flex items-center gap-5 text-sm">
-          <Link href="/pricing" className="hover:text-purple-300">
+          <Link href="/pricing" className="hover:text-primary-300">
             Pricing
           </Link>
-          <Link href="/contact" className="hover:text-purple-300">
-            Contact
+          <Link href="/help" className="hover:text-primary-300">
+            Help
           </Link>
-          <Link href="/login" className="hover:text-purple-300">
+          <Link href="/blog" className="hover:text-primary-300">
+            Blog
+          </Link>
+          <Link href="/demo" className="hover:text-primary-300">
+            Book a demo
+          </Link>
+          <Link href="/login" className="hover:text-primary-300">
             Login
           </Link>
-          <Link href="/signup" className="rounded-md bg-purple-600 px-4 py-2 font-semibold hover:bg-purple-500">
+          <Link href="/signup" className="rounded-md bg-primary-600 px-4 py-2 font-semibold hover:bg-primary-500">
             Free trial
           </Link>
         </nav>
@@ -29,7 +35,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-slate-800 bg-slate-950 text-slate-400">
+    <footer className="border-t border-zinc-800 bg-zinc-950 text-zinc-400">
       <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 text-sm sm:grid-cols-3">
         <div>
           <p className="font-semibold text-white">{site.name}</p>
@@ -42,6 +48,9 @@ export function SiteFooter() {
           <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
           <Link href="/refund-policy" className="hover:text-white">Refund & Cancellation Policy</Link>
           <Link href="/contact" className="hover:text-white">Contact</Link>
+          <Link href="/faq" className="hover:text-white">FAQ</Link>
+          <Link href="/help" className="hover:text-white">Help Center</Link>
+          <Link href="/blog" className="hover:text-white">Blog</Link>
         </div>
         <div>
           <p>{site.address}</p>
@@ -68,9 +77,9 @@ export function SitePage({ children }) {
 export function LegalPage({ title, updated, children }) {
   return (
     <SitePage>
-      <article className="mx-auto max-w-3xl px-6 py-12 text-slate-800 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-bold [&_li]:mt-1 [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
+      <article className="mx-auto max-w-3xl px-6 py-12 text-zinc-800 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-bold [&_li]:mt-1 [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
         <h1 className="text-3xl font-extrabold">{title}</h1>
-        <p className="mt-2 text-sm text-slate-500">Last updated: {updated}</p>
+        <p className="mt-2 text-sm text-zinc-500">Last updated: {updated}</p>
         {children}
       </article>
     </SitePage>

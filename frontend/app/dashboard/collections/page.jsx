@@ -6,6 +6,7 @@ import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Pagination, Stat, T
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 import { useAuth } from "@/providers/AuthProvider";
 
 const COLOR = { pending: "amber", accepted: "green", rejected: "red" };
@@ -13,11 +14,10 @@ const COLOR = { pending: "amber", accepted: "green", rejected: "red" };
 export default function CollectionsPage() {
   const { user, can } = useAuth();
   const [handing, setHanding] = useState(false);
-  const [page, setPage] = useState(1);
   const me = useApi("my-cash", "/collections/me");
   const summary = useApi("cash-summary", "/collections/summary", undefined, { enabled: can("collection.view") });
   const receivers = useApi("cash-receivers", "/collections/receivers", undefined, { enabled: handing });
-  const handovers = useApi(["handovers", page], "/collections/handovers", { page, limit: 25 });
+  const handovers = usePaged("handovers", "/collections/handovers");
   const inv = ["my-cash", "cash-summary", "handovers"];
   const give = useApiMutation((b) => api.post("/collections/handovers", b), { invalidate: inv });
   const decide = useApiMutation(({ id, accept }) => api.post(`/collections/handovers/${id}/decide`, { accept }), { invalidate: inv });
@@ -101,7 +101,7 @@ export default function CollectionsPage() {
                 },
               ]}
             />
-            <Pagination meta={handovers.data?.meta} onPage={setPage} />
+            <Pagination {...handovers.pager} />
           </>
         )}
       </Card>

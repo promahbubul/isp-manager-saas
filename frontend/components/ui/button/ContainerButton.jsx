@@ -1,14 +1,20 @@
-const ContainerButton = ({ title, children, onClick, type = "submit", loading = false, disabled, className = "" }) => {
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled || loading}
-      className={`w-full cursor-pointer rounded-md bg-purple-600 py-3 text-lg font-semibold text-white transition ease-in-out hover:bg-purple-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
-    >
-      {loading ? "Please wait..." : (children ?? title)}
-    </button>
-  );
-};
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/cn";
+
+/** Full-width primary submit button used on the auth screens. */
+const ContainerButton = ({ title, children, onClick, type = "submit", loading = false, disabled, className }) => (
+  <button
+    type={type}
+    onClick={onClick}
+    disabled={disabled || loading}
+    className={cn(
+      "inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60",
+      className,
+    )}
+  >
+    {loading && <Loader2 className="size-4 animate-spin" />}
+    {children ?? title}
+  </button>
+);
 
 export default ContainerButton;

@@ -7,6 +7,8 @@ import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Pagination, 
 import { api } from "@/lib/api";
 import { formatDate, taka, toDateInput } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
+import { IncomeExpenseChart } from "@/components/charts/Charts";
 
 const METHODS = ["cash", "bank", "bkash", "nagad", "rocket", "other"].map((m) => ({ value: m, label: m }));
 const monthStart = () => {
@@ -19,7 +21,6 @@ function ProfitLoss({ range }) {
   if (isLoading) return <Loading />;
   if (error) return <ErrorBox error={error} />;
   const p = data.data;
-  const max = Math.max(1, ...p.monthly.map((m) => Math.max(m.income, m.expense)));
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -37,23 +38,42 @@ function ProfitLoss({ range }) {
       </div>
       <Card title="Last 12 months">
         {p.monthly.length === 0 ? (
-          <p className="text-sm text-slate-500">No data yet.</p>
+          <p className="text-sm text-zinc-500">No data yet.</p>
         ) : (
-          <ul className="space-y-2">
-            {p.monthly.map((m) => (
-              <li key={m.month} className="grid grid-cols-[5rem_1fr_7rem] items-center gap-3 text-sm">
-                <span className="text-slate-600">{m.month}</span>
-                <div className="space-y-1">
-                  <div className="h-2 rounded bg-emerald-500" style={{ width: `${(m.income / max) * 100}%` }} title={`Income ${taka(m.income)}`} />
-                  <div className="h-2 rounded bg-rose-400" style={{ width: `${(m.expense / max) * 100}%` }} title={`Expense ${taka(m.expense)}`} />
-                </div>
-                <span className={`text-right font-medium ${m.net >= 0 ? "text-emerald-700" : "text-rose-700"}`}>{taka(m.net)}</span>
-              </li>
-            ))}
-          </ul>
+          <IncomeExpenseChart data={p.monthly} />
         )}
-        <p className="mt-3 text-xs text-slate-500">Green = income (customer bills + other income), red = expenses. Payments taken by resellers are counted when the reseller deposits.</p>
+        <p className="mt-3 text-xs text-zinc-500">Income = customer bills + other income. Payments taken by resellers are counted when the reseller deposits.</p>
       </Card>
+    </div>
+  );
+}
+
+function CashBook({ range }) {
+  const { data, isLoading, error } = useApi(["cashbook", range], "/accounts/cashbook", range);
+  if (isLoading) return <Loading />;
+  if (error) return <ErrorBox error={error} />;
+  const c = data.data;
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Stat label="Opening cash" value={taka(c.opening)} />
+        <Stat label="Cash in" value={taka(c.totalIn)} tone="green" />
+        <Stat label="Cash out" value={taka(c.totalOut)} tone="red" />
+        <Stat label="Closing cash" value={taka(c.closing)} />
+      </div>
+      <Table
+        rowKey="date"
+        rows={c.rows}
+        empty="No cash movement in this period."
+        columns={[
+          { key: "date", header: "Date" },
+          { key: "lines", header: "Details", className: "whitespace-normal", render: (r) => r.lines.map((l, i) => <div key={i} className={l.kind === "in" ? "text-emerald-700" : "text-rose-700"}>{`${l.kind === "in" ? "+" : "−"} ${taka(l.amount)} ${l.text}`}</div>) },
+          { key: "in", header: "In", render: (r) => taka(r.in) },
+          { key: "out", header: "Out", render: (r) => taka(r.out) },
+          { key: "balance", header: "Balance", render: (r) => <strong>{taka(r.balance)}</strong> },
+        ]}
+      />
+      <p className="text-xs text-zinc-500">Only cash: bKash, bank and online payments are not in the cash book. Handovers between staff do not change company cash.</p>
     </div>
   );
 }
@@ -61,8 +81,8 @@ function ProfitLoss({ range }) {
 function Entries({ range }) {
   const [q, setQ] = useState({ type: "", page: 1 });
   const [adding, setAdding] = useState(null);
-  const params = Object.fromEntries(Object.entries({ ...range, ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useApi(["ledger", params], "/accounts/entries", params);
+  const list = usePaged("ledger", "/accounts/entries", { ...range, ...q, page: undefined });
+  const { data, isLoading, error } = list;
   const cats = useApi("ledger-categories", "/accounts/categories");
   const save = useApiMutation((body) => api.post("/accounts/entries", body), { invalidate: ["ledger", "pnl", "ledger-categories"] });
   const remove = useApiMutation((id) => api.delete(`/accounts/entries/${id}`), { invalidate: ["ledger", "pnl"] });
@@ -75,7 +95,7 @@ function Entries({ range }) {
           <Select value={q.type} onChange={(e) => setQ({ type: e.target.value, page: 1 })} options={[{ value: "", label: "Income + expense" }, { value: "expense", label: "Expenses" }, { value: "income", label: "Other income" }]} />
         </div>
         {totals && (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-zinc-600">
             Income {taka(totals.income)} · Expense {taka(totals.expense)}
           </p>
         )}
@@ -94,6 +114,7 @@ function Entries({ range }) {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data?.entries ?? []}
             empty="Nothing in this period."
             columns={[
@@ -118,7 +139,7 @@ function Entries({ range }) {
               },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
       {adding && (
@@ -148,12 +169,13 @@ export default function AccountsPage() {
     <div>
       <PageHeader title="Accounts" subtitle="Expenses, other income and profit & loss" />
       <div className="mb-6 flex flex-wrap items-end gap-3">
-        <div className="flex rounded-md border border-slate-300 bg-white p-0.5">
+        <div className="flex rounded-md border border-zinc-300 bg-white p-0.5">
           {[
             ["pnl", "Profit & loss"],
             ["entries", "Income & expenses"],
+            ["cash", "Cash book"],
           ].map(([k, l]) => (
-            <button key={k} type="button" onClick={() => setTab(k)} className={`cursor-pointer rounded px-3 py-1.5 text-sm ${tab === k ? "bg-purple-700 text-white" : "text-slate-700"}`}>
+            <button key={k} type="button" onClick={() => setTab(k)} className={`cursor-pointer rounded px-3 py-1.5 text-sm ${tab === k ? "bg-primary-700 text-white" : "text-zinc-700"}`}>
               {l}
             </button>
           ))}
@@ -161,7 +183,7 @@ export default function AccountsPage() {
         <Input label="From" type="date" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
         <Input label="To" type="date" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} />
       </div>
-      {tab === "pnl" ? <ProfitLoss range={range} /> : <Entries range={range} />}
+      {tab === "pnl" ? <ProfitLoss range={range} /> : tab === "cash" ? <CashBook range={range} /> : <Entries range={range} />}
     </div>
   );
 }

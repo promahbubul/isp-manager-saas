@@ -7,6 +7,7 @@ import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Pagination, 
 import { api } from "@/lib/api";
 import { formatDate, taka, toDateInput } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 import { useAuth } from "@/providers/AuthProvider";
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
@@ -79,7 +80,7 @@ function SalarySheet() {
           onClose={() => setPaying(null)}
         />
       )}
-      <p className="mt-3 text-xs text-slate-500">Every payment is added to Accounts as a Salary expense automatically.</p>
+      <p className="mt-3 text-xs text-zinc-500">Every payment is added to Accounts as a Salary expense automatically.</p>
     </Card>
   );
 }
@@ -87,8 +88,8 @@ function SalarySheet() {
 export default function EmployeesPage() {
   const { can } = useAuth();
   const [editing, setEditing] = useState(null);
-  const [page, setPage] = useState(1);
-  const { data, isLoading, error } = useApi(["employees", page], "/employees", { page, limit: 50, active: "all" });
+  const list = usePaged("employees", "/employees", { active: "all" }, { defaultLimit: 50 });
+  const { data, isLoading, error } = list;
   const save = useApiMutation((b) => (editing?._id ? api.patch(`/employees/${editing._id}`, b) : api.post("/employees", b)), { invalidate: ["employees", "salary-sheet"] });
 
   return (
@@ -121,7 +122,7 @@ export default function EmployeesPage() {
               { key: "isActive", header: "", render: (e) => <Badge color={e.isActive ? "green" : "slate"}>{e.isActive ? "active" : "left"}</Badge> },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={setPage} />
+          <Pagination {...list.pager} />
         </>
       )}
       {can("employee.salary") && <SalarySheet />}

@@ -65,13 +65,13 @@ function PlanForm({ plan, onDone }) {
       <Input label="Staff" type="number" {...register("limits.staff")} />
       <Input label="Sort order" type="number" {...register("sortOrder")} />
       <div className="col-span-2 sm:col-span-4">
-        <p className="mb-1 text-sm font-semibold text-slate-700">Features</p>
+        <p className="mb-1 text-sm font-semibold text-zinc-700">Features</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {FEATURES.map((f) => (
             <Checkbox key={f} id={`f-${f}`} label={f.replace(/_/g, " ")} value={f} {...register("features")} />
           ))}
         </div>
-        <p className="mt-1 text-xs text-slate-500">Shown on pricing; feature gating per plan is not enforced yet.</p>
+        <p className="mt-1 text-xs text-zinc-500">Shown on pricing; feature gating per plan is not enforced yet.</p>
       </div>
       <div className="col-span-2 flex gap-6 sm:col-span-4">
         <Checkbox label="Public (shown on pricing)" {...register("isPublic")} />

@@ -145,4 +145,52 @@ async function monthlyTrend(company: Types.ObjectId) {
   return [...map.values()].sort((a, b) => a.month.localeCompare(b.month)).map((r) => ({ ...r, income: round2(r.income), expense: round2(r.expense), net: round2(r.income - r.expense) }));
 }
 
-export const AccountsService = { list, create, update, remove, categories, profitAndLoss };
+/**
+ * Cash book: only physical cash. In = cash bills collected + cash income entries;
+ * out = cash expenses. Opening balance = everything before `from`.
+ */
+async function cashBook(companyId: string, query: Record<string, unknown>) {
+  const { from, to } = dateRange(query);
+  const company = oid(companyId);
+  const day = (f: string) => ({ $dateToString: { format: "%Y-%m-%d", date: `$${f}`, timezone: "Asia/Dhaka" } });
+  const sumBefore = async () => {
+    const [p, l] = await Promise.all([
+      Payment.aggregate<{ t: number }>([{ $match: { company, status: "success", method: "cash", reseller: null, createdAt: { $lt: from } } }, { $group: { _id: null, t: { $sum: "$amount" } } }]),
+      LedgerEntry.aggregate<{ _id: string; t: number }>([{ $match: { company, method: "cash", date: { $lt: from } } }, { $group: { _id: "$type", t: { $sum: "$amount" } } }]),
+    ]);
+    const led = Object.fromEntries(l.map((x) => [x._id, x.t]));
+    return (p[0]?.t ?? 0) + (led.income ?? 0) - (led.expense ?? 0);
+  };
+  const [opening, bills, entries] = await Promise.all([
+    sumBefore(),
+    Payment.aggregate<{ _id: string; amount: number; count: number }>([
+      { $match: { company, status: "success", method: "cash", reseller: null, createdAt: { $gte: from, $lt: to } } },
+      { $group: { _id: day("createdAt"), amount: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]),
+    LedgerEntry.find({ method: "cash", date: { $gte: from, $lt: to } }).sort("date").select("type category amount date note"),
+  ]);
+  const days = new Map<string, { date: string; in: number; out: number; lines: { kind: "in" | "out"; text: string; amount: number }[] }>();
+  const get = (d: string) => days.get(d) ?? days.set(d, { date: d, in: 0, out: 0, lines: [] }).get(d)!;
+  for (const b of bills) {
+    const r = get(b._id);
+    r.in += b.amount;
+    r.lines.push({ kind: "in", text: `Customer bills (${b.count})`, amount: b.amount });
+  }
+  for (const e of entries) {
+    const d = new Date(e.date.getTime() + 6 * 3600_000).toISOString().slice(0, 10);
+    const r = get(d);
+    const kind = e.type === "income" ? "in" : "out";
+    r[kind] += e.amount;
+    r.lines.push({ kind, text: `${e.category}${e.note ? ` — ${e.note}` : ""}`, amount: e.amount });
+  }
+  let balance = round2(opening);
+  const rows = [...days.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((r) => {
+      balance = round2(balance + r.in - r.out);
+      return { ...r, in: round2(r.in), out: round2(r.out), balance };
+    });
+  return { from, to: addDays(to, -1), opening: round2(opening), closing: balance, totalIn: round2(rows.reduce((n, r) => n + r.in, 0)), totalOut: round2(rows.reduce((n, r) => n + r.out, 0)), rows };
+}
+
+export const AccountsService = { list, create, update, remove, categories, profitAndLoss, cashBook };

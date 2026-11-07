@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { NextFunction, Request, Response, Router } from "express";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { isValidObjectId, model, Schema, Types } from "mongoose";
 import { z } from "zod";
 import config from "../../config";
@@ -128,7 +128,10 @@ publicApiRoutes.use(
     standardHeaders: "draft-8",
     legacyHeaders: false,
     skip: () => config.isTest,
-    keyGenerator: (req) => String(req.headers["x-api-key"] ?? req.headers.authorization ?? req.ip).slice(0, 13),
+    keyGenerator: (req) => {
+      const key = (req.headers["x-api-key"] as string | undefined) ?? req.headers.authorization;
+      return key ? `key:${key.slice(0, 13)}` : ipKeyGenerator(req.ip ?? "");
+    },
     message: { success: false, message: "Rate limit: 120 requests per minute per key" },
   }),
   apiKeyAuth,

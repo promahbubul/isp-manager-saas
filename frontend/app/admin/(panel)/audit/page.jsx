@@ -2,19 +2,20 @@
 
 import { useState } from "react";
 import { ErrorBox, Loading, PageHeader, Pagination, Table } from "@/components/ui";
-import { useAdminApi } from "@/lib/adminHooks";
+
+import { usePaged } from "@/lib/usePaged";
 import { formatDateTime } from "@/lib/format";
 
 export default function AdminAuditPage() {
   const [q, setQ] = useState({ search: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 50 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useAdminApi(["audit", params], "/admin/audit-logs", params);
+  const list = usePaged("audit", "/admin/audit-logs", { ...q, page: undefined }, { client: "admin" });
+  const { data, isLoading, error } = list;
 
   return (
     <div>
       <PageHeader title="Platform audit log" subtitle="Every change made by platform staff, including impersonation" />
       <input
-        className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 sm:w-96"
+        className="mb-4 w-full rounded-md border border-zinc-300 px-3 py-2 sm:w-96"
         placeholder="Search action or text"
         value={q.search}
         onChange={(e) => setQ({ search: e.target.value, page: 1 })}
@@ -25,6 +26,7 @@ export default function AdminAuditPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             columns={[
               { key: "createdAt", header: "Time", render: (l) => formatDateTime(l.createdAt) },
@@ -35,7 +37,7 @@ export default function AdminAuditPage() {
               { key: "ip", header: "IP" },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
 import { Button, ErrorBox, Loading, PageHeader, Pagination, Select, StatusBadge, Table } from "@/components/ui";
-import { downloadFile, getErrorMessage } from "@/lib/api";
+import QuickForm from "@/components/common/QuickForm";
+import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { daysUntil, formatDate, taka } from "@/lib/format";
-import { useApi } from "@/lib/hooks";
+import { useApi, useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const STATUS_OPTIONS = ["active", "expired", "disabled", "free"].map((s) => ({ value: s, label: s }));
 
@@ -40,9 +42,12 @@ function CustomersList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  const { data, isLoading, error } = useApi(["customers", query], "/customers", { limit: 25, ...query });
+  const list = usePaged("customers", "/customers", { ...query, page: undefined });
+  const { data, isLoading, error } = list;
   const zones = useApi("zones", "/zones");
   const packages = useApi("packages", "/packages");
+  const [bulk, setBulk] = useState(false);
+  const bulkRun = useApiMutation((b) => api.post("/customers/bulk", b), { invalidate: ["customers"] });
 
   return (
     <div>
@@ -59,6 +64,11 @@ function CustomersList() {
                 Export Excel
               </Button>
             </PermissionGate>
+            <PermissionGate perm="customer.enable_disable">
+              <Button variant="secondary" onClick={() => setBulk(true)}>
+                Bulk action
+              </Button>
+            </PermissionGate>
             <PermissionGate perm="customer.create">
               <Link href="/dashboard/customers/create">
                 <Button>+ Add customer</Button>
@@ -67,13 +77,31 @@ function CustomersList() {
           </>
         }
       />
+      {bulk && (
+        <QuickForm
+          title="Bulk action (whole zone)"
+          submitLabel="Run"
+          loading={bulkRun.isPending}
+          initial={{ action: "disable" }}
+          fields={[
+            { name: "zone", label: "Zone", type: "select", required: true, placeholder: "— choose —", options: (zones.data?.data ?? []).map((z) => ({ value: z._id, label: z.name })) },
+            { name: "action", label: "Action", type: "select", options: [{ value: "disable", label: "Disable all" }, { value: "enable", label: "Enable all (manually disabled ones)" }, { value: "package", label: "Move all to a package" }] },
+            { name: "package", label: "Package (for “Move”)", type: "select", placeholder: "—", options: (packages.data?.data ?? []).map((p) => ({ value: p._id, label: p.name })) },
+          ]}
+          onSubmit={(v) => {
+            if (!confirm("Apply to every customer in this zone (max 500)?")) return Promise.reject(new Error("cancelled"));
+            return bulkRun.mutateAsync({ zone: v.zone, action: v.action, package: v.action === "package" ? v.package : undefined });
+          }}
+          onClose={() => setBulk(false)}
+        />
+      )}
 
       <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, phone, ID, username..."
-          className="rounded-md border border-slate-300 px-3 py-2 md:col-span-2"
+          className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 md:col-span-2"
         />
         <Select placeholder="All statuses" options={STATUS_OPTIONS} value={query.status ?? ""} onChange={(e) => setParam("status", e.target.value)} />
         <Select
@@ -106,7 +134,7 @@ function CustomersList() {
                 render: (c) => (
                   <div>
                     <p className="font-semibold">{c.name}</p>
-                    <p className="text-xs text-slate-500">{c.phone}</p>
+                    <p className="text-xs text-zinc-500">{c.phone}</p>
                   </div>
                 ),
               },
@@ -120,13 +148,13 @@ function CustomersList() {
                   if (c.status === "free") return "—";
                   const d = daysUntil(c.expiryDate);
                   return (
-                    <span className={d < 0 ? "text-red-600" : d <= 3 ? "text-amber-600" : ""}>
+                    <span className={d < 0 ? "text-rose-600" : d <= 3 ? "text-amber-600" : ""}>
                       {formatDate(c.expiryDate)}
                     </span>
                   );
                 },
               },
-              { key: "dueAmount", header: "Due", render: (c) => (c.dueAmount ? <span className="text-red-600">{taka(c.dueAmount)}</span> : "—") },
+              { key: "dueAmount", header: "Due", render: (c) => (c.dueAmount ? <span className="text-rose-600">{taka(c.dueAmount)}</span> : "—") },
               {
                 key: "status",
                 header: "Status",
@@ -139,7 +167,7 @@ function CustomersList() {
               },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(p) => setParam("page", String(p))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

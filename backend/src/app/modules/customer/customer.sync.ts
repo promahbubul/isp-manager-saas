@@ -47,6 +47,16 @@ export async function syncCustomer(customer: CustomerDoc, previous: Previous = {
 
     const enabled = isConnectionEnabled(customer.status);
     const username = customer.pppoe.username;
+
+    // RADIUS routers keep no users: FreeRADIUS asks us at every login. Only a disable
+    // needs action now — drop the live session so the next login is refused.
+    if (router.authMode === "radius") {
+      if (!enabled) await withRouter(router, (d) => d.kick(username));
+      customer.set({ syncStatus: "synced", syncError: undefined });
+      await customer.save();
+      return { ok: true };
+    }
+
     await withRouter(router, async (d) => {
       if (!routerChanged && previous.username && previous.username !== username) {
         await d.renameSecret(previous.username, username);

@@ -25,8 +25,8 @@ function TemplateCard({ tpl, variables }) {
     <Card title={LABELS[tpl.event] ?? tpl.event}>
       <Textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
       <SegmentHint text={message} />
-      <p className="mt-2 text-xs text-slate-500">
-        Variables: {variables.map((v) => <code key={v} className="mr-1 rounded bg-slate-100 px-1">{`{${v}}`}</code>)}
+      <p className="mt-2 text-xs text-zinc-500">
+        Variables: {variables.map((v) => <code key={v} className="mr-1 rounded bg-zinc-100 px-1">{`{${v}}`}</code>)}
       </p>
       <div className="mt-3 flex items-center justify-between">
         <Checkbox id={`active-${tpl.event}`} label="Enabled" checked={isActive} onChange={(e) => setActive(e.target.checked)} />

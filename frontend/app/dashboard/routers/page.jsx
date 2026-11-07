@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, StatusBadge, Table } from "@/components/ui";
+import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, StatusBadge, Table } from "@/components/ui";
 import { api, applyFieldErrors } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -52,7 +52,7 @@ function RouterForm({ router, onDone }) {
           {...register("useSSL", { onChange: (ev) => setValue("port", ev.target.checked ? 8729 : 8728) })}
         />
       </div>
-      <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-600 sm:col-span-2">
+      <p className="rounded-md bg-zinc-50 p-3 text-xs text-zinc-600 sm:col-span-2">
         On the MikroTik: <code>/ip service enable api</code>, create a dedicated API user with the
         <code> read,write,api,policy,test</code> policies, and allow this server&apos;s IP in the service&apos;s
         &quot;Available From&quot; list.
@@ -77,7 +77,12 @@ export default function RoutersPage() {
   const test = useApiMutation((id) => api.post(`/routers/${id}/test`), { invalidate: ["routers"] });
   const remove = useApiMutation((id) => api.delete(`/routers/${id}`), { invalidate: ["routers"] });
   const [vpnScript, setVpnScript] = useState(null);
-  const vpn = useApiMutation((id) => api.post(`/routers/${id}/vpn`), { invalidate: ["routers"], onSuccess: (res) => setVpnScript(res.data.script) });
+  const vpn = useApiMutation(({ id, type }) => api.post(`/routers/${id}/vpn`, { type }), { invalidate: ["routers"], onSuccess: (res) => setVpnScript(res.data.script) });
+  const [report, setReport] = useState(null);
+  const radius = useApiMutation((id) => api.post(`/routers/${id}/radius`), { invalidate: ["routers"], onSuccess: (res) => setVpnScript(res.data.script) });
+  const radiusOff = useApiMutation((id) => api.delete(`/routers/${id}/radius`), { invalidate: ["routers"] });
+  const loadReport = useApiMutation((id) => api.get(`/routers/${id}/sync-report`), { successToast: false, onSuccess: (res) => setReport(res.data) });
+  const fixAll = useApiMutation((id) => api.post(`/routers/${id}/sync-fix`, {}), { invalidate: ["routers", "customers"], onSuccess: (_r, id) => loadReport.mutate(id) });
   const loadSessions = useApiMutation((r) => api.get(`/routers/${r._id}/active`), {
     successToast: false,
     onSuccess: (res, r) => setSessions({ router: r, rows: res.data }),
@@ -116,7 +121,7 @@ export default function RoutersPage() {
               render: (r) => (
                 <span title={r.lastError}>
                   {formatDateTime(r.lastCheckedAt)}
-                  {r.lastError && <span className="ml-1 text-red-600">⚠</span>}
+                  {r.lastError && <span className="ml-1 text-rose-600">⚠</span>}
                 </span>
               ),
             },
@@ -132,6 +137,24 @@ export default function RoutersPage() {
                   <Button size="sm" variant="secondary" onClick={() => loadSessions.mutate(r)}>
                     Online users
                   </Button>
+                  <Button size="sm" variant="secondary" loading={loadReport.isPending && loadReport.variables === r._id} onClick={() => loadReport.mutate(r._id)}>
+                    Check sync
+                  </Button>
+                  {can("router.manage") &&
+                    (r.authMode === "radius" ? (
+                      <>
+                        <Button size="sm" variant="secondary" onClick={() => radius.mutate(r._id)}>
+                          RADIUS script
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => confirm("Switch back to PPP secrets on the router? Then run Check sync → Fix all.") && radiusOff.mutate(r._id)}>
+                          Stop RADIUS
+                        </Button>
+                      </>
+                    ) : (
+                      <Button size="sm" variant="secondary" title="Users are checked by our RADIUS server instead of being stored on the router" onClick={() => confirm(`Use RADIUS for "${r.name}"? You get a script for the router. Customers keep working: their logins are then checked by our server.`) && radius.mutate(r._id)}>
+                        Use RADIUS
+                      </Button>
+                    ))}
                   {can("router.manage") && (
                     <>
                       <Button size="sm" variant="secondary" onClick={() => setEditing(r)}>
@@ -141,8 +164,13 @@ export default function RoutersPage() {
                         size="sm"
                         variant="secondary"
                         title="For routers without a public IP: the router connects to us over WireGuard"
-                        loading={vpn.isPending && vpn.variables === r._id}
-                        onClick={() => (r.connectionMode === "vpn" || confirm(`Switch "${r.name}" to VPN mode? You will get a script to paste into the router (RouterOS 7+).`)) && vpn.mutate(r._id)}
+                        loading={vpn.isPending && vpn.variables?.id === r._id}
+                        onClick={() => {
+                          if (r.connectionMode === "vpn") return vpn.mutate({ id: r._id, type: r.vpn?.type ?? "wireguard" });
+                          const ans = prompt(`Switch "${r.name}" to VPN mode?
+Type 1 for WireGuard (RouterOS 7, recommended) or 2 for SSTP (RouterOS 6).`, "1");
+                          if (ans === "1" || ans === "2") vpn.mutate({ id: r._id, type: ans === "2" ? "sstp" : "wireguard" });
+                        }}
                       >
                         {r.connectionMode === "vpn" ? "VPN script" : "Use VPN"}
                       </Button>
@@ -162,9 +190,44 @@ export default function RoutersPage() {
         {editing !== null && <RouterForm router={editing._id ? editing : null} onDone={() => setEditing(null)} />}
       </Modal>
 
-      <Modal open={Boolean(vpnScript)} onClose={() => setVpnScript(null)} title="VPN setup script (RouterOS 7+)" size="lg">
-        <p className="mb-2 text-sm text-slate-600">Open Winbox → New Terminal on the router and paste this. The router then connects to our server over WireGuard; no public IP or port forwarding is needed.</p>
-        <pre className="max-h-80 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{vpnScript}</pre>
+      <Modal open={Boolean(report)} onClose={() => setReport(null)} title={`DB vs router: ${report?.router.name ?? ""}`} size="lg">
+        {report && (
+          <div className="space-y-3 text-sm">
+            <p className="text-zinc-600">
+              {report.customersInDb} PPPoE customers in the software · {report.secretsOnRouter} secrets on the router
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Badge color={report.summary.missingOnRouter ? "red" : "green"}>{`missing on router: ${report.summary.missingOnRouter}`}</Badge>
+              <Badge color={report.summary.shouldBeDisabled ? "red" : "green"}>{`should be off: ${report.summary.shouldBeDisabled}`}</Badge>
+              <Badge color={report.summary.shouldBeEnabled ? "amber" : "green"}>{`should be on: ${report.summary.shouldBeEnabled}`}</Badge>
+              <Badge color={report.summary.wrongProfile ? "amber" : "green"}>{`wrong profile: ${report.summary.wrongProfile}`}</Badge>
+              <Badge color="slate">{`only on router: ${report.summary.onlyOnRouter}`}</Badge>
+            </div>
+            <div className="max-h-72 overflow-auto">
+              <Table
+                rowKey="key"
+                rows={report.issues.map((i, n) => ({ ...i, key: n }))}
+                empty="Everything matches. 🎉"
+                columns={[
+                  { key: "username", header: "Username" },
+                  { key: "customer", header: "Customer", render: (i) => i.customer?.name ?? "—" },
+                  { key: "problem", header: "Problem", render: (i) => i.problem.replaceAll("_", " ") },
+                  { key: "detail", header: "Detail", className: "whitespace-normal" },
+                ]}
+              />
+            </div>
+            {report.summary.onlyOnRouter > 0 && <p className="text-xs text-zinc-500">Secrets only on the router can be imported from Customers → Import → From MikroTik.</p>}
+            {report.issues.some((i) => i.customer) && (
+              <Button loading={fixAll.isPending} onClick={() => fixAll.mutate(report.router._id)}>
+                Fix all (push software data to router)
+              </Button>
+            )}
+          </div>
+        )}
+      </Modal>
+      <Modal open={Boolean(vpnScript)} onClose={() => setVpnScript(null)} title="Router setup script" size="lg">
+        <p className="mb-2 text-sm text-zinc-600">Open Winbox → New Terminal on the router and paste this.</p>
+        <pre className="max-h-80 overflow-auto rounded bg-zinc-900 p-3 text-xs text-zinc-100">{vpnScript}</pre>
         <Button className="mt-3" variant="secondary" onClick={() => navigator.clipboard.writeText(vpnScript ?? "")}>
           Copy script
         </Button>

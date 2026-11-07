@@ -1,0 +1,43 @@
+# /etc/freeradius/3.0/mods-available/rest  — ISP Manager
+# Enable:  ln -s ../mods-available/rest /etc/freeradius/3.0/mods-enabled/rest
+# Replace CHANGE_ME_RADIUS_API_SECRET with RADIUS_API_SECRET from backend/.env.
+rest {
+	tls {
+	}
+
+	connect_uri = "http://127.0.0.1:5000/api/v1/radius"
+
+	# Every request authenticates with HTTP basic auth (password = RADIUS_API_SECRET).
+	authorize {
+		uri = "${..connect_uri}/authorize"
+		method = 'post'
+		body = 'json'
+		auth = 'basic'
+		username = "freeradius"
+		password = "CHANGE_ME_RADIUS_API_SECRET"
+		require_auth = yes
+		tls = ${..tls}
+	}
+
+	accounting {
+		uri = "${..connect_uri}/accounting"
+		method = 'post'
+		body = 'json'
+		auth = 'basic'
+		username = "freeradius"
+		password = "CHANGE_ME_RADIUS_API_SECRET"
+		require_auth = yes
+		tls = ${..tls}
+	}
+
+	pool {
+		start = ${thread[pool].start_servers}
+		min = ${thread[pool].min_spare_servers}
+		max = ${thread[pool].max_servers}
+		spare = ${thread[pool].max_spare_servers}
+		uses = 0
+		retry_delay = 30
+		lifetime = 0
+		idle_timeout = 60
+	}
+}

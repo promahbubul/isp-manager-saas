@@ -8,15 +8,15 @@ import { Badge, Button, Card, ErrorBox, InfoList, Loading, PageHeader, Paginatio
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const TX_COLOR = { deposit: "green", recharge: "blue", refund: "amber", adjust: "slate" };
 
 export default function ResellerDetailPage() {
   const { id } = useParams();
   const [modal, setModal] = useState(null); // deposit | adjust | edit
-  const [page, setPage] = useState(1);
   const { data, isLoading, error } = useApi(["reseller", id], `/resellers/${id}`);
-  const ledger = useApi(["reseller-ledger", id, page], `/resellers/${id}/ledger`, { page, limit: 25 });
+  const ledger = usePaged(["reseller-ledger", id], `/resellers/${id}/ledger`);
   const inv = [["reseller", id], ["reseller-ledger", id], "resellers"];
   const deposit = useApiMutation((b) => api.post(`/resellers/${id}/deposit`, b), { invalidate: [...inv, "pnl", "ledger"] });
   const adjust = useApiMutation((b) => api.post(`/resellers/${id}/adjust`, b), { invalidate: inv });
@@ -54,7 +54,7 @@ export default function ResellerDetailPage() {
         <Card title="Account">
           <InfoList
             items={[
-              { label: "Balance", value: <strong className={r.balance < 0 ? "text-red-600" : ""}>{taka(r.balance)}</strong> },
+              { label: "Balance", value: <strong className={r.balance < 0 ? "text-rose-600" : ""}>{taka(r.balance)}</strong> },
               { label: "Credit limit", value: taka(r.creditLimit) },
               { label: "Default rate", value: `package price − ${r.discountPercent}%` },
               { label: "Status", value: <Badge color={r.isActive ? "green" : "slate"}>{r.isActive ? "active" : "inactive"}</Badge> },
@@ -65,7 +65,7 @@ export default function ResellerDetailPage() {
         </Card>
         <Card title="Package rates">
           {r.rates.length === 0 ? (
-            <p className="text-sm text-slate-500">All packages use the default rate.</p>
+            <p className="text-sm text-zinc-500">All packages use the default rate.</p>
           ) : (
             <Table rowKey="package" rows={r.rates.map((x) => ({ ...x, package: x.package?._id, name: x.package?.name, list: x.package?.price }))} columns={[{ key: "name", header: "Package" }, { key: "list", header: "List price", render: (x) => taka(x.list) }, { key: "price", header: "Reseller pays", render: (x) => taka(x.price) }]} />
           )}
@@ -82,14 +82,14 @@ export default function ResellerDetailPage() {
               columns={[
                 { key: "createdAt", header: "Time", render: (t) => formatDateTime(t.createdAt) },
                 { key: "type", header: "Type", render: (t) => <Badge color={TX_COLOR[t.type]}>{t.type}</Badge> },
-                { key: "amount", header: "Amount", render: (t) => <span className={t.amount < 0 ? "text-red-600" : "text-emerald-700"}>{taka(t.amount)}</span> },
+                { key: "amount", header: "Amount", render: (t) => <span className={t.amount < 0 ? "text-rose-600" : "text-emerald-700"}>{taka(t.amount)}</span> },
                 { key: "balanceAfter", header: "Balance after", render: (t) => taka(t.balanceAfter) },
                 { key: "customer", header: "Customer", render: (t) => (t.customer ? `${t.customer.name} (${t.customer.customerId})` : "—") },
                 { key: "note", header: "Note", className: "max-w-xs truncate" },
                 { key: "by", header: "By", render: (t) => t.by?.name },
               ]}
             />
-            <Pagination meta={ledger.data?.meta} onPage={setPage} />
+            <Pagination {...ledger.pager} />
           </>
         )}
       </Card>

@@ -46,7 +46,7 @@ export default function SystemHealthPage() {
         {!h.ok && (
           <ul className="mt-2 list-disc pl-5 font-normal">
             {h.warnings.map((w) => (
-              <li key={w.section} className={w.critical ? "font-semibold text-red-700" : ""}>
+              <li key={w.section} className={w.critical ? "font-semibold text-rose-700" : ""}>
                 {w.message}
               </li>
             ))}
@@ -94,7 +94,7 @@ export default function SystemHealthPage() {
               header: "State",
               className: "whitespace-normal",
               render: (j) =>
-                j.stale ? <Badge color="red">overdue</Badge> : j.lastOk === false ? <span className="text-red-700">failed: {j.lastError}</span> : <Badge color="green">ok</Badge>,
+                j.stale ? <Badge color="red">overdue</Badge> : j.lastOk === false ? <span className="text-rose-700">failed: {j.lastError}</span> : <Badge color="green">ok</Badge>,
             },
             { key: "runs", header: "Runs / failed", render: (j) => `${j.runs} / ${j.failures}` },
           ]}
@@ -103,14 +103,14 @@ export default function SystemHealthPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Section title="MikroTik routers" s={h.routers}>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-sm text-zinc-600">
             Online {h.routers.counts?.online ?? 0} · offline {h.routers.counts?.offline ?? 0} · never checked {h.routers.counts?.unknown ?? 0}
           </p>
           {h.routers.offline?.length > 0 && (
             <Table
               rows={h.routers.offline}
               columns={[
-                { key: "company", header: "ISP", render: (r) => (r.company ? <Link className="text-purple-700" href={`/admin/companies/${r.company._id}`}>{r.company.name}</Link> : "—") },
+                { key: "company", header: "ISP", render: (r) => (r.company ? <Link className="text-primary-700" href={`/admin/companies/${r.company._id}`}>{r.company.name}</Link> : "—") },
                 { key: "name", header: "Router", render: (r) => `${r.name} (${r.host})` },
                 { key: "lastCheckedAt", header: "Checked", render: (r) => ago(r.lastCheckedAt) },
                 { key: "lastError", header: "Error", className: "max-w-xs truncate" },
@@ -119,14 +119,14 @@ export default function SystemHealthPage() {
           )}
         </Section>
         <Section title="Customer → MikroTik sync" s={h.customerSync}>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-sm text-zinc-600">
             Pending {h.customerSync.pending ?? 0} · failed {h.customerSync.failed ?? 0} (retried every 10 min)
           </p>
           {h.customerSync.topFailing?.length > 0 && (
             <Table
               rows={h.customerSync.topFailing.map((r, i) => ({ ...r, _id: r.company?._id ?? i }))}
               columns={[
-                { key: "company", header: "ISP", render: (r) => (r.company ? <Link className="text-purple-700" href={`/admin/companies/${r.company._id}`}>{r.company.name}</Link> : "—") },
+                { key: "company", header: "ISP", render: (r) => (r.company ? <Link className="text-primary-700" href={`/admin/companies/${r.company._id}`}>{r.company.name}</Link> : "—") },
                 { key: "failed", header: "Failed customers" },
               ]}
             />
@@ -146,7 +146,7 @@ export default function SystemHealthPage() {
         <Section title="Payments" s={h.payments}>
           <InfoList
             items={[
-              { label: "Manual payments to review (platform)", value: h.payments.pendingReviewPlatform ? <Link className="text-purple-700" href="/admin/payments">{h.payments.pendingReviewPlatform}</Link> : 0 },
+              { label: "Manual payments to review (platform)", value: h.payments.pendingReviewPlatform ? <Link className="text-primary-700" href="/admin/payments">{h.payments.pendingReviewPlatform}</Link> : 0 },
               { label: "Manual payments ISPs must review", value: h.payments.pendingReviewIsp },
               { label: "Abandoned checkouts (7 days)", value: h.payments.abandoned7d },
               { label: "Failed (24 h)", value: h.payments.failed24h },
@@ -156,7 +156,7 @@ export default function SystemHealthPage() {
         <Section title="ISP support" s={h.support}>
           <InfoList
             items={[
-              { label: "Waiting for us", value: <Link className="text-purple-700" href="/admin/support">{h.support.open ?? 0}</Link> },
+              { label: "Waiting for us", value: <Link className="text-primary-700" href="/admin/support">{h.support.open ?? 0}</Link> },
               { label: "Urgent", value: h.support.urgent ?? 0 },
             ]}
           />

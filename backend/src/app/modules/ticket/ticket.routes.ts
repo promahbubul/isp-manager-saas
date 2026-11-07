@@ -5,6 +5,8 @@ import sendResponse from "../../utils/sendResponse";
 import { audit } from "../activityLog/activityLog.service";
 import { Actor } from "../customer/customer.service";
 import { requireFeature } from "../subscription/planFeature";
+import AppError from "../../errors/AppError";
+import { savePrivateFile, sendPrivateFile, uploadAttachment } from "../../utils/privateFiles";
 import { User } from "../user/user.model";
 import { assignSchema, commentSchema, createTicketSchema, statusSchema, TicketService, updateTicketSchema } from "./ticket.service";
 
@@ -79,6 +81,25 @@ router.patch(
 
 router.post("/:id/comments", authorize("ticket.view"), validateBody(commentSchema), async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 201, message: "Comment added", data: await TicketService.comment(actor(req), id(req), req.body.text) });
+});
+
+
+/* ── attachments (photos of the ONU light, fiber damage, PDF reports) ── */
+router.post("/:id/attachments", authorize("ticket.view"), uploadAttachment, async (req: Request, res: Response) => {
+  if (!req.file) throw new AppError(400, "Attach the file as 'file'");
+  const t = await TicketService.getById(actor(req), id(req));
+  if ((t.attachments?.length ?? 0) >= 10) throw new AppError(400, "Up to 10 files per complaint");
+  const file = await savePrivateFile("tickets", `${req.user!.company}-${t.id}`, req.file.buffer);
+  t.attachments.push({ file, name: req.file.originalname.slice(0, 100), size: req.file.size, at: new Date() });
+  await t.save();
+  sendResponse(res, { statusCode: 201, message: "File attached", data: t.attachments });
+});
+
+router.get("/:id/attachments/:file", authorize("ticket.view"), async (req: Request, res: Response) => {
+  const t = await TicketService.getById(actor(req), id(req));
+  const a = t.attachments?.find((x) => x.file === String(req.params.file));
+  if (!a) throw new AppError(404, "File not found");
+  sendPrivateFile(res, "tickets", a.file, a.name);
 });
 
 export default router;

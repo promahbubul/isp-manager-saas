@@ -6,7 +6,8 @@ import { PRIORITY_COLOR, SUPPORT_CATEGORIES, SUPPORT_PRIORITIES, SUPPORT_STATUS,
 import { Badge, Button, ErrorBox, Input, Loading, Modal, PageHeader, Pagination, Select, Table, Textarea } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
-import { useApi, useApiMutation } from "@/lib/hooks";
+import { useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const EMPTY = { subject: "", category: "technical", priority: "normal", message: "" };
 
@@ -39,8 +40,8 @@ export default function SupportPage() {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [q, setQ] = useState({ status: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useApi(["support", params], "/support", params);
+  const list = usePaged("support", "/support", { ...q, page: undefined });
+  const { data, isLoading, error } = list;
 
   return (
     <div>
@@ -62,6 +63,7 @@ export default function SupportPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty="No requests yet."
             onRowClick={(t) => router.push(`/dashboard/support/${t._id}`)}
@@ -74,7 +76,7 @@ export default function SupportPage() {
               { key: "lastMessageAt", header: "Last update", render: (t) => formatDateTime(t.lastMessageAt) },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
       {creating && <NewTicket onClose={() => setCreating(false)} />}

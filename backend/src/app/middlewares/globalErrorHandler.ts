@@ -3,10 +3,11 @@ import mongoose from "mongoose";
 import { ZodError } from "zod";
 import config from "../config";
 import AppError from "../errors/AppError";
+import { recordError } from "../modules/system/errorLog.model";
 
 type ErrorDetail = { path: string; message: string };
 
-export const globalErrorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+export const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   let statusCode = 500;
   let message = "Something went wrong";
   let errors: ErrorDetail[] | undefined;
@@ -37,7 +38,10 @@ export const globalErrorHandler: ErrorRequestHandler = (err, _req, res, _next) =
     message = "Malformed JSON body";
   }
 
-  if (statusCode >= 500 && !config.isTest) console.error(err);
+  if (statusCode >= 500) {
+    if (!config.isTest) console.error(err);
+    void recordError(err, { method: req.method, path: req.originalUrl, status: statusCode, company: req.user?.company, user: req.user?.id ?? req.platformUser?.id });
+  }
 
   res.status(statusCode).json({
     success: false,

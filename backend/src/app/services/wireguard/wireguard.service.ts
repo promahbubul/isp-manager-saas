@@ -59,17 +59,17 @@ export async function enableRouterVpn(routerId: string) {
   assertConfigured();
   const router = await MikrotikRouter.findById(routerId).select("+vpn.privateKey");
   if (!router) throw new AppError(404, "Router not found");
-  if (!router.vpn?.publicKey) {
+  if (router.vpn?.type === "sstp" || !router.vpn?.publicKey) {
     const keys = generateKeyPair();
-    router.vpn = { publicKey: keys.publicKey, privateKey: encrypt(keys.privateKey), address: await nextTunnelIp(), createdAt: new Date() };
+    router.vpn = { type: "wireguard", publicKey: keys.publicKey, privateKey: encrypt(keys.privateKey), address: await nextTunnelIp(), createdAt: new Date() };
   }
-  await wg(["set", config.wireguard.iface, "peer", router.vpn.publicKey, "allowed-ips", `${router.vpn.address}/32`]);
+  await wg(["set", config.wireguard.iface, "peer", router.vpn.publicKey!, "allowed-ips", `${router.vpn.address}/32`]);
   router.connectionMode = "vpn";
   router.host = router.vpn.address;
   router.port = 8728;
   router.useSSL = false;
   await router.save();
-  return { router, script: routerScript({ privateKey: decrypt(router.vpn.privateKey), address: router.vpn.address }) };
+  return { router, script: routerScript({ privateKey: decrypt(router.vpn.privateKey!), address: router.vpn.address }) };
 }
 
 /** Back to a public IP: drop the peer. */
@@ -91,6 +91,6 @@ export async function disableRouterVpn(routerId: string, host: string) {
 export async function syncAllPeers() {
   if (!config.wireguard.enabled || !config.wireguard.apply) return 0;
   const routers = await MikrotikRouter.find({ connectionMode: "vpn", "vpn.publicKey": { $exists: true } }).select("vpn");
-  for (const r of routers) await wg(["set", config.wireguard.iface, "peer", r.vpn!.publicKey, "allowed-ips", `${r.vpn!.address}/32`]).catch((e) => console.error("[wg] peer", r.id, e.message));
+  for (const r of routers) await wg(["set", config.wireguard.iface, "peer", r.vpn!.publicKey!, "allowed-ips", `${r.vpn!.address}/32`]).catch((e) => console.error("[wg] peer", r.id, e.message));
   return routers.length;
 }

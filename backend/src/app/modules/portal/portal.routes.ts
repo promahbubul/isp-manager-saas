@@ -9,6 +9,8 @@ import { tenantStorage } from "../../utils/tenantContext";
 import { Company } from "../company/company.model";
 import { hasFeature } from "../subscription/planFeature";
 import { packageRequestSchema } from "./packageRequest";
+import { savePrivateFile, sendPrivateFile, uploadAttachment } from "../../utils/privateFiles";
+import { passwordSchema, pppoeLoginSchema, profileSchema } from "./portal.service";
 import { otpRequestSchema, otpVerifySchema, portalCommentSchema, portalTicketSchema, PortalService } from "./portal.service";
 
 /** Customer portal session (Bearer token from /portal/:slug/verify). Runs inside the ISP's tenant context. */
@@ -85,6 +87,37 @@ router.post("/tickets/:id/comments", portalAuth, validateBody(portalCommentSchem
   sendResponse(res, { statusCode: 201, message: "Message sent", data: await PortalService.commentTicket(session(req), String(req.params.id), req.body.text) });
 });
 
+router.post("/tickets/:id/attachments", portalAuth, uploadAttachment, async (req: Request, res: Response) => {
+  if (!req.file) throw new AppError(400, "Attach a photo or PDF");
+  const t = await PortalService.getTicket(session(req), String(req.params.id));
+  if (t.status === "closed") throw new AppError(400, "This complaint is closed");
+  if ((t.attachments?.length ?? 0) >= 10) throw new AppError(400, "Up to 10 files per complaint");
+  const file = await savePrivateFile("tickets", `${session(req).company}-${t.id}`, req.file.buffer);
+  t.attachments.push({ file, name: req.file.originalname.slice(0, 100), size: req.file.size, at: new Date(), fromCustomer: true });
+  await t.save();
+  sendResponse(res, { statusCode: 201, message: "Photo added", data: t.attachments });
+});
+
+router.get("/tickets/:id/attachments/:file", portalAuth, async (req: Request, res: Response) => {
+  const t = await PortalService.getTicket(session(req), String(req.params.id));
+  const a = t.attachments?.find((x) => x.file === String(req.params.file));
+  if (!a) throw new AppError(404, "File not found");
+  sendPrivateFile(res, "tickets", a.file, a.name);
+});
+
+router.get("/payments/:id/receipt", portalAuth, async (req: Request, res: Response) => {
+  sendResponse(res, { message: "Receipt", data: await PortalService.receipt(session(req), String(req.params.id)) });
+});
+
+router.patch("/accounts/:id/profile", portalAuth, validateBody(profileSchema), async (req: Request, res: Response) => {
+  sendResponse(res, { message: "Profile saved", data: await PortalService.updateProfile(session(req), String(req.params.id), req.body) });
+});
+
+router.post("/accounts/:id/password", portalAuth, validateBody(passwordSchema), async (req: Request, res: Response) => {
+  const r = await PortalService.changePassword(session(req), String(req.params.id), req.body);
+  sendResponse(res, { message: r.sync.ok ? "Password changed. Put the new password in your WiFi router (PPPoE settings)." : "Password saved, but the network could not be updated right now. The ISP will retry.", data: r });
+});
+
 /* ── public: ISP info and OTP login ── */
 router.get("/isp/:slug", async (req: Request, res: Response) => {
   sendResponse(res, { message: "ISP", data: await PortalService.info(String(req.params.slug)) });
@@ -93,6 +126,10 @@ router.get("/isp/:slug", async (req: Request, res: Response) => {
 router.post("/isp/:slug/otp", otpLimiter, validateBody(otpRequestSchema), async (req: Request, res: Response) => {
   const r = await PortalService.requestOtp(String(req.params.slug), req.body.phone);
   sendResponse(res, { message: r.message, data: { sentTo: r.sentTo } });
+});
+
+router.post("/isp/:slug/login", otpLimiter, validateBody(pppoeLoginSchema), async (req: Request, res: Response) => {
+  sendResponse(res, { message: "Logged in", data: await PortalService.pppoeLogin(String(req.params.slug), req.body.username, req.body.password) });
 });
 
 router.post("/isp/:slug/verify", otpLimiter, validateBody(otpVerifySchema), async (req: Request, res: Response) => {

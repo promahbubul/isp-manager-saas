@@ -23,20 +23,22 @@ function Payments({ slug, account }) {
   if (isLoading) return <Loading />;
   if (error) return <ErrorBox error={error} />;
   const rows = data.data;
-  if (!rows.length) return <p className="text-sm text-slate-500">No payments yet.</p>;
+  if (!rows.length) return <p className="text-sm text-zinc-500">No payments yet.</p>;
   return (
-    <ul className="divide-y divide-slate-100">
+    <ul className="divide-y divide-zinc-100">
       {rows.map((p) => (
         <li key={p._id} className="flex items-center justify-between py-2 text-sm">
           <div>
             <p className="font-medium">{taka(p.amount)}</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-zinc-500">
               {formatDateTime(p.createdAt)} · {p.method}
               {p.trxId ? ` · ${p.trxId}` : ""}
             </p>
           </div>
-          <div className="text-right text-xs text-slate-500">
-            <p>{p.receiptNo}</p>
+          <div className="text-right text-xs text-zinc-500">
+            <Link href={`/portal/${slug}/receipt/${p._id}`} className="text-primary-700 hover:underline">
+              {p.receiptNo}
+            </Link>
             {p.newExpiry && <p>valid to {formatDate(p.newExpiry)}</p>}
           </div>
         </li>
@@ -54,9 +56,9 @@ function LiveUsage({ slug, account }) {
   const l = data?.data;
   if (account.connectionType && account.connectionType !== "pppoe") return null;
   return (
-    <div className="mt-4 border-t border-slate-100 pt-3 text-sm">
+    <div className="mt-4 border-t border-zinc-100 pt-3 text-sm">
       {!on ? (
-        <button type="button" className="cursor-pointer text-purple-700 hover:underline" onClick={() => setOn(true)}>
+        <button type="button" className="cursor-pointer text-primary-700 hover:underline" onClick={() => setOn(true)}>
           Check my connection now
         </button>
       ) : isFetching && !l ? (
@@ -67,7 +69,7 @@ function LiveUsage({ slug, account }) {
           <span>IP {l.ip}</span>
           <span>up {l.uptime}</span>
           {l.downloadBytes != null && <span>↓ {gb(l.downloadBytes)} · ↑ {gb(l.uploadBytes)} this session</span>}
-          <button type="button" className="cursor-pointer text-purple-700 hover:underline" onClick={() => refetch()}>
+          <button type="button" className="cursor-pointer text-primary-700 hover:underline" onClick={() => refetch()}>
             refresh
           </button>
         </div>
@@ -76,7 +78,7 @@ function LiveUsage({ slug, account }) {
           <Badge color="red">offline</Badge> Your router is not connected right now. Restart it; if it still does not connect, report a problem below.
         </p>
       ) : (
-        <p className="text-slate-500">{l?.error ?? "Live status is not available."}</p>
+        <p className="text-zinc-500">{l?.error ?? "Live status is not available."}</p>
       )}
     </div>
   );
@@ -92,7 +94,7 @@ function PackageChange({ slug, account }) {
   if (mine) return <p className="mt-3 text-sm text-amber-700">Package change to {mine.toPackage?.name} requested — the ISP will confirm.</p>;
   if (!open) {
     return (
-      <button type="button" className="mt-3 cursor-pointer text-sm text-purple-700 hover:underline" onClick={() => setOpen(true)}>
+      <button type="button" className="mt-3 cursor-pointer text-sm text-primary-700 hover:underline" onClick={() => setOpen(true)}>
         Change package
       </button>
     );
@@ -111,6 +113,46 @@ function PackageChange({ slug, account }) {
   );
 }
 
+function AccountSettings({ slug, account }) {
+  const [open, setOpen] = useState(false);
+  const [p, setP] = useState({ altPhone: account.altPhone ?? "", email: account.email ?? "" });
+  const [pw, setPw] = useState({ currentPassword: "", newPassword: "" });
+  const save = usePortalMutation(slug, (api) => api.patch(`/accounts/${account._id}/profile`, p), { invalidate: ["me"] });
+  const change = usePortalMutation(slug, (api) => api.post(`/accounts/${account._id}/password`, pw), { onSuccess: () => setPw({ currentPassword: "", newPassword: "" }) });
+  if (!open) {
+    return (
+      <button type="button" className="mt-3 ml-4 cursor-pointer text-sm text-primary-700 hover:underline" onClick={() => setOpen(true)}>
+        My details &amp; password
+      </button>
+    );
+  }
+  return (
+    <div className="mt-4 space-y-4 border-t border-zinc-100 pt-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Input label="Second mobile" value={p.altPhone} onChange={(e) => setP({ ...p, altPhone: e.target.value })} />
+        <Input label="Email" type="email" value={p.email} onChange={(e) => setP({ ...p, email: e.target.value })} />
+      </div>
+      <Button size="sm" loading={save.isPending} onClick={() => save.mutate()}>
+        Save details
+      </Button>
+      <p className="text-xs text-zinc-500">To change the main mobile number, contact the ISP.</p>
+      {account.connectionType === "pppoe" && (
+        <div className="space-y-3">
+          <p className="text-sm font-semibold">Change internet (PPPoE) password</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label="Current password" type="password" value={pw.currentPassword} onChange={(e) => setPw({ ...pw, currentPassword: e.target.value })} />
+            <Input label="New password" type="password" value={pw.newPassword} onChange={(e) => setPw({ ...pw, newPassword: e.target.value })} />
+          </div>
+          <Button size="sm" variant="secondary" disabled={!pw.currentPassword || pw.newPassword.length < 6} loading={change.isPending} onClick={() => change.mutate()}>
+            Change password
+          </Button>
+          <p className="text-xs text-amber-700">After changing, put the new password in your WiFi router&apos;s PPPoE settings or the internet will stop.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Connection({ slug, account, phone, payUrl }) {
   const [showPayments, setShowPayments] = useState(false);
   const st = STATUS[account.status] ?? { label: account.status, color: "slate" };
@@ -121,7 +163,7 @@ function Connection({ slug, account, phone, payUrl }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-lg font-bold">{account.name}</p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-zinc-500">
             {account.customerId}
             {account.pppoe?.username ? ` · ${account.pppoe.username}` : ""}
           </p>
@@ -130,29 +172,29 @@ function Connection({ slug, account, phone, payUrl }) {
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <dt className="text-slate-500">Package</dt>
+          <dt className="text-zinc-500">Package</dt>
           <dd className="font-semibold">{account.package?.name ?? "—"}</dd>
-          {account.package && <dd className="text-xs text-slate-500">{account.package.speedDown} Mbps</dd>}
+          {account.package && <dd className="text-xs text-zinc-500">{account.package.speedDown} Mbps</dd>}
         </div>
         <div>
-          <dt className="text-slate-500">Monthly bill</dt>
+          <dt className="text-zinc-500">Monthly bill</dt>
           <dd className="font-semibold">{taka(monthly)}</dd>
         </div>
         <div>
-          <dt className="text-slate-500">{account.status === "free" ? "Validity" : days < 0 ? "Expired on" : "Valid until"}</dt>
-          <dd className={`font-semibold ${days < 0 ? "text-red-600" : days <= 3 ? "text-amber-600" : ""}`}>{account.status === "free" ? "No expiry" : formatDate(account.expiryDate)}</dd>
-          {account.status !== "free" && days >= 0 && <dd className="text-xs text-slate-500">{days === 0 ? "ends today" : `${days} day(s) left`}</dd>}
+          <dt className="text-zinc-500">{account.status === "free" ? "Validity" : days < 0 ? "Expired on" : "Valid until"}</dt>
+          <dd className={`font-semibold ${days < 0 ? "text-rose-600" : days <= 3 ? "text-amber-600" : ""}`}>{account.status === "free" ? "No expiry" : formatDate(account.expiryDate)}</dd>
+          {account.status !== "free" && days >= 0 && <dd className="text-xs text-zinc-500">{days === 0 ? "ends today" : `${days} day(s) left`}</dd>}
         </div>
         <div>
-          <dt className="text-slate-500">Due</dt>
-          <dd className={`font-semibold ${account.dueAmount > 0 ? "text-red-600" : ""}`}>{taka(account.dueAmount)}</dd>
+          <dt className="text-zinc-500">Due</dt>
+          <dd className={`font-semibold ${account.dueAmount > 0 ? "text-rose-600" : ""}`}>{taka(account.dueAmount)}</dd>
         </div>
       </dl>
       <div className="mt-4 flex flex-wrap gap-2">
         {payUrl && account.status !== "free" && (
           <a
-            href={`/pay/${slug}?c=${encodeURIComponent(account.customerId)}&p=${encodeURIComponent(phone)}`}
-            className="inline-flex items-center rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800"
+            href={`/pay/${slug}?c=${encodeURIComponent(account.customerId)}&p=${encodeURIComponent(account.phone ?? phone ?? "")}`}
+            className="inline-flex items-center rounded-md bg-primary-700 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-800"
           >
             Pay bill
           </a>
@@ -162,12 +204,13 @@ function Connection({ slug, account, phone, payUrl }) {
         </Button>
       </div>
       {showPayments && (
-        <div className="mt-4 border-t border-slate-100 pt-3">
+        <div className="mt-4 border-t border-zinc-100 pt-3">
           <Payments slug={slug} account={account} />
         </div>
       )}
       <LiveUsage slug={slug} account={account} />
       <PackageChange slug={slug} account={account} />
+      <AccountSettings slug={slug} account={account} />
     </Card>
   );
 }
@@ -214,17 +257,17 @@ function Complaints({ slug, accounts }) {
       ) : error ? (
         <ErrorBox error={error} />
       ) : data.data.length === 0 ? (
-        <p className="text-sm text-slate-500">No complaints. If your internet is not working, report it here and the ISP will be notified.</p>
+        <p className="text-sm text-zinc-500">No complaints. If your internet is not working, report it here and the ISP will be notified.</p>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-zinc-100">
           {data.data.map((t) => {
             const [label, color] = TICKET_STATUS[t.status] ?? [t.status, "slate"];
             return (
               <li key={t._id}>
-                <Link href={`/portal/${slug}/tickets/${t._id}`} className="flex items-center justify-between gap-3 py-2 hover:bg-slate-50">
+                <Link href={`/portal/${slug}/tickets/${t._id}`} className="flex items-center justify-between gap-3 py-2 hover:bg-zinc-50">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{t.subject}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-zinc-500">
                       {t.ticketNo} · {formatDateTime(t.createdAt)}
                       {accounts.length > 1 && t.customer ? ` · ${t.customer.name}` : ""}
                     </p>
@@ -281,7 +324,7 @@ export default function PortalAccountPage() {
       }
     >
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">Logged in as {me.phone}</p>
+        <p className="text-sm text-zinc-600">Logged in as {me.phone ?? me.accounts[0]?.pppoe?.username}</p>
         {me.accounts.length === 0 && <ErrorBox>No active connection is registered with this number. Please contact {me.company?.name}.</ErrorBox>}
         {me.accounts.map((a) => (
           <Connection key={a._id} slug={slug} account={a} phone={me.phone} payUrl={me.payUrl} />

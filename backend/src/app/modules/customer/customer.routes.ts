@@ -2,7 +2,8 @@ import { Request, Response, Router } from "express";
 import { auth, authorize, requireWritableTenant } from "../../middlewares/auth";
 import { validateBody } from "../../middlewares/validateRequest";
 import sendResponse from "../../utils/sendResponse";
-import { audit } from "../activityLog/activityLog.service";
+import { Customer } from "./customer.model";
+import { audit, trackChanges } from "../activityLog/activityLog.service";
 import AppError from "../../errors/AppError";
 import { uploadExcel } from "../../middlewares/upload";
 import { sendXlsx } from "../../services/excel/excel.service";
@@ -111,7 +112,7 @@ router.post(
 );
 
 router.get("/:id",authorize("customer.view"), CustomerController.getById);
-router.patch("/:id", authorize("customer.edit"), validateBody(updateCustomerSchema), audit("customer.update", "customer"), CustomerController.update);
+router.patch("/:id", authorize("customer.edit"), validateBody(updateCustomerSchema), trackChanges(Customer), audit("customer.update", "customer"), CustomerController.update);
 router.delete("/:id", authorize("customer.delete"), audit("customer.delete", "customer"), CustomerController.remove);
 router.patch("/:id/enable", authorize("customer.enable_disable"), audit("customer.enable", "customer"), CustomerController.enable);
 router.patch("/:id/disable", authorize("customer.enable_disable"), audit("customer.disable", "customer"), CustomerController.disable);

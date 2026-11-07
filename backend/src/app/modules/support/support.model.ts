@@ -58,7 +58,7 @@ const schema = new Schema<ISupportTicket>(
 );
 
 schema.plugin(tenantPlugin);
-schema.index({ company: 1, lastMessageAt: -1 });
+schema.index({ company: 1, lastMessageAt: -1, _id: -1 });
 schema.index({ status: 1, lastMessageAt: -1 });
 
 export const SupportTicket = model<ISupportTicket>("SupportTicket", schema);

@@ -9,6 +9,8 @@ export interface IPackage {
   speedUp: number;
   bdixSpeed?: number;
   price: number;
+  /** VAT/tax added on top of the bill (BTRC/NBR), % */
+  vatPercent: number;
   validityDays: number;
   router: Types.ObjectId;
   /** PPP profile name on the MikroTik router */
@@ -25,6 +27,7 @@ const packageSchema = new Schema<IPackage>(
     speedUp: { type: Number, required: true, min: 0 },
     bdixSpeed: { type: Number, min: 0 },
     price: { type: Number, required: true, min: 0 },
+    vatPercent: { type: Number, default: 0, min: 0, max: 50 },
     validityDays: { type: Number, required: true, min: 1, default: 30 },
     router: { type: Schema.Types.ObjectId, ref: "Router", required: true },
     mikrotikProfile: { type: String, required: true, trim: true },

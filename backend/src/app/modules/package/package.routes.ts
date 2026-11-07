@@ -1,7 +1,8 @@
 import { Request, Response, Router } from "express";
 import { auth, authorize, requireWritableTenant } from "../../middlewares/auth";
 import { validateBody } from "../../middlewares/validateRequest";
-import { audit } from "../activityLog/activityLog.service";
+import { Package } from "./package.model";
+import { audit, trackChanges } from "../activityLog/activityLog.service";
 import sendResponse from "../../utils/sendResponse";
 import { PackageService } from "./package.service";
 import { createPackageSchema, updatePackageSchema } from "./package.validation";
@@ -29,7 +30,7 @@ router.use(auth(), requireWritableTenant);
 
 router.get("/", PackageController.list); // needed by customer & recharge forms
 router.post("/", authorize("package.manage"), validateBody(createPackageSchema), audit("package.create", "package"), PackageController.create);
-router.patch("/:id", authorize("package.manage"), validateBody(updatePackageSchema), audit("package.update", "package"), PackageController.update);
+router.patch("/:id", authorize("package.manage"), validateBody(updatePackageSchema), trackChanges(Package), audit("package.update", "package"), PackageController.update);
 router.delete("/:id", authorize("package.manage"), audit("package.delete", "package"), PackageController.remove);
 
 export default router;

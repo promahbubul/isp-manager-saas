@@ -23,6 +23,8 @@ pnpm build
 echo "▶ Seeding plans / super admin (idempotent)"
 cd "$ROOT/backend"
 node dist/scripts/seed.js
+# indexes are not built on boot in production (autoIndex off), sync them here
+node dist/scripts/syncIndexes.js
 
 echo "▶ Reloading processes"
 cd "$ROOT"

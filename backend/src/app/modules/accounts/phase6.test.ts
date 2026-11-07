@@ -55,6 +55,10 @@ describe("resellers", () => {
     expect(rc.body.data.customer.reseller).toBe(rid);
     const listed = await api().get("/api/v1/customers").set(ra);
     expect(listed.body.data.map((c: { name: string }) => c.name)).toEqual(["Jamal"]);
+    // regression: the reseller dashboard used to count 0 (string id in aggregate)
+    const dash = await api().get("/api/v1/dashboard").set(ra);
+    expect(dash.body.data.customers.total).toBe(1);
+    expect(dash.body.data.trend).toHaveLength(14);
     expect((await api().get(`/api/v1/customers/${own.body.data.customer._id}`).set(ra)).status).toBe(404);
 
     // no balance yet

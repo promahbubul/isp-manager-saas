@@ -63,8 +63,8 @@ function StaffForm({ staff, zones, onDone }) {
       <Select label="Role" required options={roles} error={e.role?.message} {...register("role")} className="sm:col-span-2" />
       {(role === "collector" || role === "technician") && (
         <div className="sm:col-span-2">
-          <p className="mb-1 text-sm font-semibold text-slate-700">Zones</p>
-          <p className="mb-2 text-xs text-slate-500">No zone selected = can see all customers.</p>
+          <p className="mb-1 text-sm font-semibold text-zinc-700">Zones</p>
+          <p className="mb-2 text-xs text-zinc-500">No zone selected = can see all customers.</p>
           <div className="grid grid-cols-2 gap-2">
             {zones.map((z) => (
               <Checkbox key={z._id} id={`zone-${z._id}`} label={z.name} value={z._id} {...register("zones")} />

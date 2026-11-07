@@ -22,7 +22,8 @@ export function portalApi(slug) {
     // Expired or revoked: drop the token and go back to the login screen.
     if (error.response?.status === 401 && typeof window !== "undefined") {
       setPortalToken(slug, null);
-      window.location.href = `/portal/${slug}`;
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- outside React: no router here
+      window.location.assign(`/portal/${slug}`);
     }
     return Promise.reject(error);
   });

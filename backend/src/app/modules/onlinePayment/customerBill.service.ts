@@ -56,8 +56,10 @@ async function findPayingCustomer(companyId: string, account: string, phone: str
   return customer;
 }
 
-function billFor(customer: CustomerDoc, months: number) {
+async function billFor(customer: CustomerDoc, months: number) {
+  const pkg = await Package.findById(customer.package).select("vatPercent");
   return calculateRecharge({
+    vatPercent: customer.billingType === "postpaid" ? 0 : (pkg?.vatPercent ?? 0),
     months,
     monthlyFee: customer.monthlyFee,
     customerDiscount: customer.discount,
@@ -90,14 +92,14 @@ async function lookup(slug: string, input: z.infer<typeof lookupSchema>) {
     monthlyBill: Math.max(0, c.monthlyFee - c.discount),
     dueAmount: c.dueAmount,
     balance: c.balance,
-    payableOneMonth: billFor(c, 1).amount,
+    payableOneMonth: (await billFor(c, 1)).amount,
   };
 }
 
 async function payBill(slug: string, input: z.infer<typeof payBillSchema>) {
   const company = await companyBySlug(slug);
   const customer = await findPayingCustomer(company.id, input.account, input.phone);
-  const { amount } = billFor(customer, input.months);
+  const { amount } = await billFor(customer, input.months);
   const { attempt, redirectUrl } = await startPayment({
     scope: "customer_bill",
     company: company._id,

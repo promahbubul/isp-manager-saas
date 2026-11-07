@@ -43,7 +43,7 @@ export default function CreateCustomerPage() {
         {created && (
           <div className="space-y-2">
             <p>Give these PPPoE credentials to the customer:</p>
-            <div className="rounded-md bg-slate-100 p-4 font-mono">
+            <div className="rounded-md bg-zinc-100 p-4 font-mono">
               <p>Username: {created.customer.pppoe.username}</p>
               <p>Password: {created.generatedPassword}</p>
             </div>

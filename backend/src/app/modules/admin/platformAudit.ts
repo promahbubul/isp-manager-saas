@@ -24,8 +24,8 @@ const schema = new Schema<IPlatformAuditLog>(
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );
-schema.index({ createdAt: -1 });
-schema.index({ company: 1, createdAt: -1 });
+schema.index({ createdAt: -1, _id: -1 });
+schema.index({ company: 1, createdAt: -1, _id: -1 });
 
 export const PlatformAuditLog = model<IPlatformAuditLog>("PlatformAuditLog", schema);
 

@@ -15,6 +15,8 @@ export const createRouterSchema = z.object({
   username: z.string().trim().min(1).max(100),
   password: z.string().min(1).max(200),
   connectionMode: z.enum(["public", "vpn"]).default("public"),
+  authMode: z.enum(["secret", "radius"]).default("secret"),
+  radius: z.object({ nasIp: z.string().trim().max(45).optional(), expiredPool: z.string().trim().max(60).optional() }).optional(),
 });
 
 export const updateRouterSchema = z
@@ -27,6 +29,8 @@ export const updateRouterSchema = z
     /** omit to keep the current password */
     password: z.string().min(1).max(200),
     connectionMode: z.enum(["public", "vpn"]),
+    authMode: z.enum(["secret", "radius"]),
+    radius: z.object({ nasIp: z.string().trim().max(45).optional(), expiredPool: z.string().trim().max(60).optional() }),
     isActive: z.boolean(),
   })
   .partial()

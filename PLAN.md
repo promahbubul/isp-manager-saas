@@ -1407,7 +1407,7 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Marketing site: landing, pricing (live plans), terms, privacy, refund, contact — ⚠️ আইনি লেখা template, আইনজীবী দিয়ে দেখিয়ে নিতে হবে
 - [x] Tests: মোট ৯৯টি
 - [x] Logo file upload (PNG/JPG/WebP, magic-byte যাচাই, SVG বন্ধ)
-- [ ] Nagad direct API — ⏸ Nagad merchant account + তাদের API document ছাড়া বানানো ঝুঁকিপূর্ণ (RSA sign/encrypt); এখন SSLCommerz-এর মাধ্যমে Nagad চলে
+- [x] ~~Nagad direct API~~ — বাদ (সিদ্ধান্ত): Nagad SSLCommerz-এর মাধ্যমে চলবে
 
 ### Phase 4 — Super Admin (সপ্তাহ ১৩–১৪)
 - [x] Super admin dashboard (MRR/ARR, tenant status, revenue 30 দিন, end customers, recent signups)
@@ -1450,10 +1450,36 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Own SMS gateway option (credit লাগে না; test SMS)
 - [x] Public API + API key (Enterprise; scope, hashed key, revoke, rate limit)
 - [ ] Mobile app (collector + customer) — ⏸ আলাদা React Native project; এখন web + portal মোবাইলে চলে
-- [ ] RADIUS (FreeRADIUS) support — ⏸ আলাদা RADIUS server ও আসল NAS দিয়ে test লাগবে
-- [ ] OLT integration (ONU signal) — ⏸ vendor (BDCOM/VSOL/Huawei) অনুযায়ী আলাদা, আসল OLT ছাড়া বানানো যাবে না
+- [x] RADIUS (FreeRADIUS rlm_rest → API: authorize + accounting → IP log, expired pool, router script, clients file) — ⚠️ আসল FreeRADIUS + MikroTik দিয়ে test বাকি
+- [x] OLT integration (SNMP: Huawei GPON profile, BDCOM — যাচাই বাকি, custom OID; ৩০ মিনিটে ONU signal, customer-এর সাথে মিল) — ⚠️ আসল OLT দিয়ে test বাকি
 - [x] WhatsApp notification (WhatsApp Cloud API, approved template; plan feature `whatsapp`)
 - [x] Analytics (নিয়মভিত্তিক churn risk, collection forecast, renewal rate)
+
+### Redesign ও platform উন্নতি — শেষ
+- [x] নতুন design system (indigo + zinc, token), সব component নতুন, Radix modal (মোবাইলে bottom sheet), responsive shell (মোবাইলে drawer)
+- [x] Table: sticky header, row নম্বর, উচ্চতা = screen − top bar; নতুন pagination (cursor, rows per page, “Showing x–y of z”)
+- [x] Backend: cursor pagination + `_id` সহ index, NoSQL injection guard, pino log + request id, compression, MongoDB rate-limit store, live/ready health, graceful shutdown, production-এ autoIndex বন্ধ + `db:indexes`
+- [x] Security: Next.js 16.4.5, nodemailer 10, transitive dependency patch — `pnpm audit` দুই দিকেই ০
+- [x] Bug fix: dark-mode OS-এ কালো background, Geist font আসলে load হচ্ছিল না, reseller dashboard-এ ০ customer, RADIUS secret edit-এ মুছে যাওয়া
+
+### Feature list (§4) থেকে বাকি থাকা কাজ — শেষ
+- [x] Marketing: Blog, Help Center (super admin লেখে), FAQ, Demo request form
+- [x] Super admin: Email/SMTP setting + test, Error log (5xx group করা, ৩০ দিন), Refund record (SMS credit কাটে / invoice void)
+- [x] কাস্টমারের ছবি ও NID upload (private, শুধু staff দেখে), fiber length
+- [x] কাস্টমার timeline (payment, অভিযোগ, SMS, কী বদলেছে)
+- [x] Bulk action (zone ধরে disable/enable/package)
+- [x] Package change: এখন / prorated (বাকি দিন নতুন দামে) / পরের রিচার্জে
+- [x] Package-এ VAT/tax %, connection fee / device sale / অন্য charge
+- [x] Ticket attachment (ছবি/PDF, private), SLA (priority অনুযায়ী ঘণ্টা, missed দেখায়)
+- [x] Email: daily summary (রাত ৯টা), subscription reminder
+- [x] Cash book (শুধু নগদ, running balance)
+- [x] Activity log-এ before/after (কোন field কী থেকে কী)
+- [x] SSTP VPN (RouterOS 6), DB ↔ MikroTik sync report + fix
+- [x] Portal: PPPoE username/password login, receipt print/PDF, profile ও PPPoE password বদল, অভিযোগে ছবি
+- [x] PWA (portal ফোনে install, offline page)
+- [x] ~~বাংলা UI~~ — বাদ (সিদ্ধান্ত): পুরো UI English
+- [x] SMS gateway: ISP owner নিজের credential দেয় — PutulHost (WO SMS API), Twilio, Vonage, Plivo, যেকোনো HTTP; balance check, test SMS; সব plan-এ
+- [x] Tests: মোট ১৫০+
 
 ---
 

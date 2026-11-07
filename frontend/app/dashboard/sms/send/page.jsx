@@ -93,13 +93,13 @@ export default function SendSmsPage() {
             rows={5}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="প্রিয় {name}, ..."
+            placeholder="Dear {name}, ..."
           />
           <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
             <SegmentHint text={message} />
             <div className="flex flex-wrap gap-1">
               {(mode === "filter" ? VARS : ["{company}"]).map((v) => (
-                <button key={v} type="button" onClick={() => setMessage((m) => m + v)} className="cursor-pointer rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs hover:bg-purple-100">
+                <button key={v} type="button" onClick={() => setMessage((m) => m + v)} className="cursor-pointer rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs hover:bg-primary-100">
                   {v}
                 </button>
               ))}
@@ -115,7 +115,7 @@ export default function SendSmsPage() {
         <div className="space-y-4">
           <Stat label="SMS balance" value={balance.data?.data?.balance ?? "—"} hint="credits · 1 credit = 1 SMS part" />
           <Card title="Tips">
-            <ul className="list-disc space-y-1 pl-4 text-sm text-slate-600">
+            <ul className="list-disc space-y-1 pl-4 text-sm text-zinc-600">
               <li>English SMS: 160 characters per credit. Bangla: 70 per credit.</li>
               <li>Variables like {"{name}"} are filled for each customer.</li>
               <li>Need more credits? Contact support (online purchase is coming).</li>

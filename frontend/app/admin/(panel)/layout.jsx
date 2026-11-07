@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { Bug, Building2, CreditCard, HeartPulse, KeyRound, Landmark, Layers, LayoutDashboard, LifeBuoy, Megaphone, Newspaper, ScrollText, Settings, ShieldCheck, TicketPercent, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import AppShell from "@/components/shell/AppShell";
+import UserMenu from "@/components/shell/UserMenu";
 import { createContext, useContext, useEffect, useState } from "react";
 import { adminApi, refreshAdminToken, setAdminFailureHandler, setAdminToken } from "@/lib/adminApi";
 
@@ -9,23 +11,39 @@ const AdminContext = createContext(null);
 export const useAdmin = () => useContext(AdminContext);
 
 const NAV = [
-  { href: "/admin", label: "Overview" },
-  { href: "/admin/companies", label: "ISPs" },
-  { href: "/admin/support", label: "Support" },
-  { href: "/admin/payments", label: "Payments" },
-  { href: "/admin/plans", label: "Plans" },
-  { href: "/admin/coupons", label: "Coupons" },
-  { href: "/admin/announcements", label: "Announcements" },
-  { href: "/admin/gateways", label: "Gateways" },
-  { href: "/admin/audit", label: "Audit log" },
-  { href: "/admin/system", label: "System" },
-  { href: "/admin/users", label: "Admins", superOnly: true },
-  { href: "/admin/settings", label: "Settings" },
+  { items: [{ title: "Overview", href: "/admin", icon: LayoutDashboard, exact: true }] },
+  {
+    title: "ISPs",
+    items: [
+      { title: "ISPs", href: "/admin/companies", icon: Building2 },
+      { title: "Support", href: "/admin/support", icon: LifeBuoy },
+      { title: "Payments", href: "/admin/payments", icon: CreditCard },
+    ],
+  },
+  {
+    title: "Catalog",
+    items: [
+      { title: "Plans", href: "/admin/plans", icon: Layers },
+      { title: "Coupons", href: "/admin/coupons", icon: TicketPercent },
+      { title: "Announcements", href: "/admin/announcements", icon: Megaphone },
+      { title: "Website content", href: "/admin/content", icon: Newspaper },
+    ],
+  },
+  {
+    title: "Platform",
+    items: [
+      { title: "Gateways", href: "/admin/gateways", icon: Landmark },
+      { title: "System health", href: "/admin/system", icon: HeartPulse },
+      { title: "Errors", href: "/admin/errors", icon: Bug },
+      { title: "Audit log", href: "/admin/audit", icon: ScrollText },
+      { title: "Admins", href: "/admin/users", icon: Users, superOnly: true },
+      { title: "Settings", href: "/admin/settings", icon: Settings },
+    ],
+  },
 ];
 
 export default function AdminPanelLayout({ children }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [admin, setAdmin] = useState(null);
   const [status, setStatus] = useState("loading");
 
@@ -46,31 +64,44 @@ export default function AdminPanelLayout({ children }) {
     router.replace("/admin/login");
   };
 
-  if (status !== "ready") return <div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>;
+  if (status !== "ready") {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-canvas">
+        <div className="size-8 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" role="status" aria-label="Loading" />
+      </div>
+    );
+  }
+
+  const nav = NAV.map((sec) => ({ ...sec, items: sec.items.filter((n) => !n.superOnly || admin.role === "super_admin") })).filter((sec) => sec.items.length);
+  const brand = (
+    <>
+      <span className="flex size-8 items-center justify-center rounded-lg bg-zinc-900 text-white">
+        <ShieldCheck className="size-4" />
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold text-ink">Platform admin</span>
+        <span className="block truncate text-xs text-muted">ISP Manager</span>
+      </span>
+    </>
+  );
+  const topbar = (
+    <>
+      <div className="min-w-0 flex-1" />
+      <UserMenu
+        name={admin.name}
+        subtitle={admin.role.replace("_", " ")}
+        onLogout={logout}
+        warning={!admin.twoFactor?.enabled && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" title="Two-factor authentication is off">2FA off</span>}
+        links={[{ title: "My account & 2FA", href: "/admin/account", icon: KeyRound }]}
+      />
+    </>
+  );
 
   return (
     <AdminContext.Provider value={admin}>
-      <div className="min-h-screen bg-slate-50 text-slate-900">
-        <header className="bg-slate-900 text-white">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-6 py-3">
-            <span className="font-extrabold italic text-purple-300">Platform Admin</span>
-            <nav className="flex flex-wrap gap-1">
-              {NAV.filter((n) => !n.superOnly || admin.role === "super_admin").map((n) => (
-                <Link key={n.href} href={n.href} className={`rounded px-3 py-1.5 text-sm ${(n.href === "/admin" ? pathname === n.href : pathname.startsWith(n.href)) ? "bg-white/20" : "hover:bg-white/10"}`}>
-                  {n.label}
-                </Link>
-              ))}
-            </nav>
-            <Link href="/admin/account" className="ml-auto text-sm text-slate-300 hover:text-white">
-              {admin.name} ({admin.role}){!admin.twoFactor?.enabled && <span className="ml-1 text-amber-400" title="Two-factor authentication is off">⚠ 2FA</span>}
-            </Link>
-            <button type="button" onClick={logout} className="cursor-pointer rounded border border-slate-600 px-3 py-1 text-sm hover:bg-white/10">
-              Logout
-            </button>
-          </div>
-        </header>
-        <main className="mx-auto max-w-7xl p-6">{children}</main>
-      </div>
+      <AppShell brand={brand} nav={nav} topbar={topbar}>
+        {children}
+      </AppShell>
     </AdminContext.Provider>
   );
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import AuthCard from "@/components/auth/AuthCard";
 import { ContainerButton, LabelWithInput } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api";
@@ -63,12 +63,12 @@ function LoginForm() {
 
       {companies && (
         <div className="mb-5 flex flex-col gap-1">
-          <label htmlFor="companySlug" className="font-semibold text-slate-700">
-            Company <span className="text-red-500">*</span>
+          <label htmlFor="companySlug" className="font-semibold text-zinc-700">
+            Company <span className="text-rose-500">*</span>
           </label>
           <select
             id="companySlug"
-            className="rounded-md border border-slate-300 px-4 py-2.5 text-slate-900"
+            className="rounded-md border border-zinc-300 px-4 py-2.5 text-zinc-900"
             {...register("companySlug")}
           >
             {companies.map((c) => (
@@ -82,7 +82,7 @@ function LoginForm() {
 
       <ContainerButton title="Login" loading={isSubmitting} />
       <p className="mt-3 text-center text-sm">
-        <Link href="/forgot-password" className="text-purple-700 hover:underline">
+        <Link href="/forgot-password" className="text-primary-700 hover:underline">
           Forgot password?
         </Link>
       </p>
@@ -98,7 +98,7 @@ export default function LoginPage() {
       footer={
         <>
           New here?{" "}
-          <Link href="/signup" className="font-semibold text-purple-700 hover:underline">
+          <Link href="/signup" className="font-semibold text-primary-700 hover:underline">
             Start your free trial
           </Link>
         </>

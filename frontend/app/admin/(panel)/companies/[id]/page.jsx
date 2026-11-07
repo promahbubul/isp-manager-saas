@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Badge, Button, Card, ErrorBox, InfoList, Input, Loading, Modal, PageHeader, Select, Table } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
@@ -54,7 +54,7 @@ function ActionModal({ action, company, plans, onClose }) {
       )}
       {action === "delete" && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-700">
+          <p className="text-sm text-zinc-700">
             This removes all of <strong>{company.name}</strong>&apos;s customers, payments, routers, staff, tickets and logs. It cannot be undone. Subscription invoices, platform payments and the audit log are kept for accounting. Export the data first if anyone may need it.
           </p>
           <Input label={`Type ${company.slug} to confirm`} value={confirmSlug} onChange={(e) => setConfirmSlug(e.target.value)} />
@@ -65,7 +65,7 @@ function ActionModal({ action, company, plans, onClose }) {
       )}
       {action === "plan" && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">For offline payments or custom contracts. No invoice or gateway charge is created.</p>
+          <p className="text-sm text-zinc-600">For offline payments or custom contracts. No invoice or gateway charge is created.</p>
           <Select label="Plan" value={plan} onChange={(e) => setPlan(e.target.value)} options={plans.map((p) => ({ value: p._id, label: p.name }))} />
           <Select label="Billing" value={interval} onChange={(e) => setInterval_(e.target.value)} options={[{ value: "monthly", label: "Monthly" }, { value: "yearly", label: "Yearly" }]} />
           <Input label="Paid until" type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
@@ -174,7 +174,7 @@ export default function CompanyDetailPage() {
       />
 
       {c.status === "archived" && (
-        <p className="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">
+        <p className="rounded-lg bg-zinc-100 px-4 py-3 text-sm text-zinc-700">
           This ISP is archived: nobody can log in, its payment page is off and background jobs skip it. Restore it, or export the data and delete it permanently.
         </p>
       )}
@@ -207,7 +207,7 @@ export default function CompanyDetailPage() {
           <InfoList
             items={[
               { label: "Owner", value: owner?.name },
-              { label: "Mobile", value: owner?.phone ? <a className="text-purple-700" href={`tel:${owner.phone}`}>{owner.phone}</a> : "—" },
+              { label: "Mobile", value: owner?.phone ? <a className="text-primary-700" href={`tel:${owner.phone}`}>{owner.phone}</a> : "—" },
               { label: "Email", value: owner?.email },
               { label: "Last login", value: formatDateTime(owner?.lastLogin) },
               { label: "Company phone", value: c.phone },

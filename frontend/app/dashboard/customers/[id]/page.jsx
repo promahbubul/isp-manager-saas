@@ -8,18 +8,19 @@ import { Badge, Button, Card, ErrorBox, InfoList, Loading, Modal, PageHeader, St
 import { api } from "@/lib/api";
 import { daysUntil, formatDate, formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
+import { CustomerActions, CustomerDocuments, CustomerTimeline } from "@/components/customer/CustomerExtras";
 import { useAuth } from "@/providers/AuthProvider";
 
 function LiveStatus({ id }) {
   const live = useApi(["customer-live", id], `/customers/${id}/live`, undefined, { retry: false, refetchInterval: 30_000 });
-  if (live.isLoading) return <p className="text-sm text-slate-500">Checking router...</p>;
+  if (live.isLoading) return <p className="text-sm text-zinc-500">Checking router...</p>;
   if (live.error) return <ErrorBox error={live.error} />;
   const d = live.data.data;
   const mismatch = d.secret.exists && d.secret.disabled === d.expectedEnabled;
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <span className={`h-3 w-3 rounded-full ${d.online ? "bg-emerald-500" : "bg-slate-300"}`} />
+        <span className={`h-3 w-3 rounded-full ${d.online ? "bg-emerald-500" : "bg-zinc-300"}`} />
         <span className="font-semibold">{d.online ? "Online" : "Offline"}</span>
       </div>
       {d.session && (
@@ -31,7 +32,7 @@ function LiveStatus({ id }) {
           ]}
         />
       )}
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-zinc-600">
         Router secret:{" "}
         {d.secret.exists ? (
           <>
@@ -87,6 +88,7 @@ export default function CustomerDetailPage() {
                 </Link>
               )}
             </PermissionGate>
+            <CustomerActions customer={c} />
             <PermissionGate perm="customer.edit">
               <Link href={`/dashboard/customers/${id}/edit`}>
                 <Button variant="secondary">Edit</Button>
@@ -97,30 +99,30 @@ export default function CustomerDetailPage() {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-500">Status</p>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+          <p className="text-sm text-zinc-500">Status</p>
           <div className="mt-1 flex items-center gap-2">
             <StatusBadge status={c.status} />
             {c.syncStatus !== "synced" && <Badge color="amber">sync {c.syncStatus}</Badge>}
           </div>
-          {c.syncError && <p className="mt-1 text-xs text-red-600">{c.syncError}</p>}
+          {c.syncError && <p className="mt-1 text-xs text-rose-600">{c.syncError}</p>}
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-500">Expiry</p>
-          <p className={`mt-1 text-lg font-bold ${days < 0 ? "text-red-600" : days <= 3 ? "text-amber-600" : ""}`}>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+          <p className="text-sm text-zinc-500">Expiry</p>
+          <p className={`mt-1 text-lg font-bold ${days < 0 ? "text-rose-600" : days <= 3 ? "text-amber-600" : ""}`}>
             {c.status === "free" ? "Never" : formatDate(c.expiryDate)}
           </p>
-          {c.status !== "free" && <p className="text-xs text-slate-500">{days < 0 ? `${-days} day(s) ago` : `${days} day(s) left`}</p>}
+          {c.status !== "free" && <p className="text-xs text-zinc-500">{days < 0 ? `${-days} day(s) ago` : `${days} day(s) left`}</p>}
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-500">Due</p>
-          <p className={`mt-1 text-lg font-bold ${c.dueAmount ? "text-red-600" : ""}`}>{taka(c.dueAmount)}</p>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+          <p className="text-sm text-zinc-500">Due</p>
+          <p className={`mt-1 text-lg font-bold ${c.dueAmount ? "text-rose-600" : ""}`}>{taka(c.dueAmount)}</p>
           {c.balance > 0 && <p className="text-xs text-emerald-700">Advance {taka(c.balance)}</p>}
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-500">Monthly bill</p>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+          <p className="text-sm text-zinc-500">Monthly bill</p>
           <p className="mt-1 text-lg font-bold">{taka(c.monthlyFee - c.discount)}</p>
-          {c.discount > 0 && <p className="text-xs text-slate-500">after {taka(c.discount)} discount</p>}
+          {c.discount > 0 && <p className="text-xs text-zinc-500">after {taka(c.discount)} discount</p>}
         </div>
       </div>
 
@@ -138,7 +140,20 @@ export default function CustomerDetailPage() {
               { label: "Router", value: c.router?.name },
               { label: "Connection date", value: formatDate(c.connectionDate) },
               { label: "Auto disable", value: c.autoDisable ? "Yes" : "No" },
-              { label: "ONU MAC", value: c.device?.onuMac },
+              { label: "ONU MAC / serial", value: c.device?.onuMac },
+              {
+                label: "ONU signal",
+                value:
+                  c.device?.onuRxAt &&
+                  (c.device.onuRx == null ? (
+                    <Badge color="slate">offline</Badge>
+                  ) : (
+                    <span title={`read ${formatDateTime(c.device.onuRxAt)}`}>
+                      <Badge color={c.device.onuRx >= -24 ? "green" : c.device.onuRx >= -27 ? "blue" : c.device.onuRx >= -30 ? "amber" : "red"}>{`${c.device.onuRx} dBm`}</Badge>
+                    </span>
+                  )),
+              },
+              { label: "Fiber length", value: c.device?.fiberLength ? `${c.device.fiberLength} m` : undefined },
               { label: "Box / Port", value: [c.device?.boxNo, c.device?.port].filter(Boolean).join(" / ") || undefined },
               { label: "Note", value: c.note },
             ]}
@@ -147,7 +162,7 @@ export default function CustomerDetailPage() {
 
         <Card title="Router">
           <LiveStatus id={id} />
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-zinc-200 pt-4">
             <PermissionGate perm="customer.enable_disable">
               {c.status === "disabled" ? (
                 <Button size="sm" variant="success" loading={enable.isPending} onClick={() => enable.mutate()}>
@@ -186,7 +201,7 @@ export default function CustomerDetailPage() {
                 key: "receiptNo",
                 header: "Receipt",
                 render: (p) => (
-                  <Link className="text-purple-700 hover:underline" href={`/dashboard/billing/receipt/${p._id}`}>
+                  <Link className="text-primary-700 hover:underline" href={`/dashboard/billing/receipt/${p._id}`}>
                     {p.receiptNo}
                   </Link>
                 ),
@@ -202,11 +217,16 @@ export default function CustomerDetailPage() {
         </Card>
       </PermissionGate>
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <CustomerTimeline id={id} />
+        <CustomerDocuments customer={c} />
+      </div>
+
       <PermissionGate perm="customer.delete">
         <div className="flex justify-end">
           <Button
             variant="ghost"
-            className="text-red-600"
+            className="text-rose-600"
             onClick={() => confirm(`Mark ${c.name} as left? The PPPoE account will be removed from the router.`) && remove.mutate()}
           >
             Customer left — remove
@@ -216,7 +236,7 @@ export default function CustomerDetailPage() {
 
       <Modal open={Boolean(creds)} onClose={() => setCreds(null)} title="PPPoE credentials" size="sm">
         {creds && (
-          <div className="rounded-md bg-slate-100 p-4 font-mono">
+          <div className="rounded-md bg-zinc-100 p-4 font-mono">
             <p>Username: {creds.username}</p>
             <p>Password: {creds.password}</p>
           </div>

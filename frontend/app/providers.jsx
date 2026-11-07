@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
 
 export default function Providers({ children }) {
@@ -16,7 +16,7 @@ export default function Providers({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>{children}</AuthProvider>
-      <Toaster position="top-right" />
+      <Toaster position="top-right" richColors closeButton duration={4000} />
     </QueryClientProvider>
   );
 }

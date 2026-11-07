@@ -86,5 +86,5 @@ export async function proxy(request) {
 
 export const config = {
   // Everything except Next.js internals and static files (the subdomain rewrite needs "/" too).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw\\.js|offline\\.html|icons/|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
 };

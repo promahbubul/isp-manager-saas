@@ -4,6 +4,8 @@ import { z } from "zod";
 import config from "../../config";
 import AppError from "../../errors/AppError";
 import { signPortalToken } from "../../utils/jwt";
+import { decrypt, encrypt } from "../../utils/encryption";
+import { syncCustomer } from "../customer/customer.sync";
 import { normalizeBdPhone } from "../../utils/phone";
 import { optionalText } from "../../utils/zod";
 import { generateOtp, hashOtp, Otp } from "../auth/otp.model";
@@ -120,9 +122,15 @@ async function verifyOtp(slug: string, phone: string, code: string) {
 
 type Session = { phone: string; company: string };
 
+/**
+ * Sessions from an SMS code cover every connection with that mobile number;
+ * sessions from a PPPoE login ("c:<customer id>") cover only that connection.
+ */
+const who = (s: Session): Record<string, unknown> => (s.phone.startsWith("c:") ? { _id: s.phone.slice(2) } : { phone: s.phone });
+
 function accounts(s: Session) {
-  return Customer.find({ phone: s.phone, ...ACTIVE })
-    .select("customerId name connectionType pppoe.username package monthlyFee discount expiryDate dueAmount balance status address zone")
+  return Customer.find({ ...who(s), ...ACTIVE })
+    .select("customerId name phone altPhone email connectionType pppoe.username package monthlyFee discount expiryDate dueAmount balance status address zone")
     .populate("package", "name speedDown speedUp price validityDays")
     .populate("zone", "name")
     .sort("customerId");
@@ -135,7 +143,7 @@ async function me(s: Session) {
     companyFeatures(s.company),
   ]);
   return {
-    phone: s.phone,
+    phone: s.phone.startsWith("c:") ? null : s.phone,
     company: company && { name: company.name, slug: company.slug, logo: company.logo, phone: company.phone, address: company.address },
     features: { onlinePayment: features.includes("online_payment"), tickets: features.includes("ticket"), whiteLabel: features.includes("white_label") },
     payUrl: company && features.includes("online_payment") ? `${config.appUrl}/pay/${company.slug}` : null,
@@ -146,7 +154,8 @@ async function me(s: Session) {
 /** The connection must belong to this mobile number. */
 async function ownAccount(s: Session, id: string) {
   if (!Types.ObjectId.isValid(id)) throw new AppError(400, "Invalid connection");
-  const c = await Customer.findOne({ _id: id, phone: s.phone, ...ACTIVE }).select("_id name customerId phone");
+  // $and: both conditions on _id must hold (a PPPoE session must not reach other connections)
+  const c = await Customer.findOne({ $and: [who(s), { _id: id }], ...ACTIVE }).select("_id name customerId phone");
   if (!c) throw new AppError(404, "Connection not found");
   return c;
 }
@@ -164,7 +173,7 @@ async function assertTickets(s: Session) {
 }
 
 async function myCustomerIds(s: Session) {
-  return (await Customer.find({ phone: s.phone, ...ACTIVE }).select("_id")).map((c) => c._id);
+  return (await Customer.find({ ...who(s), ...ACTIVE }).select("_id")).map((c) => c._id);
 }
 
 async function listTickets(s: Session) {
@@ -268,4 +277,66 @@ async function live(s: Session, accountId: string) {
   }
 }
 
-export const PortalService = { info, requestOtp, verifyOtp, me, payments, listTickets, createTicket, getTicket, commentTicket, packages, requestPackageChange, pendingRequests, live };
+export const pppoeLoginSchema = z.object({ username: z.string().trim().min(2).max(64), password: z.string().min(1).max(64) });
+
+/** Login with the PPPoE username + password printed on the welcome SMS / router sticker. */
+async function pppoeLogin(slug: string, username: string, password: string) {
+  const { company } = await portalCompany(slug);
+  const c = await Customer.findOne({ company: company._id, "pppoe.username": username, ...ACTIVE }).select("+pppoe.password");
+  const fail = new AppError(400, "Wrong username or password");
+  if (!c?.pppoe?.password) throw fail;
+  const real = Buffer.from(decrypt(c.pppoe.password));
+  const given = Buffer.from(password);
+  if (real.length !== given.length || !crypto.timingSafeEqual(real, given)) throw fail;
+  return { accessToken: signPortalToken(`c:${c.id}`, company.id), expiresInDays: 7 };
+}
+
+/** Printable money receipt for one of the customer's own payments. */
+async function receipt(s: Session, paymentId: string) {
+  if (!Types.ObjectId.isValid(paymentId)) throw new AppError(400, "Invalid receipt");
+  const p = await Payment.findOne({ _id: paymentId, customer: { $in: await myCustomerIds(s) }, status: "success" }).populate("customer", "name customerId phone address pppoe.username");
+  if (!p) throw new AppError(404, "Receipt not found");
+  const company = await Company.findById(s.company).select("name phone email address logo");
+  return { ...p.toJSON(), company };
+}
+
+export const profileSchema = z.object({ altPhone: z.string().trim().max(20).optional(), email: z.email().trim().toLowerCase().optional().or(z.literal("")), address: optionalText(300) });
+export const passwordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(6, "At least 6 characters").max(64).regex(/^[\x21-\x7e]+$/, "No spaces or special characters"),
+});
+
+async function updateProfile(s: Session, accountId: string, input: z.infer<typeof profileSchema>) {
+  const c = await ownAccount(s, accountId);
+  const set: Record<string, unknown> = {};
+  const unset: Record<string, 1> = {};
+  if (input.altPhone !== undefined) {
+    if (input.altPhone === "") unset.altPhone = 1;
+    else {
+      const p = normalizeBdPhone(input.altPhone);
+      if (!p) throw new AppError(400, "Enter a valid mobile number");
+      set.altPhone = p;
+    }
+  }
+  if (input.email !== undefined) {
+    if (input.email) set.email = input.email;
+    else unset.email = 1;
+  }
+  if (input.address !== undefined) set.address = input.address;
+  await Customer.updateOne({ _id: c._id }, { ...(Object.keys(set).length ? { $set: set } : {}), ...(Object.keys(unset).length ? { $unset: unset } : {}) });
+  return Customer.findById(c._id).select("name customerId phone altPhone email address");
+}
+
+/** New PPPoE password: saved and pushed to the router (the customer must update their WiFi router too). */
+async function changePassword(s: Session, accountId: string, input: z.infer<typeof passwordSchema>) {
+  const own = await ownAccount(s, accountId);
+  const c = await Customer.findById(own._id).select("+pppoe.password");
+  if (!c) throw new AppError(404, "Connection not found");
+  if (decrypt(c.pppoe.password) !== input.currentPassword) throw new AppError(400, "Current password is wrong");
+  c.pppoe.password = encrypt(input.newPassword);
+  await c.save();
+  const sync = await syncCustomer(c);
+  return { sync };
+}
+
+export const PortalService = { pppoeLogin, receipt, updateProfile, changePassword, info, requestOtp, verifyOtp, me, payments, listTickets, createTicket, getTicket, commentTicket, packages, requestPackageChange, pendingRequests, live };

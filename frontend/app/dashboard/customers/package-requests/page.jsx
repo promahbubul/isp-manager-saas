@@ -5,14 +5,16 @@ import PermissionGate from "@/components/common/PermissionGate";
 import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
-import { useApi, useApiMutation } from "@/lib/hooks";
+import { useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const COLOR = { pending: "amber", approved: "green", rejected: "red", cancelled: "slate" };
 
 /** Package change requests customers send from the self-care portal. */
 export default function PackageRequestsPage() {
   const [q, setQ] = useState({ status: "pending", page: 1 });
-  const { data, isLoading, error } = useApi(["package-requests", q], "/package-requests", { ...q, limit: 25 });
+  const list = usePaged("package-requests", "/package-requests", { ...q, page: undefined });
+  const { data, isLoading, error } = list;
   const decide = useApiMutation(({ id, approve }) => api.post(`/package-requests/${id}/decide`, { approve }), { invalidate: ["package-requests", "customers"] });
 
   return (
@@ -56,7 +58,7 @@ export default function PackageRequestsPage() {
               },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

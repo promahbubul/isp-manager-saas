@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import AuthCard from "@/components/auth/AuthCard";
 import { ContainerButton, ErrorBox, LabelWithInput } from "@/components/ui";
 import { api, getErrorMessage } from "@/lib/api";
@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
       title="Reset password"
       subtitle={step === "request" ? "We will send a 6-digit code to your registered mobile." : `Enter the code sent to ${sentTo || "your mobile"}.`}
       footer={
-        <Link href="/login" className="font-semibold text-purple-700 hover:underline">
+        <Link href="/login" className="font-semibold text-primary-700 hover:underline">
           Back to login
         </Link>
       }
@@ -77,8 +77,8 @@ export default function ForgotPasswordPage() {
           <LabelWithInput label="New password" type="password" required hint="At least 8 characters with a letter and a number" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" />
           {companies && (
             <div className="mb-5 flex flex-col gap-1">
-              <label className="font-semibold text-slate-700">Company</label>
-              <select className="rounded-md border border-slate-300 px-4 py-2.5" value={companySlug} onChange={(e) => setCompanySlug(e.target.value)}>
+              <label className="font-semibold text-zinc-700">Company</label>
+              <select className="rounded-md border border-zinc-300 px-4 py-2.5" value={companySlug} onChange={(e) => setCompanySlug(e.target.value)}>
                 {companies.map((c) => (
                   <option key={c.slug} value={c.slug}>
                     {c.name}
@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
           )}
           {error && <div className="mb-4"><ErrorBox>{error}</ErrorBox></div>}
           <ContainerButton title="Change password" loading={busy} />
-          <button type="button" className="mt-3 w-full cursor-pointer text-sm text-purple-700 hover:underline" onClick={() => setStep("request")}>
+          <button type="button" className="mt-3 w-full cursor-pointer text-sm text-primary-700 hover:underline" onClick={() => setStep("request")}>
             Didn&apos;t get a code? Send again
           </button>
         </form>

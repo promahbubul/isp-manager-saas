@@ -13,6 +13,8 @@ export interface IPayment {
   amount: number;
   /** what this payment was billed for (months × fee + previous due) */
   billAmount: number;
+  /** VAT/tax included in billAmount */
+  vat?: number;
   discount: number;
   months: number;
   method: PaymentMethod;
@@ -44,6 +46,7 @@ const paymentSchema = new Schema<IPayment>(
     type: { type: String, enum: ["recharge", "connection_fee", "other"], default: "recharge" },
     amount: { type: Number, required: true, min: 0 },
     billAmount: { type: Number, required: true, min: 0 },
+    vat: { type: Number, default: 0 },
     discount: { type: Number, default: 0, min: 0 },
     months: { type: Number, default: 1, min: 0 },
     method: { type: String, enum: PAYMENT_METHODS, default: "cash" },
@@ -66,7 +69,7 @@ const paymentSchema = new Schema<IPayment>(
 
 paymentSchema.plugin(tenantPlugin);
 paymentSchema.index({ company: 1, receiptNo: 1 }, { unique: true });
-paymentSchema.index({ company: 1, createdAt: -1 });
+paymentSchema.index({ company: 1, createdAt: -1, _id: -1 });
 paymentSchema.index({ company: 1, customer: 1, createdAt: -1 });
 paymentSchema.index({ company: 1, receivedBy: 1, createdAt: -1 });
 

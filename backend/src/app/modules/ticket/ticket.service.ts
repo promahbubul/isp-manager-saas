@@ -69,6 +69,10 @@ async function list(actor: Actor, query: Record<string, unknown>) {
   else if (typeof query.assignedTo === "string" && isValidObjectId(query.assignedTo)) filter.assignedTo = query.assignedTo;
   // "active" = open + in_progress
   if (query.status === "active") filter.status = { $in: ["open", "in_progress"] };
+  else if (query.status === "overdue") {
+    filter.status = { $in: ["open", "in_progress"] };
+    filter.dueBy = { $lt: new Date() }; // SLA missed
+  }
   else if (typeof query.status === "string" && (TICKET_STATUSES as readonly string[]).includes(query.status)) {
     filter.status = query.status;
   }
@@ -182,12 +186,13 @@ async function comment(actor: Actor, id: string, text: string) {
 /** Open/in-progress counts for the dashboard badge. */
 async function counts(actor: Actor) {
   const scope = ticketScope(actor);
-  const [open, inProgress, mine] = await Promise.all([
+  const [open, inProgress, mine, overdue] = await Promise.all([
     Ticket.countDocuments({ ...scope, status: "open" }),
     Ticket.countDocuments({ ...scope, status: "in_progress" }),
     Ticket.countDocuments({ assignedTo: actor.id, status: { $in: ["open", "in_progress"] } }),
+    Ticket.countDocuments({ ...scope, status: { $in: ["open", "in_progress"] }, dueBy: { $lt: new Date() } }),
   ]);
-  return { open, inProgress, mine };
+  return { open, inProgress, mine, overdue };
 }
 
 export const TicketService = { list, getById, create, update, assign, setStatus, comment, counts };

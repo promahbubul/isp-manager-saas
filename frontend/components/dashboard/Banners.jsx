@@ -5,7 +5,7 @@ import { useApi } from "@/lib/hooks";
 import { useAuth } from "@/providers/AuthProvider";
 
 const TONE = {
-  info: "bg-blue-50 text-blue-900 border-blue-200",
+  info: "bg-sky-50 text-sky-900 border-sky-200",
   warning: "bg-amber-50 text-amber-900 border-amber-200",
   success: "bg-emerald-50 text-emerald-900 border-emerald-200",
 };
@@ -32,7 +32,7 @@ export function AnnouncementBanners() {
   const items = (data?.data ?? []).filter((a) => !dismissed.includes(a._id));
   if (!items.length) return null;
   return items.map((a) => (
-    <div key={a._id} className={`flex items-start gap-3 border-b px-6 py-2 text-sm ${TONE[a.type] ?? TONE.info}`}>
+    <div key={a._id} className={`flex items-start gap-3 border-b px-4 py-2 text-sm sm:px-6 ${TONE[a.type] ?? TONE.info}`}>
       <div className="flex-1">
         <strong>{a.title}</strong>
         {a.body && <span className="ml-2">{a.body}</span>}
@@ -49,7 +49,7 @@ export function ImpersonationBanner() {
   const { impersonation, company, logout } = useAuth();
   if (!impersonation) return null;
   return (
-    <div className="flex items-center justify-between bg-red-600 px-6 py-2 text-sm font-medium text-white">
+    <div className="flex flex-wrap items-center justify-between gap-2 bg-rose-600 px-4 py-2 text-sm font-medium text-white sm:px-6">
       <span>
         🔐 {impersonation.by} is viewing <strong>{company?.name}</strong> as the owner. Every action is logged.
       </span>

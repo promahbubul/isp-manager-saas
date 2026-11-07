@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { api } from "../../../tests/helpers";
 import { fakeRouter } from "../../../tests/fakeRouter";
 import { createCustomer, DAY, setupIsp } from "../../../tests/isp";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import config from "../../config";
 import { generateKeyPair } from "../../services/wireguard/wireguard.service";
 import { Plan } from "../plan/plan.model";
@@ -87,5 +90,30 @@ describe("WireGuard VPN router mode", () => {
 
     const off = await api().delete(`/api/v1/routers/${isp.routerId}/vpn`).set(isp.auth).send({ host: "203.0.113.10" });
     expect(off.body.data).toMatchObject({ connectionMode: "public", host: "203.0.113.10" });
+  });
+});
+
+describe("SSTP VPN router mode", () => {
+  const saved = { ...config.sstp };
+  afterEach(() => Object.assign(config.sstp, saved));
+
+  it("creates SSTP credentials, a script and the chap-secrets file", async () => {
+    const isp = await setupIsp();
+    expect((await api().post(`/api/v1/routers/${isp.routerId}/vpn`).set(isp.auth).send({ type: "sstp" })).status).toBe(503);
+    const file = path.join(os.tmpdir(), `chap-secrets-${Date.now()}`);
+    Object.assign(config.sstp, { enabled: true, host: "vpn.example.com", secretsFile: file });
+    const r = await api().post(`/api/v1/routers/${isp.routerId}/vpn`).set(isp.auth).send({ type: "sstp" });
+    expect(r.status).toBe(200);
+    expect(r.body.data.router).toMatchObject({ connectionMode: "vpn", host: "10.201.0.2", vpn: { type: "sstp" } });
+    expect(r.body.data.router.vpn.sstpPassword).toBeUndefined();
+    expect(r.body.data.script).toContain("/interface sstp-client add name=isp-manager connect-to=vpn.example.com");
+    // a second ISP enabling SSTP must not drop the first one from the shared file
+    const other = await setupIsp("o2.test");
+    await api().post(`/api/v1/routers/${other.routerId}/vpn`).set(other.auth).send({ type: "sstp" }).expect(200);
+    const secrets = fs.readFileSync(file, "utf8");
+    expect(secrets).toContain("10.201.0.3");
+    expect(secrets).toContain(`${r.body.data.router.vpn.sstpUser}\t*\t`);
+    expect(secrets).toContain("10.201.0.2");
+    fs.rmSync(file);
   });
 });

@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Button, Card, ErrorBox, InfoList, Input, Loading, PageHeader, Select, StatusBadge, Textarea } from "@/components/ui";
 import { api, applyFieldErrors, getErrorMessage } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
@@ -43,23 +43,23 @@ function CustomerSearch({ onPick }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Name, mobile, customer ID or PPPoE username"
-        className="w-full rounded-md border border-slate-300 px-3 py-2"
+        className="w-full rounded-md border border-zinc-300 px-3 py-2"
       />
-      <div className="mt-3 divide-y divide-slate-100">
+      <div className="mt-3 divide-y divide-zinc-100">
         {(results.data?.data ?? []).map((c) => (
           <button
             key={c._id}
             type="button"
             onClick={() => onPick(c._id)}
-            className="flex w-full cursor-pointer items-center justify-between px-2 py-2 text-left hover:bg-purple-50"
+            className="flex w-full cursor-pointer items-center justify-between px-2 py-2 text-left hover:bg-primary-50"
           >
             <span>
-              <strong>{c.name}</strong> <span className="text-slate-500">· {c.customerId} · {c.pppoe.username} · {c.phone}</span>
+              <strong>{c.name}</strong> <span className="text-zinc-500">· {c.customerId} · {c.pppoe.username} · {c.phone}</span>
             </span>
             <StatusBadge status={c.status} />
           </button>
         ))}
-        {debounced.length >= 2 && results.isSuccess && results.data.data.length === 0 && <p className="p-2 text-slate-500">No match.</p>}
+        {debounced.length >= 2 && results.isSuccess && results.data.data.length === 0 && <p className="p-2 text-zinc-500">No match.</p>}
       </div>
     </Card>
   );
@@ -141,13 +141,13 @@ function RechargeForm({ customerId, onClear }) {
           <Textarea label="Note" className="sm:col-span-2" {...register("note")} />
 
           {calc && (
-            <div className="space-y-1 rounded-md bg-slate-50 p-4 text-sm sm:col-span-2">
+            <div className="space-y-1 rounded-md bg-zinc-50 p-4 text-sm sm:col-span-2">
               <Row label="This bill" value={taka(calc.bill)} />
               <Row label="+ Previous due" value={taka(c.dueAmount)} />
               <Row label="− Advance" value={taka(c.balance)} />
               <Row label="Payable" value={taka(calc.payable)} bold />
               <Row label="Received" value={taka(calc.paid)} />
-              {calc.dueAfter > 0 && <Row label="Due after" value={taka(calc.dueAfter)} tone="text-red-600" />}
+              {calc.dueAfter > 0 && <Row label="Due after" value={taka(calc.dueAfter)} tone="text-rose-600" />}
               {calc.advance > 0 && <Row label="Advance after" value={taka(calc.advance)} tone="text-emerald-700" />}
               <Row label="New expiry" value={formatDate(newExpiry)} bold />
             </div>

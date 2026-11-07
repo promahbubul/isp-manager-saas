@@ -7,6 +7,7 @@ import TicketForm, { CATEGORIES } from "@/components/ticket/TicketForm";
 import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, Pagination, Select, Stat, StatusBadge, Table } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import { useApi } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const STATUS = [
   { value: "active", label: "Open + in progress" },
@@ -14,6 +15,7 @@ const STATUS = [
   { value: "in_progress", label: "In progress" },
   { value: "solved", label: "Solved" },
   { value: "closed", label: "Closed" },
+  { value: "overdue", label: "SLA missed" },
   { value: "", label: "All" },
 ];
 const PRIORITY_COLOR = { high: "red", medium: "amber", low: "slate" };
@@ -23,8 +25,8 @@ export default function TicketsPage() {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [q, setQ] = useState({ status: "active", assignedTo: "", search: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useApi(["tickets", params], "/tickets", params);
+  const list = usePaged("tickets", "/tickets", { ...q, page: undefined });
+  const { data, isLoading, error } = list;
   const counts = useApi("ticket-counts", "/tickets/counts");
   const set = (k) => (e) => setQ((s) => ({ ...s, [k]: e.target.value, page: 1 }));
   const c = counts.data?.data;
@@ -39,13 +41,14 @@ export default function TicketsPage() {
           </PermissionGate>
         }
       />
-      <div className="mb-4 grid grid-cols-3 gap-4">
+      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Open" value={c?.open ?? "—"} tone="red" />
         <Stat label="In progress" value={c?.inProgress ?? "—"} tone="amber" />
         <Stat label="Assigned to me" value={c?.mine ?? "—"} />
+        <Stat label="SLA missed" value={c?.overdue ?? "—"} tone="red" />
       </div>
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <input className="rounded-md border border-slate-300 px-3 py-2" placeholder="Search ticket no. or subject" value={q.search} onChange={set("search")} />
+        <input className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100" placeholder="Search ticket no. or subject" value={q.search} onChange={set("search")} />
         <Select options={STATUS} value={q.status} onChange={set("status")} />
         <Select
           options={[
@@ -63,6 +66,7 @@ export default function TicketsPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             onRowClick={(t) => router.push(`/dashboard/tickets/${t._id}`)}
             columns={[
@@ -71,12 +75,12 @@ export default function TicketsPage() {
               { key: "customer", header: "Customer", render: (t) => (t.customer ? `${t.customer.name} (${t.customer.customerId})` : "—") },
               { key: "category", header: "Category", render: (t) => categoryLabel[t.category] ?? t.category },
               { key: "priority", header: "Priority", render: (t) => <Badge color={PRIORITY_COLOR[t.priority]}>{t.priority}</Badge> },
-              { key: "assignedTo", header: "Assigned", render: (t) => t.assignedTo?.name ?? <span className="text-slate-400">—</span> },
+              { key: "assignedTo", header: "Assigned", render: (t) => t.assignedTo?.name ?? <span className="text-zinc-400">—</span> },
               { key: "status", header: "Status", render: (t) => <StatusBadge status={t.status === "solved" || t.status === "closed" ? "success" : t.status === "open" ? "failed" : "pending"} /> },
               { key: "createdAt", header: "Created", render: (t) => formatDateTime(t.createdAt) },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
       <Modal open={creating} onClose={() => setCreating(false)} title="New ticket" size="lg">

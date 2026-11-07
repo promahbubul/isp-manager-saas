@@ -22,7 +22,7 @@ export default function AnalyticsPage() {
           <Stat label="Renewal rate" value={`${f.renewalRate}%`} />
           <Stat label="Customers due" value={f.prepaidCustomers + f.postpaidCustomers} />
         </div>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-zinc-500">
           Prepaid: {f.prepaidCustomers} customers whose validity ends in the next 30 days (or ended in the last 30) — {taka(f.prepaidAmount)} incl. dues. Postpaid: {f.postpaidCustomers} monthly bills —{" "}
           {taka(f.postpaidAmount)}. Renewal rate = share of customers who paid within 14 days of expiry over the last 3 months.
         </p>
@@ -39,7 +39,7 @@ export default function AnalyticsPage() {
           empty="Nobody at risk right now. 🎉"
           columns={[
             { key: "score", header: "Risk", render: (r) => <Badge color={r.score >= 60 ? "red" : r.score >= 40 ? "amber" : "slate"}>{r.score}</Badge> },
-            { key: "name", header: "Customer", render: (r) => <Link className="font-medium text-purple-700 hover:underline" href={`/dashboard/customers/${r.customer._id}`}>{`${r.customer.name} (${r.customer.customerId})`}</Link> },
+            { key: "name", header: "Customer", render: (r) => <Link className="font-medium text-primary-700 hover:underline" href={`/dashboard/customers/${r.customer._id}`}>{`${r.customer.name} (${r.customer.customerId})`}</Link> },
             { key: "phone", header: "Mobile", render: (r) => <a href={`tel:${r.customer.phone}`}>{r.customer.phone}</a> },
             { key: "zone", header: "Zone", render: (r) => r.customer.zone?.name ?? "—" },
             { key: "expiry", header: "Expiry", render: (r) => formatDate(r.customer.expiryDate) },

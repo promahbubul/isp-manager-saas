@@ -43,7 +43,7 @@ const schema = new Schema<ILedgerEntry>(
   { timestamps: true },
 );
 schema.plugin(tenantPlugin);
-schema.index({ company: 1, date: -1 });
+schema.index({ company: 1, date: -1, _id: -1 });
 schema.index({ company: 1, type: 1, category: 1, date: -1 });
 schema.index({ company: 1, source: 1, ref: 1 });
 

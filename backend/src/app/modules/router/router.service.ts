@@ -1,4 +1,5 @@
 import { isValidObjectId } from "mongoose";
+import { writeRadiusClients } from "../../services/radius/radius.service";
 import AppError from "../../errors/AppError";
 import { withRouter } from "../../services/mikrotik/mikrotik.service";
 import { encrypt } from "../../utils/encryption";
@@ -33,11 +34,15 @@ async function create(companyId: string, input: CreateRouterInput) {
 
 async function update(id: string, input: UpdateRouterInput) {
   const router = await findRouterWithSecret(id);
-  const { password, ...rest } = input;
+  const { password, radius, ...rest } = input;
   router.set(rest);
+  // field by field: replacing the whole "radius" object would drop the (unloaded) shared secret
+  if (radius) for (const [k, v] of Object.entries(radius)) router.set(`radius.${k}`, v || undefined);
   if (password) router.password = encrypt(password);
   if (password || rest.host || rest.port || rest.username || rest.useSSL !== undefined) router.status = "unknown";
-  return router.save();
+  const saved = await router.save();
+  if (radius || rest.authMode || rest.host || rest.isActive !== undefined) await writeRadiusClients().catch(() => undefined);
+  return saved;
 }
 
 async function remove(companyId: string, id: string) {

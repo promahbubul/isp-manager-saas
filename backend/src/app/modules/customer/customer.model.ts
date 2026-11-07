@@ -37,7 +37,20 @@ export interface ICustomer {
   status: CustomerStatus;
   autoDisable: boolean;
   connectionDate: Date;
-  device?: { onuMac?: string; boxNo?: string; port?: string };
+  device?: {
+    onuMac?: string;
+    boxNo?: string;
+    port?: string;
+    fiberLength?: number;
+    /** last ONU received optical power from the OLT, dBm (null = offline) */
+    onuRx?: number | null;
+    onuRxAt?: Date;
+    olt?: Types.ObjectId;
+  };
+  /** stored file names (private uploads) */
+  documents?: { photo?: string; nidFront?: string; nidBack?: string };
+  /** package that starts at the next recharge ("next cycle" change) */
+  pendingPackage?: Types.ObjectId | null;
   note?: string;
   syncStatus: "synced" | "pending" | "failed";
   syncError?: string;
@@ -78,7 +91,9 @@ const customerSchema = new Schema<ICustomer>(
     status: { type: String, enum: CUSTOMER_STATUSES, default: "active" },
     autoDisable: { type: Boolean, default: true },
     connectionDate: { type: Date, default: () => new Date() },
-    device: { onuMac: String, boxNo: String, port: String },
+    device: { onuMac: String, boxNo: String, port: String, fiberLength: Number, onuRx: Number, onuRxAt: Date, olt: { type: Schema.Types.ObjectId, ref: "Olt" } },
+    documents: { photo: String, nidFront: String, nidBack: String },
+    pendingPackage: { type: Schema.Types.ObjectId, ref: "Package", default: null },
     note: String,
     syncStatus: { type: String, enum: ["synced", "pending", "failed"], default: "pending" },
     syncError: String,
@@ -109,6 +124,7 @@ customerSchema.index(
 customerSchema.index({ company: 1, phone: 1 });
 customerSchema.index({ company: 1, status: 1, expiryDate: 1 });
 customerSchema.index({ company: 1, zone: 1 });
+customerSchema.index({ company: 1, deletedAt: 1, createdAt: -1, _id: -1 }); // default list order (cursor pagination)
 customerSchema.index({ status: 1, autoDisable: 1, expiryDate: 1 }); // expire job (cross-tenant)
 
 export const Customer = model<ICustomer>("Customer", customerSchema);

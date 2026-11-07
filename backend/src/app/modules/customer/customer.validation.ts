@@ -47,7 +47,7 @@ const base = {
   connectionDate: date.optional(),
   dueAmount: money.default(0),
   device: z
-    .object({ onuMac: optionalText(30), boxNo: optionalText(30), port: optionalText(30) })
+    .object({ onuMac: optionalText(30), boxNo: optionalText(30), port: optionalText(30), fiberLength: z.coerce.number().min(0).max(100_000).optional() })
     .optional(),
   note: optionalText(1000),
 };

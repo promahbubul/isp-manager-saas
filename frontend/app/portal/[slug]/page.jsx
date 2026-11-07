@@ -13,7 +13,9 @@ export default function PortalLoginPage() {
   const router = useRouter();
   const [isp, setIsp] = useState(null);
   const [ispError, setIspError] = useState(null);
-  const [step, setStep] = useState("phone");
+  const [step, setStep] = useState("phone"); // phone | code | pppoe
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [sentTo, setSentTo] = useState("");
@@ -52,6 +54,15 @@ export default function PortalLoginPage() {
     });
   };
 
+  const pppoeLogin = (e) => {
+    e.preventDefault();
+    run(async () => {
+      const r = await portalApi(slug).post(`/isp/${slug}/login`, { username, password });
+      setPortalToken(slug, r.data.data.accessToken);
+      router.replace(`/portal/${slug}/account`);
+    });
+  };
+
   const verify = (e) => {
     e.preventDefault();
     run(async () => {
@@ -74,18 +85,33 @@ export default function PortalLoginPage() {
     <PortalShell isp={isp}>
       <Card>
         <h2 className="mb-1 text-xl font-bold">My account</h2>
-        <p className="mb-5 text-sm text-slate-600">See your package, validity and payments, pay your bill and report problems.</p>
-        {step === "phone" ? (
+        <p className="mb-5 text-sm text-zinc-600">See your package, validity and payments, pay your bill and report problems.</p>
+        {step === "pppoe" ? (
+          <form onSubmit={pppoeLogin} className="space-y-4">
+            <Input label="PPPoE username" autoComplete="username" required value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Input label="PPPoE password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            {error && <ErrorBox>{error}</ErrorBox>}
+            <Button type="submit" size="lg" className="w-full" loading={busy}>
+              Log in
+            </Button>
+            <button type="button" className="cursor-pointer text-sm text-primary-700 hover:underline" onClick={() => (setStep("phone"), setError(""))}>
+              Use an SMS code instead
+            </button>
+          </form>
+        ) : step === "phone" ? (
           <form onSubmit={sendCode} className="space-y-4">
             <Input label="Mobile number registered with us" placeholder="01XXXXXXXXX" inputMode="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
             {error && <ErrorBox>{error}</ErrorBox>}
             <Button type="submit" size="lg" className="w-full" loading={busy}>
               Send code by SMS
             </Button>
+            <button type="button" className="cursor-pointer text-sm text-primary-700 hover:underline" onClick={() => (setStep("pppoe"), setError(""))}>
+              Log in with PPPoE username &amp; password
+            </button>
           </form>
         ) : (
           <form onSubmit={verify} className="space-y-4">
-            <p className="text-sm text-slate-600">We sent a 6-digit code to {sentTo}. It is valid for 5 minutes.</p>
+            <p className="text-sm text-zinc-600">We sent a 6-digit code to {sentTo}. It is valid for 5 minutes.</p>
             <Input
               label="Code"
               inputMode="numeric"
@@ -100,10 +126,10 @@ export default function PortalLoginPage() {
               Log in
             </Button>
             <div className="flex justify-between text-sm">
-              <button type="button" className="cursor-pointer text-slate-600 hover:underline" onClick={() => setStep("phone")}>
+              <button type="button" className="cursor-pointer text-zinc-600 hover:underline" onClick={() => setStep("phone")}>
                 Change number
               </button>
-              <button type="button" className="cursor-pointer text-purple-700 hover:underline" disabled={busy} onClick={sendCode}>
+              <button type="button" className="cursor-pointer text-primary-700 hover:underline" disabled={busy} onClick={sendCode}>
                 Send again
               </button>
             </div>
@@ -111,9 +137,9 @@ export default function PortalLoginPage() {
         )}
       </Card>
       {isp.onlinePayment && (
-        <p className="mt-4 text-center text-sm text-slate-600">
+        <p className="mt-4 text-center text-sm text-zinc-600">
           Only want to pay?{" "}
-          <a className="font-semibold text-purple-700 hover:underline" href={`/pay/${slug}`}>
+          <a className="font-semibold text-primary-700 hover:underline" href={`/pay/${slug}`}>
             Pay without logging in
           </a>
         </p>

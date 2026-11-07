@@ -9,6 +9,7 @@ export const createPackageSchema = z.object({
   speedUp: speed,
   bdixSpeed: speed.optional(),
   price: money,
+  vatPercent: z.coerce.number().min(0).max(50).optional(),
   validityDays: z.coerce.number().int().min(1).max(366).default(30),
   router: objectId,
   mikrotikProfile: z.string().trim().min(1).max(100),

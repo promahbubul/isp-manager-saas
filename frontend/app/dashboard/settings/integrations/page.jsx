@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { api, getErrorMessage } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
@@ -16,7 +16,7 @@ function FeatureCard({ title, query, children }) {
   if (locked(query.error)) {
     return (
       <Card title={title}>
-        <p className="text-sm text-slate-500">🔒 {query.error.response.data.message}</p>
+        <p className="text-sm text-zinc-500">🔒 {query.error.response.data.message}</p>
       </Card>
     );
   }
@@ -47,53 +47,110 @@ function LogoCard() {
       <div className="flex items-center gap-4">
         {company?.logo ? (
           // eslint-disable-next-line @next/next/no-img-element -- uploaded file on the API host
-          <img src={company.logo} alt="Logo" className="h-16 w-16 rounded border border-slate-200 object-contain" />
+          <img src={company.logo} alt="Logo" className="h-16 w-16 rounded border border-zinc-200 object-contain" />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400">no logo</div>
+          <div className="flex h-16 w-16 items-center justify-center rounded border border-dashed border-zinc-300 text-xs text-zinc-400">no logo</div>
         )}
-        <label className={`cursor-pointer rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 ${busy ? "opacity-60" : ""}`}>
+        <label className={`cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 ${busy ? "opacity-60" : ""}`}>
           {busy ? "Uploading…" : "Upload PNG / JPG / WebP (max 1 MB)"}
           <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={busy} onChange={(e) => upload(e.target.files?.[0])} />
         </label>
       </div>
-      <p className="mt-2 text-xs text-slate-500">Shown on receipts, the customer portal and the payment page.</p>
+      <p className="mt-2 text-xs text-zinc-500">Shown on receipts, the customer portal and the payment page.</p>
     </Card>
   );
 }
 
+/** Labels and help for each SMS provider's fields (the server decides which fields exist). */
+const SMS_PROVIDERS = {
+  putulhost: { label: "PutulHost (WO SMS)", help: "Bangladesh. Get the username and API key from your PutulHost SMS panel, and whitelist this server's IP there, otherwise sending fails with “IP Black List.”" },
+  twilio: { label: "Twilio", help: "International. Account SID and Auth Token from the Twilio console; From = your Twilio number or alphanumeric sender." },
+  vonage: { label: "Vonage (Nexmo)", help: "International. API key and secret from the Vonage dashboard; From = sender name or number." },
+  plivo: { label: "Plivo", help: "International. Auth ID and Auth Token from the Plivo console; From = your Plivo number or sender ID." },
+  http: { label: "Other (any HTTP API)", help: "Any gateway with a GET/POST URL, e.g. BulkSMSBD, Alpha SMS, Greenweb. Use {to} {message} {apiKey} {senderId} in the URL." },
+};
+const FIELD_LABELS = {
+  userName: "Username",
+  apiKey: "API key",
+  senderName: "Sender ID (masking)",
+  transactionType: "Message type",
+  accountSid: "Account SID",
+  authToken: "Auth token",
+  from: "From (sender)",
+  apiSecret: "API secret",
+  authId: "Auth ID",
+  httpUrl: "Gateway URL",
+  httpMethod: "Method",
+  successPattern: "Success pattern (regex on the response)",
+  senderId: "Sender ID",
+};
+
 function SmsGatewayCard() {
   const q = useApi("own-sms", "/settings/sms-gateway", undefined, { retry: false });
+  const specs = useApi("sms-providers", "/settings/sms-gateway/providers");
   const [f, setF] = useState(null);
   const [to, setTo] = useState("");
   const save = useApiMutation((b) => api.put("/settings/sms-gateway", b), { invalidate: ["own-sms"] });
   const test = useApiMutation(() => api.post("/settings/sms-gateway/test", { to }), { invalidate: ["own-sms"] });
+  const balance = useApiMutation(() => api.get("/settings/sms-gateway/balance"), { successToast: false, onSuccess: (r) => toast(r.data.balance ? `Balance: ${r.data.balance}` : "This provider does not report a balance") });
   const cur = q.data?.data;
-  const v = f ?? { enabled: cur?.enabled ?? false, httpUrl: cur?.httpUrl ?? "", httpMethod: cur?.httpMethod ?? "GET", successPattern: cur?.successPattern ?? ".", senderId: cur?.senderId ?? "", apiKey: "" };
-  const set = (k) => (e) => setF({ ...v, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
+  const v = f ?? { enabled: cur?.enabled ?? false, provider: cur?.provider ?? "putulhost", fields: { ...(cur?.options ?? {}) } };
+  const spec = specs.data?.data?.[v.provider];
+  const secrets = new Set(spec?.credentials ?? []);
+  const saved = new Set(cur?.provider === v.provider ? (cur?.savedSecrets ?? []) : []);
+  const setField = (k) => (e) => setF({ ...v, fields: { ...v.fields, [k]: e.target.value } });
+
+  const input = (k) => {
+    if (k === "transactionType") {
+      return <Select key={k} label={FIELD_LABELS[k]} value={v.fields[k] ?? "T"} onChange={setField(k)} options={[{ value: "T", label: "Transactional (bills, OTP)" }, { value: "P", label: "Promotional (offers)" }]} />;
+    }
+    if (k === "httpMethod") {
+      return <Select key={k} label={FIELD_LABELS[k]} value={v.fields[k] ?? "GET"} onChange={setField(k)} options={[{ value: "GET", label: "GET" }, { value: "POST", label: "POST (form)" }]} />;
+    }
+    return (
+      <Input
+        key={k}
+        className={k === "httpUrl" ? "sm:col-span-2" : ""}
+        label={`${FIELD_LABELS[k] ?? k}${spec?.required.includes(k) ? " *" : ""}`}
+        type={secrets.has(k) ? "password" : "text"}
+        placeholder={secrets.has(k) && saved.has(k) ? "•••• saved (leave empty to keep)" : k === "httpUrl" ? "https://bulksmsbd.net/api/smsapi?api_key={apiKey}&type=text&number={to}&senderid={senderId}&message={message}" : ""}
+        value={v.fields[k] ?? ""}
+        onChange={setField(k)}
+      />
+    );
+  };
+
   return (
-    <FeatureCard title="Own SMS gateway" query={q}>
-      <p className="mb-4 text-sm text-slate-600">Use your own BulkSMSBD / Alpha SMS / Greenweb account. SMS then go through it and no SMS credits are used.</p>
-      <div className="grid gap-4">
-        <Input label="Gateway URL" placeholder="https://bulksmsbd.net/api/smsapi?api_key={apiKey}&type=text&number={to}&senderid={senderId}&message={message}" value={v.httpUrl} onChange={set("httpUrl")} hint="Placeholders: {to} {message} {apiKey} {senderId}" />
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Select label="Method" value={v.httpMethod} onChange={set("httpMethod")} options={[{ value: "GET", label: "GET" }, { value: "POST", label: "POST (form)" }]} />
-          <Input label="API key" type="password" placeholder={cur?.hasApiKey ? "•••• saved" : ""} value={v.apiKey} onChange={set("apiKey")} />
-          <Input label="Sender ID" value={v.senderId} onChange={set("senderId")} />
+    <FeatureCard title="SMS gateway" query={q}>
+      <p className="mb-4 text-sm text-zinc-600">Connect your own SMS account. All your SMS (automatic, bulk and login codes) then go through it and no platform SMS credits are used.</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Select
+          label="Provider"
+          className="sm:col-span-2"
+          value={v.provider}
+          onChange={(e) => setF({ ...v, provider: e.target.value, fields: e.target.value === cur?.provider ? { ...(cur?.options ?? {}) } : {} })}
+          options={Object.entries(SMS_PROVIDERS).map(([value, p]) => ({ value, label: p.label }))}
+        />
+        <p className="text-xs text-zinc-500 sm:col-span-2">{SMS_PROVIDERS[v.provider]?.help}</p>
+        {spec ? [...spec.options, ...spec.credentials].map(input) : <Loading />}
+        <div className="sm:col-span-2">
+          <Checkbox label="Send all my SMS through this gateway" checked={v.enabled} onChange={(e) => setF({ ...v, enabled: e.target.checked })} />
         </div>
-        <Input label="Success pattern (regex on the response)" value={v.successPattern} onChange={set("successPattern")} hint={'e.g. "response_code":\\s*202 for BulkSMSBD'} />
-        <Checkbox label="Send all my SMS through this gateway" checked={v.enabled} onChange={set("enabled")} />
       </div>
       <div className="mt-4 flex flex-wrap items-end gap-2">
-        <Button loading={save.isPending} onClick={() => save.mutate({ ...v, apiKey: v.apiKey || undefined, senderId: v.senderId || undefined })}>
+        <Button loading={save.isPending} onClick={() => save.mutate(v)}>
           Save
         </Button>
         {cur && (
           <>
             <Input label="Test to" placeholder="01XXXXXXXXX" value={to} onChange={(e) => setTo(e.target.value)} />
-            <Button variant="secondary" loading={test.isPending} onClick={() => test.mutate()}>
+            <Button variant="secondary" loading={test.isPending} disabled={!to} onClick={() => test.mutate()}>
               Send test
             </Button>
-            {cur.lastTestAt && <Badge color={cur.lastTestOk ? "green" : "red"}>{`last test ${cur.lastTestOk ? "ok" : "failed"} · ${formatDateTime(cur.lastTestAt)}`}</Badge>}
+            <Button variant="secondary" loading={balance.isPending} onClick={() => balance.mutate()}>
+              Check balance
+            </Button>
+            {cur.lastTestAt && <Badge color={cur.lastTestOk ? "green" : "red"}>{`last test ${cur.lastTestOk ? "ok" : `failed: ${cur.lastTestError ?? ""}`} · ${formatDateTime(cur.lastTestAt)}`}</Badge>}
           </>
         )}
       </div>
@@ -134,7 +191,7 @@ function WhatsAppCard() {
     });
   return (
     <FeatureCard title="WhatsApp notifications" query={q}>
-      <p className="mb-4 text-sm text-slate-600">
+      <p className="mb-4 text-sm text-zinc-600">
         Uses the official WhatsApp Cloud API. Create message templates in Meta WhatsApp Manager, wait for approval, then enter their names here. Variables fill {"{{1}}, {{2}}"}… in the order you list them.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -146,9 +203,9 @@ function WhatsAppCard() {
         rows={WA_EVENTS.map(([e, label]) => ({ e, label }))}
         columns={[
           { key: "label", header: "Event" },
-          { key: "t", header: "Template name", render: (r) => <input className="w-full rounded border border-slate-300 px-2 py-1 text-sm" value={v.events[r.e].template} onChange={setEv(r.e, "template")} placeholder="payment_received_v1" /> },
-          { key: "l", header: "Language", render: (r) => <input className="w-16 rounded border border-slate-300 px-2 py-1 text-sm" value={v.events[r.e].language} onChange={setEv(r.e, "language")} /> },
-          { key: "p", header: "Variables in order", render: (r) => <input className="w-full rounded border border-slate-300 px-2 py-1 text-sm" value={v.events[r.e].params} onChange={setEv(r.e, "params")} placeholder="name, amount, expiry" /> },
+          { key: "t", header: "Template name", render: (r) => <input className="w-full rounded border border-zinc-300 px-2 py-1 text-sm" value={v.events[r.e].template} onChange={setEv(r.e, "template")} placeholder="payment_received_v1" /> },
+          { key: "l", header: "Language", render: (r) => <input className="w-16 rounded border border-zinc-300 px-2 py-1 text-sm" value={v.events[r.e].language} onChange={setEv(r.e, "language")} /> },
+          { key: "p", header: "Variables in order", render: (r) => <input className="w-full rounded border border-zinc-300 px-2 py-1 text-sm" value={v.events[r.e].params} onChange={setEv(r.e, "params")} placeholder="name, amount, expiry" /> },
         ]}
       />
       <div className="mt-4 flex items-center gap-4">
@@ -172,7 +229,7 @@ function ApiKeysCard() {
   const revoke = useApiMutation((id) => api.delete(`/settings/api-keys/${id}`), { invalidate: ["api-keys"] });
   return (
     <FeatureCard title="API keys" query={q}>
-      <p className="mb-4 text-sm text-slate-600">
+      <p className="mb-4 text-sm text-zinc-600">
         For your website, accounting software or payment kiosk. Base URL: <code>{process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"}/public-api/v1</code>, header <code>X-API-Key</code>. Endpoints: GET /customers, GET /customers/:id, POST /customers/:id/recharge, GET /payments, GET /packages.
       </p>
       {shown && (
@@ -256,7 +313,7 @@ function CustomDomainCard() {
               Remove
             </Button>
           </div>
-          <p className="text-xs text-slate-500">HTTPS for your domain is set up by the platform after verification.</p>
+          <p className="text-xs text-zinc-500">HTTPS for your domain is set up by the platform after verification.</p>
         </div>
       ) : (
         <div className="flex items-end gap-2">

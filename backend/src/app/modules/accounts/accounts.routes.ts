@@ -37,4 +37,8 @@ router.get("/pnl", authorize("expense.view"), async (req: Request, res: Response
   sendResponse(res, { message: "Profit & loss", data: await AccountsService.profitAndLoss(req.user!.company, req.query as Record<string, unknown>) });
 });
 
+router.get("/cashbook", authorize("expense.view"), async (req: Request, res: Response) => {
+  sendResponse(res, { message: "Cash book", data: await AccountsService.cashBook(req.user!.company, req.query as Record<string, unknown>) });
+});
+
 export default router;

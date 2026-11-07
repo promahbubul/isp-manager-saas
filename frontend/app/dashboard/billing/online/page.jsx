@@ -6,15 +6,16 @@ import PermissionGate from "@/components/common/PermissionGate";
 import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
-import { useApi, useApiMutation } from "@/lib/hooks";
+import { useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const STATUS_COLOR = { success: "green", pending_review: "amber", initiated: "slate", failed: "red", cancelled: "slate" };
 const STATUSES = ["pending_review", "success", "failed", "cancelled", "initiated"].map((s) => ({ value: s, label: s.replace("_", " ") }));
 
 export default function OnlinePaymentsPage() {
   const [q, setQ] = useState({ status: "pending_review", gateway: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useApi(["online-payments", params], "/online-payments", params);
+  const list = usePaged("online-payments", "/online-payments", { ...q, page: undefined });
+  const { data, isLoading, error } = list;
   const invalidate = ["online-payments", "customers", "payments", "dashboard"];
   const approve = useApiMutation((id) => api.post(`/online-payments/${id}/approve`), { invalidate });
   const reject = useApiMutation(({ id, reason }) => api.post(`/online-payments/${id}/reject`, { reason }), { invalidate });
@@ -38,6 +39,7 @@ export default function OnlinePaymentsPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty={q.status === "pending_review" ? "Nothing waiting for verification." : "No payments."}
             columns={[
@@ -68,7 +70,7 @@ export default function OnlinePaymentsPage() {
                 header: "Receipt",
                 render: (a) =>
                   a.payment ? (
-                    <Link className="text-purple-700 hover:underline" href={`/dashboard/billing/receipt/${a.payment._id}`}>
+                    <Link className="text-primary-700 hover:underline" href={`/dashboard/billing/receipt/${a.payment._id}`}>
                       {a.payment.receiptNo}
                     </Link>
                   ) : (
@@ -101,7 +103,7 @@ export default function OnlinePaymentsPage() {
               },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

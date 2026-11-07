@@ -79,7 +79,7 @@ export default function ZonesPage() {
             {
               key: "name",
               header: "Name",
-              render: (z) => (z.parent ? <span className="pl-6 text-slate-600">↳ {z.name}</span> : <strong>{z.name}</strong>),
+              render: (z) => (z.parent ? <span className="pl-6 text-zinc-600">↳ {z.name}</span> : <strong>{z.name}</strong>),
             },
             { key: "parent", header: "Parent", render: (z) => nameOf[z.parent] ?? "—" },
             { key: "customerCount", header: "Customers" },

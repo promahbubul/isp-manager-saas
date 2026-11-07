@@ -46,7 +46,7 @@ function CouponForm({ onDone }) {
         <Checkbox label="Yearly" {...register("yearly")} />
       </div>
       <div className="sm:col-span-2">
-        <p className="mb-1 text-sm font-semibold text-slate-700">Plans (none selected = all plans)</p>
+        <p className="mb-1 text-sm font-semibold text-zinc-700">Plans (none selected = all plans)</p>
         <div className="flex flex-wrap gap-4">
           {(plans.data?.data ?? []).map((p) => (
             <Checkbox key={p._id} id={`plan-${p._id}`} label={p.name} value={p._id} {...register("plans")} />

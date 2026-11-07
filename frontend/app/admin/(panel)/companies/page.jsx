@@ -3,7 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { ErrorBox, Loading, PageHeader, Pagination, Select, StatusBadge, Table } from "@/components/ui";
-import { useAdminApi } from "@/lib/adminHooks";
+
+import { usePaged } from "@/lib/usePaged";
 import { formatDate } from "@/lib/format";
 
 const STATUSES = ["trial", "active", "past_due", "suspended", "archived"].map((s) => ({ value: s, label: s.replace("_", " ") }));
@@ -13,15 +14,15 @@ function CompaniesList() {
   const router = useRouter();
   const params = useSearchParams();
   const [q, setQ] = useState({ search: "", status: params.get("status") ?? "", page: 1 });
-  const query = Object.fromEntries(Object.entries({ ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useAdminApi(["companies", query], "/admin/companies", query);
+  const list = usePaged("companies", "/admin/companies", { ...q, page: undefined }, { client: "admin" });
+  const { data, isLoading, error } = list;
   const set = (k) => (e) => setQ((s) => ({ ...s, [k]: e.target.value, page: 1 }));
 
   return (
     <div>
       <PageHeader title="ISPs" subtitle="Every company on the platform" />
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <input className="rounded-md border border-slate-300 px-3 py-2 sm:col-span-2" placeholder="Search name, subdomain, email, phone" value={q.search} onChange={set("search")} />
+        <input className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 sm:col-span-2" placeholder="Search name, subdomain, email, phone" value={q.search} onChange={set("search")} />
         <Select placeholder="All statuses" options={STATUSES} value={q.status} onChange={set("status")} />
       </div>
       {error && <ErrorBox error={error} />}
@@ -48,7 +49,7 @@ function CompaniesList() {
               { key: "createdAt", header: "Joined", render: (c) => formatDate(c.createdAt) },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

@@ -178,3 +178,30 @@ describe("portal: live usage and package change", () => {
     expect(r.secrets.get("rahim")?.profile).toBe("20M"); // pushed to the router
   });
 });
+
+describe("portal: PPPoE login, receipt, profile and password", () => {
+  it("logs in with PPPoE credentials, limited to that one connection", async () => {
+    const isp = await setupIsp();
+    const home = await createCustomer(isp, { pppoePassword: "home-pass" });
+    await createCustomer(isp, { name: "Rahim Store", pppoeUsername: "rahim-shop", pppoePassword: "shop-pass" }); // same phone
+    await api().post("/api/v1/payments/recharge").set(isp.auth).send({ customer: home.body.data.customer._id, months: 1 }).expect(201);
+
+    expect((await api().post(`${P}/isp/${isp.body.slug}/login`).send({ username: "rahim", password: "wrong" })).status).toBe(400);
+    const login = await api().post(`${P}/isp/${isp.body.slug}/login`).send({ username: "rahim", password: "home-pass" });
+    expect(login.status).toBe(200);
+    const auth = bearer(login.body.data.accessToken);
+    const me = await api().get(`${P}/me`).set(auth);
+    expect(me.body.data.accounts.map((a: { name: string }) => a.name)).toEqual(["Rahim Uddin"]); // not the shop
+
+    const pays = await api().get(`${P}/accounts/${home.body.data.customer._id}/payments`).set(auth);
+    const rc = await api().get(`${P}/payments/${pays.body.data[0]._id}/receipt`).set(auth);
+    expect(rc.body.data).toMatchObject({ amount: 500, company: { name: isp.body.companyName } });
+
+    await api().patch(`${P}/accounts/${home.body.data.customer._id}/profile`).set(auth).send({ email: "rahim@example.com", altPhone: "01811000099" }).expect(200);
+    expect((await api().post(`${P}/accounts/${home.body.data.customer._id}/password`).set(auth).send({ currentPassword: "nope", newPassword: "newpass1" })).status).toBe(400);
+    const pw = await api().post(`${P}/accounts/${home.body.data.customer._id}/password`).set(auth).send({ currentPassword: "home-pass", newPassword: "newpass1" });
+    expect(pw.status).toBe(200);
+    expect(fakeRouter(isp.host).secrets.get("rahim")?.password).toBe("newpass1");
+    expect((await api().post(`${P}/isp/${isp.body.slug}/login`).send({ username: "rahim", password: "newpass1" })).status).toBe(200);
+  });
+});

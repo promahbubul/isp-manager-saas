@@ -42,7 +42,7 @@ const invoiceSchema = new Schema<ISubscriptionInvoice>(
   },
   { timestamps: true },
 );
-invoiceSchema.index({ company: 1, createdAt: -1 });
+invoiceSchema.index({ company: 1, createdAt: -1, _id: -1 });
 
 export const SubscriptionInvoice = model<ISubscriptionInvoice>("SubscriptionInvoice", invoiceSchema);
 
@@ -54,6 +54,8 @@ export interface IPlatformSetting {
   smsCreditPriceUSD: number;
   /** days an ISP keeps write access after the subscription period ends */
   graceDays: number;
+  /** outgoing email for platform notifications (pass is encrypted) */
+  smtp?: { enabled: boolean; host?: string; port?: number; user?: string; pass?: string; from?: string };
 }
 
 const platformSettingSchema = new Schema<IPlatformSetting>(
@@ -62,6 +64,14 @@ const platformSettingSchema = new Schema<IPlatformSetting>(
     smsCreditPriceBDT: { type: Number, default: 0.35, min: 0 },
     smsCreditPriceUSD: { type: Number, default: 0.004, min: 0 },
     graceDays: { type: Number, default: 7, min: 0, max: 60 },
+    smtp: {
+      enabled: { type: Boolean, default: false },
+      host: String,
+      port: Number,
+      user: String,
+      pass: { type: String, select: false },
+      from: String,
+    },
   },
   { timestamps: true },
 );

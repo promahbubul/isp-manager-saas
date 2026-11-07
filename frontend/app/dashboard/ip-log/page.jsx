@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
 import { Badge, Button, ErrorBox, Input, Loading, PageHeader, Pagination, Table } from "@/components/ui";
 import { downloadFile, getErrorMessage } from "@/lib/api";
 import { formatDateTime, toDateInput } from "@/lib/format";
-import { useApi } from "@/lib/hooks";
+
+import { usePaged } from "@/lib/usePaged";
 
 /** BTRC user log: who had which IP when. Recorded from the routers every 5 minutes. */
 export default function IpLogPage() {
-  const [q, setQ] = useState({ from: toDateInput(new Date(Date.now() - 86_400_000)), to: toDateInput(new Date()), q: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 50 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useApi(["ip-log", params], "/ip-logs", params);
+  const [q, setQ] = useState(() => ({ from: toDateInput(new Date(Date.now() - 86_400_000)), to: toDateInput(new Date()), q: "", page: 1 }));
+  const list = usePaged("ip-log", "/ip-logs", { ...q, page: undefined });
+  const { data, isLoading, error } = list;
   const set = (k) => (e) => setQ((s) => ({ ...s, [k]: e.target.value, page: 1 }));
   const [busy, setBusy] = useState(false);
 
@@ -51,6 +52,7 @@ export default function IpLogPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty="No sessions in this period."
             columns={[
@@ -63,7 +65,7 @@ export default function IpLogPage() {
               { key: "endedAt", header: "Logout", render: (s) => (s.endedAt ? formatDateTime(s.endedAt) : <Badge color="green">online</Badge>) },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

@@ -20,6 +20,10 @@ export interface ITicket {
   assignedTo?: Types.ObjectId | null;
   createdBy?: Types.ObjectId;
   comments: { by?: Types.ObjectId; text: string; at: Date; system?: boolean; fromCustomer?: boolean }[];
+  /** photos/PDFs (private files) */
+  attachments: { file: string; name: string; size: number; at: Date; fromCustomer?: boolean }[];
+  /** SLA deadline: created + settings.ticket.slaHours[priority] */
+  dueBy?: Date;
   solvedAt?: Date;
 }
 
@@ -48,13 +52,25 @@ const schema = new Schema<ITicket>(
         _id: false,
       },
     ],
+    attachments: [{ file: String, name: String, size: Number, at: { type: Date, default: () => new Date() }, fromCustomer: Boolean, _id: false }],
+    dueBy: Date,
     solvedAt: Date,
   },
   { timestamps: true },
 );
 
 schema.plugin(tenantPlugin);
+
+// SLA deadline from the company's settings (set once, when the ticket is created).
+schema.pre("validate", async function () {
+  if (!this.isNew || this.dueBy || !this.company) return;
+  const { getSettings } = await import("../setting/setting.model");
+  const s = await getSettings(this.company);
+  const hours = s.ticket?.slaHours?.[this.priority] ?? 24;
+  this.dueBy = new Date(Date.now() + hours * 3_600_000);
+});
 schema.index({ company: 1, ticketNo: 1 }, { unique: true });
+schema.index({ company: 1, createdAt: -1, _id: -1 }); // default list order (cursor pagination)
 schema.index({ company: 1, status: 1, createdAt: -1 });
 schema.index({ company: 1, assignedTo: 1, status: 1 });
 schema.index({ company: 1, customer: 1, createdAt: -1 });

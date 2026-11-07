@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
-import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
+import { useAdminMutation } from "@/lib/adminHooks";
+import { usePaged } from "@/lib/usePaged";
 import { formatDateTime, taka } from "@/lib/format";
 
-const COLOR = { success: "green", pending_review: "amber", initiated: "slate", failed: "red", cancelled: "slate" };
+const COLOR = { success: "green", pending_review: "amber", initiated: "slate", failed: "red", cancelled: "slate", refunded: "blue" };
 
 export default function AdminPaymentsPage() {
   const [q, setQ] = useState({ status: "pending_review", scope: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useAdminApi(["payments", params], "/admin/payments", params);
+  const list = usePaged("payments", "/admin/payments", { ...q, page: undefined }, { client: "admin" });
+  const { data, isLoading, error } = list;
+  const refund = useAdminMutation(({ id, reason }) => adminApi.post(`/admin/payments/${id}/refund`, { reason }), { invalidate: ["payments", "metrics"] });
   const review = useAdminMutation(({ id, approve, reason }) => adminApi.post(`/admin/payments/${id}/review`, { approve, reason }), {
     invalidate: ["payments"],
   });
@@ -23,7 +25,7 @@ export default function AdminPaymentsPage() {
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Select
           placeholder="All statuses"
-          options={["pending_review", "success", "failed", "cancelled", "initiated"].map((s) => ({ value: s, label: s.replace("_", " ") }))}
+          options={["pending_review", "success", "refunded", "failed", "cancelled", "initiated"].map((s) => ({ value: s, label: s.replace("_", " ") }))}
           value={q.status}
           onChange={set("status")}
         />
@@ -43,6 +45,7 @@ export default function AdminPaymentsPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             columns={[
               { key: "createdAt", header: "Time", render: (a) => formatDateTime(a.createdAt) },
@@ -56,7 +59,18 @@ export default function AdminPaymentsPage() {
                 key: "actions",
                 header: "",
                 render: (a) =>
-                  a.status === "pending_review" && (
+                  a.status === "success" ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        const reason = prompt(`Refund ${a.description}? Return the money from the gateway/bKash yourself; this records it and removes SMS credits / voids the invoice.\n\nReason:`);
+                        if (reason) refund.mutate({ id: a._id, reason });
+                      }}
+                    >
+                      Refund
+                    </Button>
+                  ) : a.status === "pending_review" && (
                     <div className="flex gap-2">
                       <Button size="sm" variant="success" onClick={() => confirm(`Approve ${a.description}?`) && review.mutate({ id: a._id, approve: true })}>
                         Approve
@@ -76,7 +90,7 @@ export default function AdminPaymentsPage() {
               },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

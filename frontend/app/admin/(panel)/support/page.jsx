@@ -4,14 +4,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PRIORITY_COLOR, SUPPORT_CATEGORIES, SUPPORT_STATUS, supportCategoryLabel } from "@/components/support/supportMeta";
 import { Badge, ErrorBox, Loading, PageHeader, Pagination, Select, Stat, Table } from "@/components/ui";
-import { useAdminApi } from "@/lib/adminHooks";
+
+import { usePaged } from "@/lib/usePaged";
 import { formatDateTime } from "@/lib/format";
 
 export default function AdminSupportPage() {
   const router = useRouter();
   const [q, setQ] = useState({ status: "open", priority: "", category: "", search: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useAdminApi(["support", params], "/admin/support-tickets", params);
+  const list = usePaged("support", "/admin/support-tickets", { ...q, page: undefined }, { client: "admin" });
+  const { data, isLoading, error } = list;
   const set = (k) => (e) => setQ((s) => ({ ...s, [k]: e.target.value, page: 1 }));
   const counts = data?.data?.counts ?? {};
 
@@ -24,7 +25,7 @@ export default function AdminSupportPage() {
         <Stat label="Closed" value={counts.closed ?? 0} />
       </div>
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
-        <input className="rounded-md border border-slate-300 px-3 py-2" placeholder="Search ref or subject" value={q.search} onChange={set("search")} />
+        <input className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100" placeholder="Search ref or subject" value={q.search} onChange={set("search")} />
         <Select value={q.status} onChange={set("status")} options={[{ value: "", label: "All statuses" }, ...Object.entries(SUPPORT_STATUS).map(([value, s]) => ({ value, label: s.label }))]} />
         <Select value={q.priority} onChange={set("priority")} options={[{ value: "", label: "Any priority" }, { value: "urgent", label: "Urgent" }, { value: "normal", label: "Normal" }, { value: "low", label: "Low" }]} />
         <Select value={q.category} onChange={set("category")} options={[{ value: "", label: "Any category" }, ...SUPPORT_CATEGORIES]} />
@@ -35,6 +36,7 @@ export default function AdminSupportPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data?.tickets ?? []}
             empty="Nothing here."
             onRowClick={(t) => router.push(`/admin/support/${t._id}`)}
@@ -48,7 +50,7 @@ export default function AdminSupportPage() {
               { key: "lastMessageAt", header: "Last message", render: (t) => formatDateTime(t.lastMessageAt) },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

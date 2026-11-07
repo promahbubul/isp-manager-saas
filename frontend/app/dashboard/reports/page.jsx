@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
 import { Button, ErrorBox, Input, Loading, PageHeader, Select, Stat, Table } from "@/components/ui";
 import { downloadFile, getErrorMessage } from "@/lib/api";

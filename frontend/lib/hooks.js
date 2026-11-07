@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { api, getErrorMessage } from "./api";
 
 /** GET helper: useApi(["customers", params], "/customers", params) → { data, meta, ... } */

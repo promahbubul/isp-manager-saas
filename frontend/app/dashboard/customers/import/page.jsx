@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { toDateInput } from "@/lib/format";
@@ -34,10 +34,10 @@ function ExcelImport() {
 
   return (
     <Card title="Import from Excel">
-      <ol className="mb-4 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+      <ol className="mb-4 list-decimal space-y-1 pl-5 text-sm text-zinc-600">
         <li>
           Download the{" "}
-          <button type="button" className="cursor-pointer text-purple-700 hover:underline" onClick={() => downloadFile("/customers/import/template", undefined, "template.xlsx")}>
+          <button type="button" className="cursor-pointer text-primary-700 hover:underline" onClick={() => downloadFile("/customers/import/template", undefined, "template.xlsx")}>
             template
           </button>{" "}
           and fill one customer per row. <code>package</code> and <code>zone</code> must match names in the panel exactly.
@@ -122,7 +122,7 @@ function MikrotikImport() {
 
   return (
     <Card title="Import from MikroTik">
-      <p className="mb-4 text-sm text-slate-600">
+      <p className="mb-4 text-sm text-zinc-600">
         Creates customers for PPP secrets that already exist on a router. The router is not changed. The API user needs the{" "}
         <code>sensitive</code> policy so passwords can be read. Add phone numbers afterwards.
       </p>
@@ -141,7 +141,7 @@ function MikrotikImport() {
       {preview.isSuccess && (
         <>
           {packages.length === 0 && <ErrorBox>Create packages for this router first (matching its PPP profiles).</ErrorBox>}
-          <p className="mb-2 text-sm text-slate-600">
+          <p className="mb-2 text-sm text-zinc-600">
             {secrets.length} new secret(s) · {(preview.data.data.secrets.length ?? 0) - secrets.length} already imported
           </p>
           <Table
@@ -153,7 +153,7 @@ function MikrotikImport() {
                 key: "sel",
                 header: "",
                 render: (s) => (
-                  <input type="checkbox" className="h-4 w-4 accent-purple-600" disabled={!s.hasPassword} checked={isSelected(s) && s.hasPassword} onChange={(e) => setSelected({ ...selected, [s.username]: e.target.checked })} />
+                  <input type="checkbox" className="h-4 w-4 accent-primary-600" disabled={!s.hasPassword} checked={isSelected(s) && s.hasPassword} onChange={(e) => setSelected({ ...selected, [s.username]: e.target.checked })} />
                 ),
               },
               { key: "username", header: "Username" },
@@ -164,7 +164,7 @@ function MikrotikImport() {
                 key: "package",
                 header: "Package",
                 render: (s) => (
-                  <select className="rounded border border-slate-300 px-2 py-1 text-sm" value={pkgOf(s)} onChange={(e) => setPkgFor({ ...pkgFor, [s.username]: e.target.value })}>
+                  <select className="rounded border border-zinc-300 px-2 py-1 text-sm" value={pkgOf(s)} onChange={(e) => setPkgFor({ ...pkgFor, [s.username]: e.target.value })}>
                     <option value="">— choose —</option>
                     {packages.map((p) => (
                       <option key={p._id} value={p._id}>
@@ -174,7 +174,7 @@ function MikrotikImport() {
                   </select>
                 ),
               },
-              { key: "pw", header: "", render: (s) => !s.hasPassword && <span className="text-xs text-red-600">no password</span> },
+              { key: "pw", header: "", render: (s) => !s.hasPassword && <span className="text-xs text-rose-600">no password</span> },
             ]}
           />
           <div className="mt-4">

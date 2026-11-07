@@ -7,6 +7,7 @@ import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Pagination, Stat, T
 import { api } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const CATEGORIES = ["router", "onu", "switch", "fiber_cable", "utp_cable", "connector", "splitter", "tools", "other"].map((c) => ({ value: c, label: c.replace("_", " ") }));
 const UNITS = ["pcs", "meter", "box", "roll", "kg"].map((u) => ({ value: u, label: u }));
@@ -54,12 +55,11 @@ function MoveForm({ item, onClose }) {
 
 export default function InventoryPage() {
   const [tab, setTab] = useState("items");
-  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
   const [moving, setMoving] = useState(null);
   const summary = useApi("inv-summary", "/inventory/summary");
-  const items = useApi(["inventory", page], "/inventory/items", { page, limit: 50 });
-  const moves = useApi(["inv-moves", page], "/inventory/movements", { page, limit: 50 }, { enabled: tab === "moves" });
+  const items = usePaged("inventory", "/inventory/items", {}, { defaultLimit: 50 });
+  const moves = usePaged("inv-moves", "/inventory/movements", {}, { defaultLimit: 50, enabled: tab === "moves" });
   const save = useApiMutation((b) => (editing?._id ? api.patch(`/inventory/items/${editing._id}`, b) : api.post("/inventory/items", b)), { invalidate: ["inventory", "inv-summary"] });
   const s = summary.data?.data;
   const error = summary.error || items.error;
@@ -91,7 +91,7 @@ export default function InventoryPage() {
           ["items", "Items"],
           ["moves", "Stock history"],
         ].map(([k, l]) => (
-          <Button key={k} size="sm" variant={tab === k ? "primary" : "secondary"} onClick={() => (setTab(k), setPage(1))}>
+          <Button key={k} size="sm" variant={tab === k ? "primary" : "secondary"} onClick={() => setTab(k)}>
             {l}
           </Button>
         ))}
@@ -107,7 +107,7 @@ export default function InventoryPage() {
               columns={[
                 { key: "name", header: "Item", render: (i) => <strong>{i.name}</strong> },
                 { key: "category", header: "Category", render: (i) => i.category.replace("_", " ") },
-                { key: "stock", header: "Stock", render: (i) => <span className={i.stock <= i.minStock ? "font-semibold text-red-600" : ""}>{`${i.stock} ${i.unit}`}</span> },
+                { key: "stock", header: "Stock", render: (i) => <span className={i.stock <= i.minStock ? "font-semibold text-rose-600" : ""}>{`${i.stock} ${i.unit}`}</span> },
                 { key: "avgCost", header: "Avg. cost", render: (i) => taka(i.avgCost) },
                 { key: "value", header: "Value", render: (i) => taka(i.stock * i.avgCost) },
                 {
@@ -128,7 +128,7 @@ export default function InventoryPage() {
                 },
               ]}
             />
-            <Pagination meta={items.data?.meta} onPage={setPage} />
+            <Pagination {...items.pager} />
           </>
         )
       ) : (
@@ -151,7 +151,7 @@ export default function InventoryPage() {
                   { key: "stockAfter", header: "Stock after" },
                 ]}
               />
-              <Pagination meta={moves.data?.meta} onPage={setPage} />
+              <Pagination {...moves.pager} />
             </>
           )}
         </Card>

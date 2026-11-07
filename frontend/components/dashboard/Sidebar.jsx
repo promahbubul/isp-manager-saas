@@ -1,32 +1,33 @@
 "use client";
 
-import sidebarModules from "@/app/constant/dashboard/sidebar";
+import { Lock } from "lucide-react";
+import sidebarSections from "@/app/constant/dashboard/sidebar";
 import { useAuth } from "@/providers/AuthProvider";
-import Module from "./Module";
 
-const Sidebar = () => {
-  const { company, can, subscription } = useAuth();
+const UPGRADE = "/dashboard/billing/subscription";
+
+/**
+ * The dashboard nav for this user: hides what their permissions do not allow and
+ * shows plan-locked features with a lock that leads to the upgrade page.
+ */
+export function useDashboardNav() {
+  const { can, subscription } = useAuth();
   const features = subscription?.plan?.features ?? [];
-  // Not in the plan: keep it visible (so ISPs know it exists) but send them to the upgrade page.
-  const lock = (item) =>
-    item.feature && !features.includes(item.feature) ? { ...item, title: `${item.title} 🔒`, path: "/dashboard/billing/subscription" } : item;
-
-  const visible = sidebarModules
-    .filter((m) => !m.perm || can(m.perm))
-    .map((m) => lock({ ...m, subModules: m.subModules?.filter((s) => !s.perm || can(s.perm)).map(lock) }));
-
-  return (
-    <aside className="print:hidden flex h-full w-64 shrink-0 flex-col overflow-y-auto bg-blue-950 text-white">
-      <h1 className="truncate border-b border-slate-600 px-4 py-5 text-center text-2xl font-extrabold italic">
-        {company?.name ?? "ISP Manager"}
-      </h1>
-      <nav className="py-2">
-        {visible.map((module) => (
-          <Module key={module.id} module={module} />
-        ))}
-      </nav>
-    </aside>
-  );
-};
-
-export default Sidebar;
+  const locked = (x) => x.feature && !features.includes(x.feature);
+  const toItem = (x) => ({
+    title: x.title,
+    href: locked(x) ? UPGRADE : x.path,
+    icon: x.icon,
+    exact: x.exact,
+    badge: locked(x) ? <Lock className="ml-auto size-3.5 text-zinc-400" aria-label="Not in your plan" /> : null,
+  });
+  return sidebarSections
+    .map((s) => ({
+      title: s.title,
+      items: s.items
+        .filter((m) => !m.perm || can(m.perm))
+        .map((m) => (m.children ? { ...toItem(m), children: m.children.filter((c) => !c.perm || can(c.perm)).map((c) => ({ ...toItem(c), title: locked(c) ? `${c.title} 🔒` : c.title })) } : toItem(m)))
+        .filter((m) => !m.children || m.children.length),
+    }))
+    .filter((s) => s.items.length);
+}

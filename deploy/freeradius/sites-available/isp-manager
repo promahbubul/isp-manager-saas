@@ -1,0 +1,56 @@
+# /etc/freeradius/3.0/sites-available/isp-manager  — ISP Manager
+# Enable:  ln -s ../sites-available/isp-manager /etc/freeradius/3.0/sites-enabled/isp-manager
+#          rm /etc/freeradius/3.0/sites-enabled/default /etc/freeradius/3.0/sites-enabled/inner-tunnel
+server isp-manager {
+	listen {
+		type = auth
+		ipaddr = *
+		port = 1812
+	}
+	listen {
+		type = acct
+		ipaddr = *
+		port = 1813
+	}
+
+	authorize {
+		preprocess
+		# Ask ISP Manager: returns control:Cleartext-Password + reply:Mikrotik-Rate-Limit,
+		# 401 (expired/disabled) → reject, 404 (unknown user/router) → notfound.
+		rest
+		if (notfound || reject) {
+			reject
+		}
+		chap
+		mschap
+		pap
+	}
+
+	authenticate {
+		Auth-Type PAP {
+			pap
+		}
+		Auth-Type CHAP {
+			chap
+		}
+		Auth-Type MS-CHAP {
+			mschap
+		}
+	}
+
+	preacct {
+		preprocess
+		acct_unique
+	}
+
+	accounting {
+		# Start / Interim-Update / Stop → BTRC IP log in ISP Manager
+		rest
+	}
+
+	post-auth {
+		Post-Auth-Type REJECT {
+			attr_filter.access_reject
+		}
+	}
+}

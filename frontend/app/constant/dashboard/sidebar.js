@@ -1,84 +1,119 @@
-import { FaBoxes, FaCalculator, FaHandshake, FaMoneyBill, FaNetworkWired, FaUserAlt, FaUsersCog, FaUserTie } from "react-icons/fa";
-import { MdCardMembership, MdDashboard, MdHelpOutline, MdHistory, MdInsights, MdPolicy, MdSettings, MdSms, MdSupportAgent } from "react-icons/md";
-import { TbReportAnalytics } from "react-icons/tb";
+import {
+  Activity,
+  BarChart3,
+  Boxes,
+  Calculator,
+  CreditCard,
+  FileText,
+  Handshake,
+  LayoutDashboard,
+  LifeBuoy,
+  MessageSquare,
+  Network,
+  Settings,
+  ShieldCheck,
+  TicketCheck,
+  TrendingUp,
+  UserCog,
+  Users,
+  Wallet,
+} from "lucide-react";
 
 /**
- * `perm` hides the item when the user lacks that permission.
- * `feature` (plan feature) shows it locked, linking to the upgrade page, when the plan lacks it.
- * Later phases (resellers, accounts, inventory...) are listed in PLAN.md §18.
+ * Dashboard navigation, grouped into sections.
+ * `perm` hides an item without that permission; `feature` (plan feature) keeps it visible
+ * but locked, linking to the upgrade page.
  */
-const sidebarModules = [
-  { id: "dashboard", title: "Dashboard", icon: MdDashboard, path: "/dashboard", perm: "dashboard.view" },
+const sidebarSections = [
   {
-    id: "customers",
-    title: "Customers",
-    icon: FaUserAlt,
-    perm: "customer.view",
-    subModules: [
-      { id: "customers-all", title: "All Customers", path: "/dashboard/customers" },
-      { id: "customers-create", title: "Add Customer", path: "/dashboard/customers/create", perm: "customer.create" },
-      { id: "customers-import", title: "Import", path: "/dashboard/customers/import", perm: "customer.import" },
-      { id: "customers-requests", title: "Package Requests", path: "/dashboard/customers/package-requests", feature: "customer_portal" },
+    items: [{ title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", perm: "dashboard.view", exact: true }],
+  },
+  {
+    title: "Customers & billing",
+    items: [
+      {
+        title: "Customers",
+        icon: Users,
+        perm: "customer.view",
+        children: [
+          { title: "All customers", path: "/dashboard/customers", exact: true },
+          { title: "Add customer", path: "/dashboard/customers/create", perm: "customer.create" },
+          { title: "Import", path: "/dashboard/customers/import", perm: "customer.import" },
+          { title: "Package requests", path: "/dashboard/customers/package-requests", feature: "customer_portal" },
+        ],
+      },
+      {
+        title: "Billing",
+        icon: CreditCard,
+        perm: "payment.view",
+        children: [
+          { title: "Recharge", path: "/dashboard/billing/recharge", perm: "payment.recharge" },
+          { title: "Payment history", path: "/dashboard/billing/payments" },
+          { title: "Online payments", path: "/dashboard/billing/online", feature: "online_payment" },
+          { title: "Postpaid invoices", path: "/dashboard/billing/invoices", perm: "invoice.view" },
+          { title: "Cash collection", path: "/dashboard/collections" },
+        ],
+      },
+      { title: "Support tickets", icon: TicketCheck, path: "/dashboard/tickets", perm: "ticket.view", feature: "ticket" },
+      {
+        title: "SMS",
+        icon: MessageSquare,
+        perm: "sms.view",
+        children: [
+          { title: "Send SMS", path: "/dashboard/sms/send", perm: "sms.send" },
+          { title: "SMS history", path: "/dashboard/sms/history" },
+          { title: "Templates", path: "/dashboard/sms/templates" },
+        ],
+      },
+      { title: "Resellers", icon: Handshake, path: "/dashboard/resellers", perm: "reseller.view", feature: "reseller" },
     ],
   },
   {
-    id: "billing",
-    title: "Billing",
-    icon: FaMoneyBill,
-    perm: "payment.view",
-    subModules: [
-      { id: "billing-recharge", title: "Recharge", path: "/dashboard/billing/recharge", perm: "payment.recharge" },
-      { id: "billing-payments", title: "Payment History", path: "/dashboard/billing/payments" },
-      { id: "billing-online", title: "Online Payments", path: "/dashboard/billing/online", feature: "online_payment" },
-      { id: "billing-invoices", title: "Postpaid Invoices", path: "/dashboard/billing/invoices", perm: "invoice.view" },
-      { id: "billing-cash", title: "Cash Collection", path: "/dashboard/collections" },
-    ],
-  },
-  { id: "tickets", title: "Support Tickets", icon: MdSupportAgent, path: "/dashboard/tickets", perm: "ticket.view", feature: "ticket" },
-  {
-    id: "sms",
-    title: "SMS",
-    icon: MdSms,
-    perm: "sms.view",
-    subModules: [
-      { id: "sms-send", title: "Send SMS", path: "/dashboard/sms/send", perm: "sms.send" },
-      { id: "sms-history", title: "SMS History", path: "/dashboard/sms/history" },
-      { id: "sms-templates", title: "Templates", path: "/dashboard/sms/templates" },
-    ],
-  },
-  { id: "resellers", title: "Resellers", icon: FaHandshake, path: "/dashboard/resellers", perm: "reseller.view", feature: "reseller" },
-  { id: "reports", title: "Reports", icon: TbReportAnalytics, path: "/dashboard/reports", perm: "report.view" },
-  { id: "analytics", title: "Analytics", icon: MdInsights, path: "/dashboard/analytics", perm: "report.view" },
-  { id: "accounts", title: "Accounts (P&L)", icon: FaCalculator, path: "/dashboard/accounts", perm: "expense.view" },
-  { id: "employees", title: "Employees & Salary", icon: FaUserTie, path: "/dashboard/employees", perm: "employee.view" },
-  { id: "inventory", title: "Inventory", icon: FaBoxes, path: "/dashboard/inventory", perm: "inventory.view", feature: "inventory" },
-  { id: "iplog", title: "IP Log (BTRC)", icon: MdPolicy, path: "/dashboard/ip-log", perm: "ip_log.view", feature: "ip_log" },
-  {
-    id: "network",
     title: "Network",
-    icon: FaNetworkWired,
-    perm: "package.view",
-    subModules: [
-      { id: "network-routers", title: "Routers", path: "/dashboard/routers", perm: "router.view" },
-      { id: "network-packages", title: "Packages", path: "/dashboard/packages" },
-      { id: "network-zones", title: "Zones", path: "/dashboard/zones" },
+    items: [
+      {
+        title: "Network",
+        icon: Network,
+        perm: "package.view",
+        children: [
+          { title: "Routers", path: "/dashboard/routers", perm: "router.view" },
+          { title: "Packages", path: "/dashboard/packages" },
+          { title: "Zones", path: "/dashboard/zones" },
+          { title: "OLTs (fiber)", path: "/dashboard/olts", perm: "router.view" },
+        ],
+      },
+      { title: "IP log (BTRC)", icon: ShieldCheck, path: "/dashboard/ip-log", perm: "ip_log.view", feature: "ip_log" },
     ],
   },
-  { id: "staff", title: "Staff", icon: FaUsersCog, path: "/dashboard/staff", perm: "staff.manage" },
-  { id: "activity", title: "Activity Log", icon: MdHistory, path: "/dashboard/activity-log", perm: "activity_log.view" },
-  { id: "subscription", title: "My Subscription", icon: MdCardMembership, path: "/dashboard/billing/subscription", perm: "subscription.manage" },
   {
-    id: "settings",
-    title: "Settings",
-    icon: MdSettings,
-    perm: "setting.manage",
-    subModules: [
-      { id: "settings-general", title: "General", path: "/dashboard/settings" },
-      { id: "settings-payments", title: "Payment Gateways", path: "/dashboard/settings/payments", feature: "online_payment" },
-      { id: "settings-integrations", title: "Integrations", path: "/dashboard/settings/integrations" },
+    title: "Business",
+    items: [
+      { title: "Reports", icon: FileText, path: "/dashboard/reports", perm: "report.view" },
+      { title: "Analytics", icon: TrendingUp, path: "/dashboard/analytics", perm: "report.view" },
+      { title: "Accounts (P&L)", icon: Calculator, path: "/dashboard/accounts", perm: "expense.view" },
+      { title: "Employees & salary", icon: Wallet, path: "/dashboard/employees", perm: "employee.view" },
+      { title: "Inventory", icon: Boxes, path: "/dashboard/inventory", perm: "inventory.view", feature: "inventory" },
     ],
   },
-  { id: "help", title: "Help & Support", icon: MdHelpOutline, path: "/dashboard/support", perm: "setting.manage" },
+  {
+    title: "Administration",
+    items: [
+      { title: "Staff", icon: UserCog, path: "/dashboard/staff", perm: "staff.manage" },
+      { title: "Activity log", icon: Activity, path: "/dashboard/activity-log", perm: "activity_log.view" },
+      { title: "My subscription", icon: BarChart3, path: "/dashboard/billing/subscription", perm: "subscription.manage" },
+      {
+        title: "Settings",
+        icon: Settings,
+        perm: "setting.manage",
+        children: [
+          { title: "General", path: "/dashboard/settings", exact: true },
+          { title: "Payment gateways", path: "/dashboard/settings/payments", feature: "online_payment" },
+          { title: "Integrations", path: "/dashboard/settings/integrations" },
+        ],
+      },
+      { title: "Help & support", icon: LifeBuoy, path: "/dashboard/support", perm: "setting.manage" },
+    ],
+  },
 ];
 
-export default sidebarModules;
+export default sidebarSections;

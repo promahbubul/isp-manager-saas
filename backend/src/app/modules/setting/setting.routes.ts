@@ -22,6 +22,10 @@ const updateSettingSchema = z
       .object({ graceDays: z.coerce.number().int().min(0).max(30), autoDisable: z.boolean() })
       .partial(),
     receipt: z.object({ header: optionalText(200), footer: optionalText(300) }).partial(),
+    notifications: z.object({ dailySummaryEmail: z.boolean() }).partial(),
+    ticket: z
+      .object({ slaHours: z.object({ low: z.coerce.number().int().min(1).max(720), medium: z.coerce.number().int().min(1).max(720), high: z.coerce.number().int().min(1).max(720) }).partial() })
+      .partial(),
     sms: z
       .object({
         autoEvents: z
@@ -115,6 +119,8 @@ router.patch("/", authorize("setting.manage"), validateBody(updateSettingSchema)
   const body = req.body as z.infer<typeof updateSettingSchema>;
   if (body.billing) settings.set("billing", { ...settings.toObject().billing, ...body.billing });
   if (body.receipt) settings.set("receipt", { ...settings.toObject().receipt, ...body.receipt });
+  if (body.notifications) settings.set("notifications", { ...settings.toObject().notifications, ...body.notifications });
+  if (body.ticket?.slaHours) settings.set("ticket.slaHours", { ...settings.toObject().ticket?.slaHours, ...body.ticket.slaHours });
   if (body.sms) {
     const cur = settings.toObject().sms;
     settings.set("sms", {

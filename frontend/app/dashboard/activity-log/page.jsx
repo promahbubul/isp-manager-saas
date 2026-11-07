@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { ErrorBox, Input, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
-import { useApi } from "@/lib/hooks";
+
+import { usePaged } from "@/lib/usePaged";
 
 const ENTITIES = ["customer", "payment", "router", "package", "zone", "user", "ticket", "sms", "setting"].map((e) => ({ value: e, label: e }));
 
 export default function ActivityLogPage() {
   const [q, setQ] = useState({ search: "", entity: "", from: "", to: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 50 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useApi(["activity", params], "/activity-logs", params);
+  const list = usePaged("activity", "/activity-logs", { ...q, page: undefined });
+  const { data, isLoading, error } = list;
   const set = (k) => (e) => setQ((s) => ({ ...s, [k]: e.target.value, page: 1 }));
 
   return (
@@ -28,6 +29,7 @@ export default function ActivityLogPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             columns={[
               { key: "createdAt", header: "Time", render: (l) => formatDateTime(l.createdAt) },
@@ -37,7 +39,7 @@ export default function ActivityLogPage() {
               { key: "ip", header: "IP" },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

@@ -16,6 +16,7 @@ function PackageForm({ pkg, routers, onDone }) {
       speedDown: pkg?.speedDown ?? "",
       speedUp: pkg?.speedUp ?? "",
       price: pkg?.price ?? "",
+      vatPercent: pkg?.vatPercent ?? 0,
       validityDays: pkg?.validityDays ?? 30,
       router: pkg?.router?._id ?? pkg?.router ?? routers[0]?._id ?? "",
       mikrotikProfile: pkg?.mikrotikProfile ?? "",
@@ -41,6 +42,7 @@ function PackageForm({ pkg, routers, onDone }) {
         speedDown: Number(v.speedDown),
         speedUp: Number(v.speedUp),
         price: Number(v.price),
+        vatPercent: Number(v.vatPercent || 0),
         validityDays: Number(v.validityDays),
         ...(pkg ? {} : { isActive: undefined }),
       })
@@ -52,6 +54,7 @@ function PackageForm({ pkg, routers, onDone }) {
       <Input label="Download (Mbps)" type="number" required error={e.speedDown?.message} {...register("speedDown")} />
       <Input label="Upload (Mbps)" type="number" required error={e.speedUp?.message} {...register("speedUp")} />
       <Input label="Monthly price (৳)" type="number" step="0.01" required error={e.price?.message} {...register("price")} />
+      <Input label="VAT / tax (%)" type="number" step="0.01" hint="Added on top of the bill at recharge. 0 = none" {...register("vatPercent")} />
       <Input label="Validity (days)" type="number" required error={e.validityDays?.message} {...register("validityDays")} />
       <Select
         label="Router"

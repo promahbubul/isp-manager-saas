@@ -4,7 +4,7 @@ import { GATEWAY_IDS, GatewayId } from "../../services/payment/gateway.types";
 export const PAYMENT_SCOPES = ["subscription", "sms_credit", "customer_bill"] as const;
 export type PaymentScope = (typeof PAYMENT_SCOPES)[number];
 
-export const ATTEMPT_STATUSES = ["initiated", "pending_review", "success", "failed", "cancelled"] as const;
+export const ATTEMPT_STATUSES = ["initiated", "pending_review", "success", "failed", "cancelled", "refunded"] as const;
 export type AttemptStatus = (typeof ATTEMPT_STATUSES)[number];
 
 /**
@@ -44,6 +44,9 @@ export interface IPaymentAttempt {
   initiatedBy?: Types.ObjectId;
   reviewedBy?: Types.ObjectId;
   completedAt?: Date;
+  refundedAt?: Date;
+  refundReason?: string;
+  refundedBy?: Types.ObjectId;
   /** Payment (customer bill) created on success */
   payment?: Types.ObjectId;
   raw?: unknown;
@@ -79,6 +82,9 @@ const schema = new Schema<IPaymentAttempt>(
     initiatedBy: { type: Schema.Types.ObjectId },
     reviewedBy: { type: Schema.Types.ObjectId },
     completedAt: Date,
+    refundedAt: Date,
+    refundReason: String,
+    refundedBy: { type: Schema.Types.ObjectId },
     payment: { type: Schema.Types.ObjectId, ref: "Payment" },
     raw: { type: Schema.Types.Mixed, select: false },
   },
@@ -86,6 +92,7 @@ const schema = new Schema<IPaymentAttempt>(
 );
 schema.index({ company: 1, scope: 1, createdAt: -1 });
 schema.index({ scope: 1, status: 1, createdAt: -1 });
+schema.index({ company: 1, createdAt: -1, _id: -1 }); // tenant lists (cursor pagination)
 schema.index({ gatewayRef: 1 });
 // One manual TrxID can be claimed only once per gateway account owner.
 schema.index(

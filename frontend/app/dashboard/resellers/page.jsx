@@ -7,13 +7,14 @@ import QuickForm from "@/components/common/QuickForm";
 import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { taka } from "@/lib/format";
-import { useApi, useApiMutation } from "@/lib/hooks";
+import { useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 export default function ResellersPage() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
-  const { data, isLoading, error } = useApi(["resellers", page], "/resellers", { page, limit: 25 });
+  const list = usePaged("resellers", "/resellers");
+  const { data, isLoading, error } = list;
   const create = useApiMutation((body) => api.post("/resellers", body), { invalidate: ["resellers"] });
 
   return (
@@ -39,13 +40,13 @@ export default function ResellersPage() {
             columns={[
               { key: "name", header: "Name", render: (r) => <strong>{r.name}</strong> },
               { key: "phone", header: "Mobile (login)" },
-              { key: "balance", header: "Balance", render: (r) => <span className={r.balance < 0 ? "text-red-600" : ""}>{taka(r.balance)}</span> },
+              { key: "balance", header: "Balance", render: (r) => <span className={r.balance < 0 ? "text-rose-600" : ""}>{taka(r.balance)}</span> },
               { key: "discountPercent", header: "Rate", render: (r) => `price − ${r.discountPercent}%` },
               { key: "customers", header: "Customers", render: (r) => `${r.customers.active} active / ${r.customers.total}` },
               { key: "isActive", header: "Status", render: (r) => <Badge color={r.isActive ? "green" : "slate"}>{r.isActive ? "active" : "inactive"}</Badge> },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={setPage} />
+          <Pagination {...list.pager} />
         </>
       )}
       {creating && (

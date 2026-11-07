@@ -16,7 +16,24 @@ import { GatewayConfig } from "../paymentGateway/gatewayConfig.model";
 function aggregateScope(actor: Actor) {
   const scope = customerScope(actor);
   const zone = scope.zone as { $in: string[] } | undefined;
-  return zone ? { ...scope, zone: { $in: zone.$in.map((z) => new mongoose.Types.ObjectId(z)) } } : scope;
+  const out: Record<string, unknown> = zone ? { ...scope, zone: { $in: zone.$in.map((z) => new mongoose.Types.ObjectId(z)) } } : { ...scope };
+  // a reseller's id is a string too — without this their dashboard counted 0 customers
+  if (typeof out.reseller === "string") out.reseller = new mongoose.Types.ObjectId(out.reseller);
+  return out;
+}
+
+/** Daily collection for the last 14 Dhaka days (zero-filled), for the dashboard chart. */
+async function collectionTrend(payFilter: Record<string, unknown>, now: Date) {
+  const from = addDays(startOfDhakaDay(now), -13);
+  const rows = await Payment.aggregate<{ _id: string; amount: number; count: number }>([
+    { $match: { ...payFilter, createdAt: { $gte: from } } },
+    { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "Asia/Dhaka" } }, amount: { $sum: "$amount" }, count: { $sum: 1 } } },
+  ]);
+  const byDay = new Map(rows.map((r) => [r._id, r]));
+  return Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(addDays(from, i).getTime() + 6 * 3600_000).toISOString().slice(0, 10);
+    return { date: d, amount: byDay.get(d)?.amount ?? 0, count: byDay.get(d)?.count ?? 0 };
+  });
 }
 
 async function summary(actor: Actor) {
@@ -73,6 +90,7 @@ async function summary(actor: Actor) {
     collection: { today, month },
     routers: Object.fromEntries(routers.map((r) => [r._id, r.count])),
     recentPayments,
+    trend: await collectionTrend(payFilter, now),
     onboarding: await onboarding(actor.company),
   };
 }

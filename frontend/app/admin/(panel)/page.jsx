@@ -43,7 +43,7 @@ export default function AdminHome() {
           <Table
             rows={m.recentSignups}
             columns={[
-              { key: "name", header: "ISP", render: (c) => <Link className="text-purple-700 hover:underline" href={`/admin/companies/${c._id}`}>{c.name}</Link> },
+              { key: "name", header: "ISP", render: (c) => <Link className="text-primary-700 hover:underline" href={`/admin/companies/${c._id}`}>{c.name}</Link> },
               { key: "slug", header: "Subdomain" },
               { key: "status", header: "Status", render: (c) => <StatusBadge status={c.status === "trial" ? "pending" : c.status} /> },
               { key: "customers", header: "Customers", render: (c) => c.usage?.customers ?? 0 },
@@ -53,7 +53,7 @@ export default function AdminHome() {
         </Card>
         <Card title="Paying ISPs by plan">
           {Object.keys(m.paidByPlan).length === 0 ? (
-            <p className="text-sm text-slate-500">No paying ISPs yet.</p>
+            <p className="text-sm text-zinc-500">No paying ISPs yet.</p>
           ) : (
             <ul className="space-y-2">
               {Object.entries(m.paidByPlan).map(([plan, n]) => (
@@ -64,7 +64,7 @@ export default function AdminHome() {
               ))}
             </ul>
           )}
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-zinc-500">
             All-time received: {Object.entries(m.revenueAllTime).map(([c, a]) => money(a, c)).join(" + ") || "—"}
           </p>
         </Card>

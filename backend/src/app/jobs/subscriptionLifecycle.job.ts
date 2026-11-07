@@ -1,3 +1,5 @@
+import config from "../config";
+import { emailLayout, sendEmail } from "../services/email/email.service";
 import { getPlatformSettings } from "../modules/billing/billing.model";
 import { Company } from "../modules/company/company.model";
 import { notifyRoles } from "../modules/notification/notification.service";
@@ -70,6 +72,14 @@ export async function runSubscriptionLifecycle(now = new Date()): Promise<Lifecy
           link: "/dashboard/billing/subscription",
         }),
       );
+      const company = await Company.findById(s.company).select("name email");
+      if (company?.email) {
+        void sendEmail({
+          to: company.email,
+          subject: `Your ISP Manager subscription renews in ${days} day${days > 1 ? "s" : ""}`,
+          html: emailLayout(`Subscription renews in ${days} day${days > 1 ? "s" : ""}`, [["Company", company.name], ["Paid until", s.currentPeriodEnd.toISOString().slice(0, 10)]], { text: "Renew now", url: `${config.appUrl}/dashboard/billing/subscription` }),
+        });
+      }
       result.reminded += 1;
     }
   }

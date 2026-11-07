@@ -3,3 +3,9 @@ packages:
 allowBuilds:
   sharp: false
   unrs-resolver: false
+
+overrides:
+  browserslist: ">=4.28.7"
+  source-map-js: ">=1.2.2"
+  "@babel/core": ">=7.29.1"
+  baseline-browser-mapping: ">=2.11.0"

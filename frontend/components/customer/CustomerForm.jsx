@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Button, Card, Checkbox, Input, Select, Textarea } from "@/components/ui";
 import { api, applyFieldErrors, getErrorMessage } from "@/lib/api";
 import { toDateInput } from "@/lib/format";
@@ -44,6 +44,7 @@ export default function CustomerForm({ customer, onSaved }) {
       onuMac: customer?.device?.onuMac ?? "",
       boxNo: customer?.device?.boxNo ?? "",
       port: customer?.device?.port ?? "",
+      fiberLength: customer?.device?.fiberLength ?? "",
       note: customer?.note ?? "",
     },
   });
@@ -57,7 +58,7 @@ export default function CustomerForm({ customer, onSaved }) {
   };
 
   const onSubmit = async (v) => {
-    const { onuMac, boxNo, port, expiryDate, dueAmount, ...rest } = v;
+    const { onuMac, boxNo, port, fiberLength, expiryDate, dueAmount, ...rest } = v;
     const body = clean({
       ...rest,
       monthlyFee: rest.monthlyFee === "" ? undefined : Number(rest.monthlyFee),
@@ -66,7 +67,7 @@ export default function CustomerForm({ customer, onSaved }) {
       expiryDate: expiryDate ? new Date(`${expiryDate}T23:59:59+06:00`).toISOString() : undefined,
       ...(isEdit ? {} : { dueAmount: Number(dueAmount || 0) }),
     });
-    body.device = clean({ onuMac, boxNo, port });
+    body.device = clean({ onuMac, boxNo, port, fiberLength: fiberLength === "" ? undefined : Number(fiberLength) });
     if (isEdit) {
       // Only send billing fields that changed, so saving the form never shifts the expiry time.
       if (expiryDate === toDateInput(customer.expiryDate)) delete body.expiryDate;
@@ -130,6 +131,7 @@ export default function CustomerForm({ customer, onSaved }) {
           <Input label="ONU MAC" {...register("onuMac")} />
           <Input label="Box no." {...register("boxNo")} />
           <Input label="Port" {...register("port")} />
+          <Input label="Fiber length (m)" type="number" {...register("fiberLength")} />
         </div>
       </Card>
 

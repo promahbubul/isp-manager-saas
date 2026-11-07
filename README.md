@@ -250,7 +250,43 @@ with header `X-API-Key`, and a custom portal domain (`/settings/custom-domain`, 
 `GET /public/domain-check?domain=` for Caddy). Analytics: `/dashboard/analytics` (`GET /analytics`).
 Not built (need hardware or a separate project): mobile app, RADIUS, OLT, Nagad direct API.
 
+### Remaining feature-list items (also done)
+
+- Marketing: `/blog`, `/help` (articles written in super admin → Content), `/faq`, `/demo` (requests land in Content).
+- Super admin: SMTP in Settings (test button), **Errors** page (5xx grouped, 30 days), refund on Payments.
+- Customers: photo/NID upload (private: `POST|GET /customers/:id/documents/:kind`), fiber length, timeline
+  (`/customers/:id/timeline`), bulk zone actions (`/customers/bulk`), package change now/prorate/next cycle
+  (`/customers/:id/change-package`), other charges (`/customers/charges`). Package `vatPercent`.
+- Tickets: attachments (`/tickets/:id/attachments`), SLA hours per priority in Settings, `status=overdue` filter.
+- Accounts: cash book (`/accounts/cashbook`). Routers: `GET /routers/:id/sync-report`, `POST /routers/:id/sync-fix`,
+  SSTP VPN (`POST /routers/:id/vpn {type:"sstp"}`, `SSTP_*` env).
+- Email: daily summary 21:00 Dhaka (ISP can turn it off) and renewal reminders, via the SMTP set by the super admin.
+- Activity log stores field-level before/after for customer, package, router and staff edits.
+- Portal: PPPoE login (`/portal/isp/:slug/login`), receipts, profile and PPPoE password change, complaint photos, PWA.
+- UI is English only.
+- SMS gateways (ISP owner's own account, all plans): PutulHost WO SMS (`smsapi.resellcore.com`, server IP must be
+  whitelisted in their panel), Twilio, Vonage, Plivo or any HTTP API — `/settings/sms-gateway` (`/providers`, `/test`, `/balance`).
+- RADIUS: `POST /radius/authorize|accounting` for FreeRADIUS rlm_rest (basic auth = `RADIUS_API_SECRET`); routers switch with
+  `POST /routers/:id/radius`. Config files in `deploy/freeradius/`.
+- OLT: `/olts` (SNMP v2c, Huawei GPON profile, BDCOM unverified, custom OIDs), `POST /olts/:id/poll`, polled every 30 min;
+  ONU signal is stored on the customer (`device.onuRx`) matched by ONU MAC/serial.
+- Private files (NID, ticket attachments) live in `UPLOAD_DIR/private` and are never served by `/uploads`.
+
 - `pnpm seed` only inserts missing default plans — it never overwrites prices or limits edited in the admin panel.
+
+### UI & platform (redesign)
+
+- **Design system** in `frontend/app/globals.css` (`@theme` tokens: `primary-*` indigo, `canvas/surface/subtle/line/ink/muted`).
+  Shared UI kit in `components/ui` (Button with variants, fields, Card, Badge, Stat, skeleton Loading, Radix Modal that is a
+  bottom sheet on phones, Table with sticky header + row numbers + `100dvh - top bar` height, Pagination).
+- **App shell** `components/shell/AppShell.jsx`: sidebar on desktop, drawer on phones, sticky top bar, user menu — used by
+  the ISP dashboard and the platform admin. Icons: lucide-react. Toasts: sonner. Charts: recharts.
+- **Cursor pagination**: every list returns `meta.nextCursor`; pass it as `?cursor=` (stable under inserts, fast on big
+  collections, ties broken by `_id`). `?page=` still works. Frontend hook `lib/usePaged.js`.
+- **Backend hardening**: pino structured logs with `X-Request-Id`, secrets redacted (`LOG_LEVEL`), gzip compression,
+  NoSQL-injection guard (`$`/dotted keys stripped from query and body), MongoDB-backed rate limits shared by all PM2
+  instances, `/api/v1/health/live` and `/api/v1/health/ready`, graceful shutdown (drains for up to 15 s),
+  `autoIndex` off in production + `pnpm db:indexes` (run by `deploy.sh`).
 
 Response shape: `{ success, message, meta?, data }`; errors: `{ success: false, message, errors?: [{ path, message }] }`.
 

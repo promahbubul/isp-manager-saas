@@ -22,7 +22,7 @@ function TwoFactor({ enabled }) {
   if (enabled) {
     return (
       <Card title={<span className="flex items-center gap-2">Two-factor authentication <Badge color="green">on</Badge></span>}>
-        <p className="mb-4 text-sm text-slate-600">To turn it off, confirm your password and a current code.</p>
+        <p className="mb-4 text-sm text-zinc-600">To turn it off, confirm your password and a current code.</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <Input label="Authenticator code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
@@ -38,18 +38,18 @@ function TwoFactor({ enabled }) {
     <Card title={<span className="flex items-center gap-2">Two-factor authentication <Badge color="amber">off</Badge></span>}>
       {!setup ? (
         <>
-          <p className="mb-4 text-sm text-slate-600">Protect the admin panel with a code from Google Authenticator, Microsoft Authenticator or Authy.</p>
+          <p className="mb-4 text-sm text-zinc-600">Protect the admin panel with a code from Google Authenticator, Microsoft Authenticator or Authy.</p>
           <Button loading={start.isPending} onClick={() => start.mutate()}>
             Set up 2FA
           </Button>
         </>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">1. Scan this QR code with your authenticator app (or type the key).</p>
+          <p className="text-sm text-zinc-600">1. Scan this QR code with your authenticator app (or type the key).</p>
           {/* eslint-disable-next-line @next/next/no-img-element -- data: URL, nothing for next/image to optimise */}
-          {qr && <img src={qr} alt="2FA QR code" width={200} height={200} className="rounded border border-slate-200" />}
-          <code className="block break-all rounded bg-slate-100 p-2 text-sm">{setup.secret}</code>
-          <p className="text-sm text-slate-600">2. Enter the 6-digit code the app shows.</p>
+          {qr && <img src={qr} alt="2FA QR code" width={200} height={200} className="rounded border border-zinc-200" />}
+          <code className="block break-all rounded bg-zinc-100 p-2 text-sm">{setup.secret}</code>
+          <p className="text-sm text-zinc-600">2. Enter the 6-digit code the app shows.</p>
           <div className="flex items-end gap-2">
             <Input label="Code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
             <Button disabled={code.length !== 6} loading={enable.isPending} onClick={() => enable.mutate()}>
@@ -79,7 +79,7 @@ function ChangePassword() {
       <Button className="mt-4" disabled={!f.currentPassword || !f.newPassword} loading={save.isPending} onClick={() => save.mutate()}>
         Change password
       </Button>
-      <p className="mt-2 text-xs text-slate-500">Other sessions are logged out.</p>
+      <p className="mt-2 text-xs text-zinc-500">Other sessions are logged out.</p>
     </Card>
   );
 }

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/cn";
+
 /**
  * Works both as a controlled input and with react-hook-form:
  *   <LabelWithInput label="Phone" {...register("phone")} error={errors.phone?.message} />
@@ -6,10 +8,11 @@
 const LabelWithInput = ({ label, required, error, hint, mb, type = "text", id, name, ...inputProps }) => {
   const inputId = id || name;
   return (
-    <div className={`flex flex-col gap-1 ${mb ?? "mb-5"}`}>
+    <div className={cn("flex flex-col gap-1.5", mb ?? "mb-4")}>
       {label && (
-        <label htmlFor={inputId} className="flex items-center gap-1 font-semibold text-slate-700">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label htmlFor={inputId} className="text-sm font-medium text-ink">
+          {label}
+          {required && <span className="ml-0.5 text-rose-500">*</span>}
         </label>
       )}
       <input
@@ -17,16 +20,13 @@ const LabelWithInput = ({ label, required, error, hint, mb, type = "text", id, n
         name={name}
         type={type}
         aria-invalid={Boolean(error)}
-        className={`rounded-md border px-4 py-2.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-2 ${
-          error ? "border-red-500 focus:ring-red-200" : "border-slate-300 focus:border-purple-600 focus:ring-purple-200"
-        }`}
+        className={cn(
+          "h-10 rounded-lg border bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:ring-4",
+          error ? "border-rose-400 focus:ring-rose-100" : "border-line focus:border-primary-500 focus:ring-primary-100",
+        )}
         {...inputProps}
       />
-      {error ? (
-        <p className="text-sm text-red-600">{error}</p>
-      ) : (
-        hint && <p className="text-sm text-slate-500">{hint}</p>
-      )}
+      {error ? <p className="text-xs font-medium text-rose-600">{error}</p> : hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
 };

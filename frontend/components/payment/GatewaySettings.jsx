@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Badge, Button, Card, Checkbox, Input, Textarea } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 /**
  * One card per gateway: on/off, sandbox, credentials, instructions (manual).
@@ -44,7 +44,7 @@ function GatewayCard({ g, save, webhookBase, onSaved }) {
         <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
           <input
             type="checkbox"
-            className="h-5 w-5 accent-purple-600"
+            className="h-5 w-5 accent-primary-600"
             checked={enabled}
             disabled={busy}
             onChange={(e) => {
@@ -56,7 +56,7 @@ function GatewayCard({ g, save, webhookBase, onSaved }) {
         </label>
       }
     >
-      <p className="mb-4 text-sm text-slate-600">{g.help}</p>
+      <p className="mb-4 text-sm text-zinc-600">{g.help}</p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {g.fields.map((f) => (
           <Input
@@ -85,7 +85,7 @@ function GatewayCard({ g, save, webhookBase, onSaved }) {
           </div>
         )}
         {g.gateway === "stripe" && webhookBase && (
-          <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-600 sm:col-span-2">
+          <p className="rounded-md bg-zinc-50 p-3 text-xs text-zinc-600 sm:col-span-2">
             Stripe webhook URL (event <code>checkout.session.completed</code>): <code className="break-all">{webhookBase}</code>
           </p>
         )}

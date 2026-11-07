@@ -76,7 +76,8 @@ export async function pollIpSessions(now = new Date()) {
     if (!(await companyFeatures(c._id)).includes("ip_log")) continue;
     result.companies += 1;
     await runWithTenant(c.id, async () => {
-      const routers = await MikrotikRouter.find({ isActive: true }).select("+password");
+      // RADIUS routers report sessions themselves through accounting
+      const routers = await MikrotikRouter.find({ isActive: true, authMode: { $ne: "radius" } }).select("+password");
       for (const r of routers) {
         try {
           const active = await withRouter(r, (d) => d.listActive());

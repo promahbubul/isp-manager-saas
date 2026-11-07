@@ -33,7 +33,7 @@ export default function SupportTicketPage() {
         }
         actions={
           <>
-            <Link href="/dashboard/support" className="text-sm text-purple-700 hover:underline">
+            <Link href="/dashboard/support" className="text-sm text-primary-700 hover:underline">
               ← All requests
             </Link>
             {t.status !== "closed" && (

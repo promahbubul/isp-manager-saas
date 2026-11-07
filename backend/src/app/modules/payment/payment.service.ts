@@ -36,15 +36,20 @@ export function calculateRecharge(opts: {
   previousDue: number;
   balance: number;
   amount?: number;
+  /** VAT/tax % added on the discounted bill */
+  vatPercent?: number;
 }) {
   const perMonth = Math.max(0, opts.monthlyFee - opts.customerDiscount);
-  const bill = round2(opts.months * perMonth - opts.discount);
-  if (bill < 0) throw new AppError(400, "Discount is larger than the bill");
+  const net = round2(opts.months * perMonth - opts.discount);
+  if (net < 0) throw new AppError(400, "Discount is larger than the bill");
+  const vat = round2((net * (opts.vatPercent ?? 0)) / 100);
+  const bill = round2(net + vat);
   const totalDue = round2(opts.previousDue + bill);
   const amount = opts.amount ?? Math.max(0, round2(totalDue - opts.balance));
   const available = round2(amount + opts.balance);
   return {
     bill,
+    vat,
     amount,
     totalDue,
     dueAfter: Math.max(0, round2(totalDue - available)),
@@ -76,10 +81,18 @@ export type ApplyRechargeInput = {
  * MikroTik and sends the payment SMS. Must run inside the tenant context.
  */
 export async function applyRecharge(input: ApplyRechargeInput) {
-  const current = await Customer.findOne({ _id: input.customerId, deletedAt: null });
+  let current = await Customer.findOne({ _id: input.customerId, deletedAt: null });
   if (!current) throw new AppError(404, "Customer not found");
+  // "Next cycle" package change: the new package takes effect with this recharge.
+  let packageSwitched = false;
+  if (current.pendingPackage) {
+    const next = await Package.findOne({ _id: current.pendingPackage, isActive: true });
+    await Customer.updateOne({ _id: current._id }, next ? { package: next._id, router: next.router, monthlyFee: next.price, pendingPackage: null } : { pendingPackage: null });
+    packageSwitched = Boolean(next);
+    current = (await Customer.findById(current._id))!;
+  }
   if (current.status === "free") throw new AppError(400, "Free customers do not need recharge");
-  const pkg = await Package.findById(current.package).select("validityDays price");
+  const pkg = await Package.findById(current.package).select("validityDays price vatPercent");
   if (!pkg) throw new AppError(400, "Customer's package not found");
   const postpaid = current.billingType === "postpaid";
   if (input.chargeReseller && String(current.reseller ?? "") !== input.chargeReseller) throw new AppError(404, "Customer not found");
@@ -103,6 +116,7 @@ export async function applyRecharge(input: ApplyRechargeInput) {
         previousDue: customer.dueAmount,
         balance: customer.balance,
         amount: input.amount,
+        vatPercent: postpaid ? 0 : (pkg.vatPercent ?? 0),
       });
       if (postpaid && calc.amount <= 0) throw new AppError(400, "Nothing is due for this postpaid customer");
 
@@ -138,6 +152,7 @@ export async function applyRecharge(input: ApplyRechargeInput) {
             type: "recharge",
             amount: calc.amount,
             billAmount: calc.bill,
+            vat: calc.vat,
             discount,
             months: input.months,
             method: input.method,
@@ -173,7 +188,7 @@ export async function applyRecharge(input: ApplyRechargeInput) {
 
   // Outside the transaction: talk to the router.
   let sync;
-  if (reconnect) {
+  if (reconnect || packageSwitched) {
     const customer = await loadCustomerWithSecret(current._id);
     if (customer) sync = await syncCustomer(customer);
   }

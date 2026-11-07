@@ -5,15 +5,16 @@ import PermissionGate from "@/components/common/PermissionGate";
 import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
-import { useApi, useApiMutation } from "@/lib/hooks";
+import { useApiMutation } from "@/lib/hooks";
+import { usePaged } from "@/lib/usePaged";
 
 const COLOR = { unpaid: "red", partial: "amber", paid: "green", void: "slate" };
 
 /** Postpaid invoices: issued on the 1st, paid via Billing → Recharge (settles the oldest first). */
 export default function InvoicesPage() {
   const [q, setQ] = useState({ status: "", page: 1 });
-  const params = Object.fromEntries(Object.entries({ ...q, limit: 25 }).filter(([, v]) => v !== ""));
-  const { data, isLoading, error } = useApi(["invoices", params], "/invoices", params);
+  const list = usePaged("invoices", "/invoices", { ...q, page: undefined });
+  const { data, isLoading, error } = list;
   const issue = useApiMutation(() => api.post("/invoices/issue"), { invalidate: ["invoices"] });
   const voidIt = useApiMutation((id) => api.post(`/invoices/${id}/void`, {}), { invalidate: ["invoices"] });
 
@@ -39,6 +40,7 @@ export default function InvoicesPage() {
       ) : (
         <>
           <Table
+            indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty="No invoices. Set a customer's billing type to Postpaid to start."
             columns={[
@@ -63,7 +65,7 @@ export default function InvoicesPage() {
               },
             ]}
           />
-          <Pagination meta={data?.meta} onPage={(page) => setQ((s) => ({ ...s, page }))} />
+          <Pagination {...list.pager} />
         </>
       )}
     </div>

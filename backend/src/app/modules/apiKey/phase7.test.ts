@@ -21,35 +21,53 @@ async function toPlan(companyId: string, slug: string) {
 afterEach(() => vi.restoreAllMocks());
 
 describe("own SMS gateway", () => {
-  it("sends through the ISP's gateway without using credits", async () => {
+  it("sends through the owner's PutulHost account without using credits (any plan)", async () => {
     const isp = await setupIsp();
-    expect((await api().get("/api/v1/settings/sms-gateway").set(isp.auth)).status).toBe(403); // trial: not included
-    await toPlan(isp.companyId, "pro");
-
-    const calls: string[] = [];
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      calls.push(String(url));
-      return new Response('{"response_code":202}', { status: 200 });
+    const calls: { url: string; body: Record<string, string> }[] = [];
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init) => {
+      calls.push({ url: String(url), body: JSON.parse(String(init?.body ?? "{}")) });
+      // PutulHost always answers HTTP 200; the result is in the body
+      return new Response('{"statusCode":"200","status":"Success","responseResult":"SMS Submitted Successfully"}', { status: 200 });
     });
-    const bad = await api().put("/api/v1/settings/sms-gateway").set(isp.auth).send({ enabled: true, httpUrl: "https://gw.example/send?to={to}" });
-    expect(bad.status).toBe(400); // needs {message}
+    expect((await api().put("/api/v1/settings/sms-gateway").set(isp.auth).send({ enabled: true, provider: "putulhost", fields: { userName: "speednet" } })).status).toBe(400); // api key, sender missing
     await api()
       .put("/api/v1/settings/sms-gateway")
       .set(isp.auth)
-      .send({ enabled: true, httpUrl: "https://gw.example/send?key={apiKey}&to={to}&msg={message}", successPattern: "202", apiKey: "secret-key" })
+      .send({ enabled: true, provider: "putulhost", fields: { userName: "speednet", apiKey: "secret-key", senderName: "SPEEDNET" } })
       .expect(200);
     const got = await api().get("/api/v1/settings/sms-gateway").set(isp.auth);
-    expect(got.body.data).toMatchObject({ enabled: true, hasApiKey: true });
+    expect(got.body.data).toMatchObject({ enabled: true, provider: "putulhost", options: { userName: "speednet", senderName: "SPEEDNET", transactionType: "T" }, savedSecrets: ["apiKey"] });
     expect(JSON.stringify(got.body)).not.toContain("secret-key");
+    // saving again without the key keeps it
+    await api().put("/api/v1/settings/sms-gateway").set(isp.auth).send({ enabled: true, provider: "putulhost", fields: { userName: "speednet", senderName: "SPEEDNET", apiKey: "" } }).expect(200);
 
     const before = (await Company.findById(isp.companyId))!.smsBalance;
     fakeSms.reset();
     await createCustomer(isp); // welcome SMS
     await flushBackground();
     expect(fakeSms.sent).toHaveLength(0); // platform gateway not used
-    expect(calls[0]).toContain("key=secret-key&to=8801711000001&msg=");
+    expect(calls[0].url).toBe("https://smsapi.resellcore.com/api/SmsSending/SMS");
+    expect(calls[0].body).toMatchObject({ UserName: "speednet", Apikey: "secret-key", MobileNumber: "8801711000001", CampaignId: "null", SenderName: "SPEEDNET", TransactionType: "T" });
     expect((await Company.findById(isp.companyId))!.smsBalance).toBe(before);
-    expect(await SmsLog.findOne({ ownGateway: true, status: "sent" })).toBeTruthy();
+    expect(await SmsLog.findOne({ ownGateway: true, status: "sent", provider: "putulhost" })).toBeTruthy();
+  });
+
+  it("reports PutulHost errors from the JSON body and supports international providers", async () => {
+    const isp = await setupIsp();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("resellcore")) return new Response('{"statusCode":"406","status":"Failed","responseResult":"IP Black List."}', { status: 200 });
+      if (String(url).includes("twilio")) return new Response('{"sid":"SM1"}', { status: 201 });
+      return new Response("{}", { status: 500 });
+    });
+    await api().put("/api/v1/settings/sms-gateway").set(isp.auth).send({ enabled: false, provider: "putulhost", fields: { userName: "u", apiKey: "k", senderName: "S" } }).expect(200);
+    const t1 = await api().post("/api/v1/settings/sms-gateway/test").set(isp.auth).send({ to: "01711000001" });
+    expect(t1.body.message).toBe("Failed: IP Black List.");
+
+    await api().put("/api/v1/settings/sms-gateway").set(isp.auth).send({ enabled: true, provider: "twilio", fields: { accountSid: "AC123", authToken: "tok", from: "+15550001111" } }).expect(200);
+    const t2 = await api().post("/api/v1/settings/sms-gateway/test").set(isp.auth).send({ to: "01711000001" });
+    expect(t2.body.data.ok).toBe(true);
+    const providers = await api().get("/api/v1/settings/sms-gateway/providers").set(isp.auth);
+    expect(Object.keys(providers.body.data)).toEqual(["putulhost", "twilio", "vonage", "plivo", "http"]);
   });
 });
 

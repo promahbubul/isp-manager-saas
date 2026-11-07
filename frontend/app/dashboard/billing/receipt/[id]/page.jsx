@@ -42,13 +42,13 @@ export default function ReceiptPage() {
         </Link>
       </div>
 
-      <div id="receipt" className="mx-auto max-w-md rounded-lg border border-slate-300 bg-white p-6 text-slate-900 print:border-0">
+      <div id="receipt" className="mx-auto max-w-md rounded-lg border border-zinc-300 bg-white p-6 text-zinc-900 print:border-0">
         <div className="text-center">
           <h2 className="text-xl font-bold">{p.company?.name}</h2>
           {p.company?.address && <p className="text-sm">{p.company.address}</p>}
           <p className="text-sm">{p.company?.phone}</p>
           {p.receiptText?.header && <p className="mt-1 text-sm">{p.receiptText.header}</p>}
-          <p className="mt-3 inline-block rounded border border-slate-900 px-3 py-0.5 text-sm font-semibold">MONEY RECEIPT</p>
+          <p className="mt-3 inline-block rounded border border-zinc-900 px-3 py-0.5 text-sm font-semibold">MONEY RECEIPT</p>
         </div>
         <div className="mt-4 flex justify-between text-sm">
           <span>No: {p.receiptNo}</span>
@@ -57,15 +57,15 @@ export default function ReceiptPage() {
         <table className="mt-3 w-full text-sm">
           <tbody>
             {rows.map(([k, v]) => (
-              <tr key={k} className="border-b border-dashed border-slate-200">
-                <td className="py-1.5 text-slate-600">{k}</td>
+              <tr key={k} className="border-b border-dashed border-zinc-200">
+                <td className="py-1.5 text-zinc-600">{k}</td>
                 <td className="py-1.5 text-right font-medium">{v ?? "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <p className="mt-4 text-center text-lg font-bold">Paid: {taka(p.amount)}</p>
-        {p.receiptText?.footer && <p className="mt-3 text-center text-xs text-slate-600">{p.receiptText.footer}</p>}
+        {p.receiptText?.footer && <p className="mt-3 text-center text-xs text-zinc-600">{p.receiptText.footer}</p>}
       </div>
     </div>
   );

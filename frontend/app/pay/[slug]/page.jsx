@@ -104,19 +104,19 @@ function PayContent() {
         </form>
       ) : (
         <div className="space-y-5">
-          <div className="rounded-lg bg-slate-50 p-4">
+          <div className="rounded-lg bg-zinc-50 p-4">
             <p className="text-lg font-semibold">{bill.name}</p>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-zinc-600">
               {bill.customerId} · {bill.package}
             </p>
-            <p className={`mt-1 text-sm ${new Date(bill.expiryDate) < new Date() ? "text-red-600" : "text-slate-600"}`}>
+            <p className={`mt-1 text-sm ${new Date(bill.expiryDate) < new Date() ? "text-rose-600" : "text-zinc-600"}`}>
               {new Date(bill.expiryDate) < new Date() ? "Expired on" : "Valid until"} {formatDate(bill.expiryDate)}
             </p>
-            {bill.dueAmount > 0 && <p className="text-sm text-red-600">Previous due: {taka(bill.dueAmount)}</p>}
+            {bill.dueAmount > 0 && <p className="text-sm text-rose-600">Previous due: {taka(bill.dueAmount)}</p>}
           </div>
           <div className="flex items-center gap-3">
             <label className="text-sm font-semibold">Months</label>
-            <select className="rounded-md border border-slate-300 px-3 py-2" value={months} onChange={(e) => setMonths(Number(e.target.value))}>
+            <select className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100" value={months} onChange={(e) => setMonths(Number(e.target.value))}>
               {[1, 2, 3, 6, 12].map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -165,13 +165,13 @@ function ResultView({ result, company }) {
     <div className="space-y-3 text-center">
       <p className="text-5xl">{icon}</p>
       <h2 className="text-xl font-bold">{title}</h2>
-      <p className="text-slate-600">{text}</p>
+      <p className="text-zinc-600">{text}</p>
       {result.receiptNo && (
         <p className="text-sm">
           Receipt <strong>{result.receiptNo}</strong> · valid until <strong>{formatDate(result.newExpiry)}</strong>
         </p>
       )}
-      {result.gatewayTrxId && <p className="text-xs text-slate-500">Transaction: {result.gatewayTrxId}</p>}
+      {result.gatewayTrxId && <p className="text-xs text-zinc-500">Transaction: {result.gatewayTrxId}</p>}
       <Button variant="secondary" onClick={() => (window.location.href = window.location.pathname)}>
         Done
       </Button>
@@ -181,12 +181,12 @@ function ResultView({ result, company }) {
 
 function Shell({ company, children }) {
   return (
-    <div className="flex min-h-screen items-start justify-center bg-slate-100 px-4 py-10">
+    <div className="flex min-h-screen items-start justify-center bg-zinc-100 px-4 py-10">
       <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg sm:p-8">
         {company && (
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-extrabold text-purple-700">{company.name}</h1>
-            {company.phone && <p className="text-sm text-slate-500">Helpline {company.phone}</p>}
+            <h1 className="text-2xl font-extrabold text-primary-700">{company.name}</h1>
+            {company.phone && <p className="text-sm text-zinc-500">Helpline {company.phone}</p>}
           </div>
         )}
         {children}
