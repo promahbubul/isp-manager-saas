@@ -11,6 +11,13 @@ export interface IPlatformUser {
   isActive: boolean;
   lastLogin?: Date;
   tokenVersion: number;
+  twoFactor: {
+    enabled: boolean;
+    /** AES-encrypted base32 TOTP secret */
+    secret?: string;
+    /** secret waiting for the first valid code */
+    pendingSecret?: string;
+  };
 }
 
 interface Methods {
@@ -29,6 +36,11 @@ const schema = new Schema<IPlatformUser, PlatformUserModel, Methods>(
     isActive: { type: Boolean, default: true },
     lastLogin: Date,
     tokenVersion: { type: Number, default: 0 },
+    twoFactor: {
+      enabled: { type: Boolean, default: false },
+      secret: { type: String, select: false },
+      pendingSecret: { type: String, select: false },
+    },
   },
   {
     timestamps: true,
@@ -36,6 +48,11 @@ const schema = new Schema<IPlatformUser, PlatformUserModel, Methods>(
       transform: (_doc, ret: Record<string, unknown>) => {
         delete ret.password;
         delete ret.tokenVersion;
+        const tf = ret.twoFactor as Record<string, unknown> | undefined;
+        if (tf) {
+          delete tf.secret;
+          delete tf.pendingSecret;
+        }
         delete ret.__v;
         return ret;
       },

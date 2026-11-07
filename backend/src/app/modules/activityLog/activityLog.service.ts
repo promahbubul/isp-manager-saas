@@ -46,7 +46,7 @@ export const audit =
         action,
         entity,
         entityId: req.params.id ? String(req.params.id) : pickId(body),
-        summary: (res.locals.auditSummary as string | undefined) ?? body?.message,
+        summary: `${req.user.impersonatedBy ? "[by platform admin] " : ""}${(res.locals.auditSummary as string | undefined) ?? body?.message ?? ""}`,
         ip: req.ip,
         userAgent: req.get("user-agent")?.slice(0, 300),
       });

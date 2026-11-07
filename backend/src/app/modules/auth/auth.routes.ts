@@ -1,4 +1,5 @@
 import { Request, Response, Router } from "express";
+import { z } from "zod";
 import sendResponse from "../../utils/sendResponse";
 import { forgotSchema, requestPasswordReset, resetPassword, resetSchema } from "./passwordReset.service";
 import { auth, platformAuth } from "../../middlewares/auth";
@@ -37,5 +38,16 @@ router.post("/admin/login", authLimiter, validateBody(platformLoginSchema), Auth
 router.post("/admin/refresh-token", AuthController.platformRefreshToken);
 router.post("/admin/logout", AuthController.platformLogout);
 router.get("/admin/me", platformAuth(), AuthController.platformMe);
+router.post("/admin/2fa/setup", platformAuth(), AuthController.twoFactorSetup);
+const sixDigits = z.string().regex(/^\d{6}$/, "Enter the 6-digit code");
+router.post("/admin/2fa/enable", platformAuth(), validateBody(z.object({ code: sixDigits })), AuthController.twoFactorEnable);
+router.post(
+  "/admin/2fa/disable",
+  authLimiter,
+  platformAuth(),
+  validateBody(z.object({ password: z.string().min(1), code: sixDigits })),
+  AuthController.twoFactorDisable,
+);
+router.post("/admin/change-password", authLimiter, platformAuth(), validateBody(changePasswordSchema), AuthController.platformChangePassword);
 
 export default router;

@@ -6,7 +6,7 @@ import { api, refreshAccessToken, setAccessToken, setAuthFailureHandler } from "
 
 const AuthContext = createContext(null);
 
-const EMPTY = { user: null, company: null, permissions: [], subscription: null };
+const EMPTY = { user: null, company: null, permissions: [], subscription: null, impersonation: null };
 
 export function AuthProvider({ children }) {
   const router = useRouter();

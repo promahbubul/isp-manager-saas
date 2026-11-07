@@ -1,5 +1,6 @@
 import { CookieOptions, Request, Response } from "express";
 import config from "../../config";
+import AppError from "../../errors/AppError";
 import { durationToMs } from "../../utils/duration";
 import sendResponse from "../../utils/sendResponse";
 import { PLATFORM_REFRESH_COOKIE, TENANT_REFRESH_COOKIE } from "./auth.interface";
@@ -14,7 +15,16 @@ const cookieOptions: CookieOptions = {
   maxAge: durationToMs(config.jwt.refreshExpires),
 };
 
-const setRefresh = (res: Response, name: string, token: string) => res.cookie(name, token, cookieOptions);
+const setRefresh = (res: Response, name: string, token: string, maxAge = cookieOptions.maxAge) =>
+  res.cookie(name, token, { ...cookieOptions, maxAge });
+
+/** Used by the super-admin impersonation endpoint (short-lived tenant session). */
+export const setTenantRefreshCookie = (res: Response, token: string, maxAgeMs: number) =>
+  setRefresh(res, TENANT_REFRESH_COOKIE, token, maxAgeMs);
+
+const noImpersonation = (req: Request) => {
+  if (req.user?.impersonatedBy) throw new AppError(403, "Not allowed while impersonating");
+};
 const clearRefresh = (res: Response, name: string) => {
   const { maxAge: _maxAge, ...opts } = cookieOptions;
   res.clearCookie(name, opts);
@@ -55,6 +65,7 @@ const logout = async (_req: Request, res: Response) => {
 };
 
 const logoutAll = async (req: Request, res: Response) => {
+  noImpersonation(req);
   await AuthService.logoutAll(req.user!.id);
   clearRefresh(res, TENANT_REFRESH_COOKIE);
   sendResponse(res, { message: "Logged out from all devices" });
@@ -62,10 +73,13 @@ const logoutAll = async (req: Request, res: Response) => {
 
 const me = async (req: Request, res: Response) => {
   const data = await AuthService.me(req.user!.id);
-  sendResponse(res, { message: "Profile", data });
+  const imp = req.user!.impersonatedBy;
+  const admin = imp ? await AuthService.platformMe(imp).catch(() => null) : null;
+  sendResponse(res, { message: "Profile", data: { ...data, impersonation: imp ? { by: admin?.name ?? "Platform admin" } : null } });
 };
 
 const changePassword = async (req: Request, res: Response) => {
+  noImpersonation(req);
   const tokens = await AuthService.changePassword(req.user!.id, req.body);
   setRefresh(res, TENANT_REFRESH_COOKIE, tokens.refreshToken);
   sendResponse(res, { message: "Password changed", data: { accessToken: tokens.accessToken } });
@@ -95,6 +109,26 @@ const platformLogout = async (_req: Request, res: Response) => {
   sendResponse(res, { message: "Logged out" });
 };
 
+const twoFactorSetup = async (req: Request, res: Response) => {
+  sendResponse(res, { message: "Scan the QR code, then enter a code to confirm", data: await AuthService.twoFactorSetup(req.platformUser!.id) });
+};
+
+const twoFactorEnable = async (req: Request, res: Response) => {
+  await AuthService.twoFactorEnable(req.platformUser!.id, req.body.code);
+  sendResponse(res, { message: "Two-factor authentication is on" });
+};
+
+const twoFactorDisable = async (req: Request, res: Response) => {
+  await AuthService.twoFactorDisable(req.platformUser!.id, req.body.password, req.body.code);
+  sendResponse(res, { message: "Two-factor authentication is off" });
+};
+
+const platformChangePassword = async (req: Request, res: Response) => {
+  const tokens = await AuthService.platformChangePassword(req.platformUser!.id, req.body.currentPassword, req.body.newPassword);
+  setRefresh(res, PLATFORM_REFRESH_COOKIE, tokens.refreshToken);
+  sendResponse(res, { message: "Password changed", data: { accessToken: tokens.accessToken } });
+};
+
 const platformMe = async (req: Request, res: Response) => {
   const admin = await AuthService.platformMe(req.platformUser!.id);
   sendResponse(res, { message: "Profile", data: admin });
@@ -112,4 +146,8 @@ export const AuthController = {
   platformRefreshToken,
   platformLogout,
   platformMe,
+  twoFactorSetup,
+  twoFactorEnable,
+  twoFactorDisable,
+  platformChangePassword,
 };

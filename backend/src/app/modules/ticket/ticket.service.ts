@@ -21,8 +21,15 @@ export const createTicketSchema = z.object({
   assignedTo: objectId.optional(),
 });
 
-export const updateTicketSchema = createTicketSchema
-  .omit({ customer: true, assignedTo: true, source: true })
+// Built without .default(): zod keeps defaults inside .partial(), which would reset
+// category/priority whenever only the subject is edited.
+export const updateTicketSchema = z
+  .object({
+    category: z.enum(TICKET_CATEGORIES),
+    subject: z.string().trim().min(3).max(200),
+    description: optionalText(2000),
+    priority: z.enum(TICKET_PRIORITIES),
+  })
   .partial()
   .refine((d) => Object.keys(d).length > 0, "Nothing to update");
 

@@ -56,6 +56,8 @@ export const changePasswordSchema = z
 export const platformLoginSchema = z.object({
   email: z.email().trim().toLowerCase(),
   password: z.string().min(1),
+  /** required when 2FA is on */
+  totp: z.string().trim().regex(/^\d{6}$/).optional(),
 });
 
 export type SignupInput = z.infer<typeof signupSchema>;

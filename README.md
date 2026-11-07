@@ -185,6 +185,14 @@ Also in Phase 3: `POST /auth/forgot-password` · `/auth/reset-password` (SMS OTP
 `POST /billing/coupon` (preview), `GET/POST/PATCH /admin/coupons`. Public pages: `/pricing`, `/terms`, `/privacy`,
 `/refund-policy`, `/contact` — set `NEXT_PUBLIC_LEGAL_NAME`, `NEXT_PUBLIC_SUPPORT_*`, `NEXT_PUBLIC_OFFICE_ADDRESS` in `frontend/.env.local`.
 
+### Phase 4 — super admin
+
+`/admin` panel: metrics, ISPs (suspend/activate, extend trial, assign plan, SMS credits, **log in as owner**), plans, coupons,
+announcements, gateways, payments, audit log, platform admins, account (2FA). API under `/api/v1/admin/*`
+(`metrics`, `companies`, `companies/:id/{status,extend-trial,assign-plan,impersonate,sms-credits}`, `plans`, `announcements`,
+`platform-users`, `audit-logs`) and `/api/v1/auth/admin/{2fa/setup,2fa/enable,2fa/disable,change-password}`.
+Write actions need `super_admin`; `finance`/`support` can read. Turn on 2FA for every admin.
+
 Response shape: `{ success, message, meta?, data }`; errors: `{ success: false, message, errors?: [{ path, message }] }`.
 
 ## Architecture notes

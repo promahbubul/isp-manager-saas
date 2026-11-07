@@ -16,12 +16,15 @@ import { getPlatformSettings } from "../billing/billing.model";
 import { reviewManual } from "../onlinePayment/onlinePayment.service";
 import { IPaymentAttempt, PaymentAttempt } from "../onlinePayment/paymentAttempt.model";
 import { listGatewaySettings, updateGatewaySchema, updateGatewaySettings } from "../paymentGateway/gatewayConfig.service";
+import platformRoutes from "./admin.platform.routes";
+import { platformAudit } from "./platformAudit";
 
 /**
  * Platform (super admin) API. Phase 4 adds tenant management, plans, etc.
  */
 const router = Router();
 router.use(platformAuth("super_admin", "finance"));
+router.use(platformRoutes);
 
 const creditSchema = z.object({
   /** positive = add, negative = deduct */
@@ -31,7 +34,7 @@ const creditSchema = z.object({
   note: optionalText(300),
 });
 
-router.post("/companies/:id/sms-credits", validateBody(creditSchema), async (req: Request, res: Response) => {
+router.post("/companies/:id/sms-credits", validateBody(creditSchema), platformAudit("tenant.sms_credits", "company", true), async (req: Request, res: Response) => {
   const id = String(req.params.id);
   if (!isValidObjectId(id)) throw new AppError(400, "Invalid company id");
   const { credits, type, amount, note } = req.body as z.infer<typeof creditSchema>;
@@ -59,7 +62,7 @@ router.get("/gateways", async (_req: Request, res: Response) => {
   sendResponse(res, { message: "Platform payment gateways", data: { gateways, webhookBase: `${config.apiPublicUrl}/api/v1/pg/stripe/webhook/platform` } });
 });
 
-router.put("/gateways/:gateway", platformAuth("super_admin"), validateBody(updateGatewaySchema), async (req: Request, res: Response) => {
+router.put("/gateways/:gateway", platformAuth("super_admin"), validateBody(updateGatewaySchema), platformAudit("gateway.update", "gateway"), async (req: Request, res: Response) => {
   const data = await updateGatewaySettings(null, String(req.params.gateway), req.body);
   sendResponse(res, { message: "Payment gateway saved", data });
 });
@@ -77,7 +80,7 @@ router.get("/payments", async (req: Request, res: Response) => {
 
 const reviewSchema = z.object({ approve: z.boolean(), reason: optionalText(300) });
 
-router.post("/payments/:id/review", validateBody(reviewSchema), async (req: Request, res: Response) => {
+router.post("/payments/:id/review", validateBody(reviewSchema), platformAudit("payment.review", "payment"), async (req: Request, res: Response) => {
   const data = await reviewManual(String(req.params.id), req.body.approve, req.platformUser!.id, req.body.reason);
   sendResponse(res, { message: req.body.approve ? "Payment approved" : "Payment rejected", data });
 });
@@ -88,7 +91,7 @@ router.get("/coupons", async (_req: Request, res: Response) => {
   sendResponse(res, { message: "Coupons", data: await Coupon.find().sort("-createdAt").populate("plans", "name") });
 });
 
-router.post("/coupons", platformAuth("super_admin"), validateBody(couponSchema), async (req: Request, res: Response) => {
+router.post("/coupons", platformAuth("super_admin"), validateBody(couponSchema), platformAudit("coupon.create", "coupon"), async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 201, message: "Coupon created", data: await Coupon.create(req.body) });
 });
 
@@ -116,7 +119,7 @@ router.get("/settings", async (_req: Request, res: Response) => {
   sendResponse(res, { message: "Platform settings", data: await getPlatformSettings() });
 });
 
-router.patch("/settings", platformAuth("super_admin"), validateBody(platformSettingSchema), async (req: Request, res: Response) => {
+router.patch("/settings", platformAuth("super_admin"), validateBody(platformSettingSchema), platformAudit("platform.settings", "settings"), async (req: Request, res: Response) => {
   const s = await getPlatformSettings();
   s.set(req.body);
   await s.save();

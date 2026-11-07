@@ -5,6 +5,8 @@ import AppError from "../../errors/AppError";
 import { addDays } from "../../utils/duration";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../utils/jwt";
 import { normalizeBdPhone } from "../../utils/phone";
+import { decrypt, encrypt } from "../../utils/encryption";
+import { generateTotpSecret, otpauthUrl, verifyTotp } from "../../utils/totp";
 import { Company, CompanyDoc } from "../company/company.model";
 import { Plan } from "../plan/plan.model";
 import { PlatformUser, PlatformUserDoc } from "../platformUser/platformUser.model";
@@ -163,7 +165,29 @@ async function refresh(token: string | undefined) {
   if (!user || !user.isActive || user.tokenVersion !== payload.tv) {
     throw new AppError(401, "Session expired. Please log in again.");
   }
+  // Impersonation sessions keep their short-lived refresh token (no rotation, no extension).
+  if (payload.imp) {
+    return {
+      accessToken: signAccessToken({ sub: user.id, scope: "tenant", role: user.role, company: String(user.company), imp: payload.imp }),
+      refreshToken: token,
+    };
+  }
   return issueTenantTokens(user);
+}
+
+/** Super admin "log in as" the ISP owner for support. 1-hour session, marked in every activity log. */
+async function impersonate(companyId: string, platformUserId: string) {
+  const company = await Company.findById(companyId);
+  if (!company) throw new AppError(404, "Company not found");
+  const owner = await User.findOne({ _id: company.owner, company: company._id });
+  if (!owner || !owner.isActive) throw new AppError(400, "This company has no active owner account");
+  return {
+    company,
+    tokens: {
+      accessToken: signAccessToken({ sub: owner.id, scope: "tenant", role: owner.role, company: company.id, imp: platformUserId }),
+      refreshToken: signRefreshToken({ sub: owner.id, scope: "tenant", tv: owner.tokenVersion, imp: platformUserId }, "1h"),
+    },
+  };
 }
 
 async function me(userId: string) {
@@ -196,10 +220,16 @@ async function logoutAll(userId: string) {
 
 /* ───────────────────────── Platform ───────────────────────── */
 
-async function platformLogin({ email, password }: PlatformLoginInput) {
-  const admin = await PlatformUser.findOne({ email }).select("+password");
+async function platformLogin({ email, password, totp }: PlatformLoginInput) {
+  const admin = await PlatformUser.findOne({ email }).select("+password +twoFactor.secret");
   if (!admin || !(await admin.comparePassword(password))) throw new AppError(401, "Invalid credentials");
   if (!admin.isActive) throw new AppError(403, "Your account has been deactivated");
+  if (admin.twoFactor?.enabled) {
+    if (!totp) throw new AppError(401, "Enter the 6-digit code from your authenticator app", { needs2fa: true });
+    if (!admin.twoFactor.secret || !verifyTotp(decrypt(admin.twoFactor.secret), totp)) {
+      throw new AppError(401, "Invalid authenticator code", { needs2fa: true });
+    }
+  }
   admin.lastLogin = new Date();
   await admin.save();
   return { admin: admin.toJSON(), tokens: issuePlatformTokens(admin) };
@@ -221,6 +251,43 @@ async function platformRefresh(token: string | undefined) {
   return issuePlatformTokens(admin);
 }
 
+/* ── Platform 2FA (TOTP) ── */
+
+async function twoFactorSetup(id: string) {
+  const admin = await PlatformUser.findById(id).orFail(new AppError(404, "Admin not found"));
+  if (admin.twoFactor?.enabled) throw new AppError(400, "Two-factor authentication is already on");
+  const secret = generateTotpSecret();
+  admin.set("twoFactor.pendingSecret", encrypt(secret));
+  await admin.save();
+  return { secret, otpauthUrl: otpauthUrl(secret, admin.email, "ISP Manager Admin") };
+}
+
+async function twoFactorEnable(id: string, code: string) {
+  const admin = await PlatformUser.findById(id).select("+twoFactor.pendingSecret").orFail(new AppError(404, "Admin not found"));
+  const pending = admin.twoFactor?.pendingSecret;
+  if (!pending) throw new AppError(400, "Start the setup first");
+  if (!verifyTotp(decrypt(pending), code)) throw new AppError(400, "Invalid code — check the time on your phone");
+  admin.set({ "twoFactor.enabled": true, "twoFactor.secret": pending, "twoFactor.pendingSecret": undefined });
+  await admin.save();
+}
+
+async function twoFactorDisable(id: string, password: string, code: string) {
+  const admin = await PlatformUser.findById(id).select("+password +twoFactor.secret").orFail(new AppError(404, "Admin not found"));
+  if (!(await admin.comparePassword(password))) throw new AppError(400, "Password is incorrect");
+  if (!admin.twoFactor?.secret || !verifyTotp(decrypt(admin.twoFactor.secret), code)) throw new AppError(400, "Invalid authenticator code");
+  admin.set({ "twoFactor.enabled": false, "twoFactor.secret": undefined });
+  await admin.save();
+}
+
+async function platformChangePassword(id: string, currentPassword: string, newPassword: string) {
+  const admin = await PlatformUser.findById(id).select("+password").orFail(new AppError(404, "Admin not found"));
+  if (!(await admin.comparePassword(currentPassword))) throw new AppError(400, "Current password is incorrect");
+  admin.password = newPassword;
+  admin.tokenVersion += 1;
+  await admin.save();
+  return issuePlatformTokens(admin);
+}
+
 async function platformMe(id: string) {
   const admin = await PlatformUser.findById(id);
   if (!admin) throw new AppError(404, "Admin not found");
@@ -237,4 +304,9 @@ export const AuthService = {
   platformLogin,
   platformRefresh,
   platformMe,
+  impersonate,
+  twoFactorSetup,
+  twoFactorEnable,
+  twoFactorDisable,
+  platformChangePassword,
 };

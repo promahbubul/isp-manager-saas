@@ -60,3 +60,12 @@ describe("tickets", () => {
     expect((await api().patch(`/api/v1/tickets/${a.body.data._id}/assign`).set(t1.auth).send({ assignedTo: t1.id })).status).toBe(403);
   });
 });
+
+describe("ticket edit", () => {
+  it("editing the subject keeps category and priority", async () => {
+    const ctx = await setupIsp();
+    const t = await api().post("/api/v1/tickets").set(ctx.auth).send({ subject: "Slow at night", category: "slow_speed", priority: "high" });
+    const upd = await api().patch(`/api/v1/tickets/${t.body.data._id}`).set(ctx.auth).send({ subject: "Slow every night" });
+    expect(upd.body.data).toMatchObject({ subject: "Slow every night", category: "slow_speed", priority: "high" });
+  });
+});

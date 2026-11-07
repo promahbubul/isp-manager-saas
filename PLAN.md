@@ -1410,11 +1410,17 @@ main → deploy staging (auto) → production (manual approve)
 - [ ] Nagad direct API (এখন SSLCommerz-এর মাধ্যমে Nagad চলে)
 
 ### Phase 4 — Super Admin (সপ্তাহ ১৩–১৪)
-- [ ] Super admin dashboard (MRR, tenants)
-- [ ] Tenant management, impersonate, suspend
-- [ ] Plan/coupon/SMS credit management
-- [ ] Platform support ticket, announcement
-- [ ] Audit log, system health, 2FA
+- [x] Super admin dashboard (MRR/ARR, tenant status, revenue 30 দিন, end customers, recent signups)
+- [x] Tenant management: list/search, detail, suspend/activate, trial বাড়ানো, plan assign (offline/contract), SMS credit
+- [x] Impersonate (owner হিসেবে ১ ঘণ্টা, প্রতিটা কাজ "[by platform admin]" চিহ্নিত, password/logout-all বন্ধ)
+- [x] Plan management (create/edit) — ⚠️ PATCH-এ default reset হওয়ার bug ধরা ও ঠিক করা হয়েছে (plan, announcement, ticket)
+- [x] Announcements (plan অনুযায়ী target, ISP dashboard-এ banner)
+- [x] Platform audit log, platform admin users (role), 2FA (TOTP, RFC 6238 test vector সহ), admin password change
+- [x] Tests: মোট ১০৮টি
+- [ ] Platform support ticket (ISP → platform)
+- [ ] System health page (queue/router stats)
+- [ ] Plan feature-flag enforcement (এখন শুধু limit enforce হয়)
+- [ ] Tenant archive/delete + data export
 
 **🚀 Milestone: Public Launch (v1.0)**
 

@@ -11,6 +11,8 @@ declare global {
         company: string;
         permissions: Permission[];
         zones: string[];
+        /** set while a super admin is impersonating */
+        impersonatedBy?: string;
       };
       company?: CompanyDoc;
       platformUser?: { id: string; role: PlatformRole };

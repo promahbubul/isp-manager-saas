@@ -15,6 +15,7 @@ import reportRoutes from "../modules/report/report.routes";
 import smsRoutes from "../modules/sms/sms.routes";
 import ticketRoutes from "../modules/ticket/ticket.routes";
 import adminRoutes from "../modules/admin/admin.routes";
+import announcementRoutes from "../modules/announcement/announcement.routes";
 import billingRoutes from "../modules/billing/billing.routes";
 import pgRoutes from "../modules/onlinePayment/pg.routes";
 import { publicPayRoutes, tenantGatewayRoutes, tenantOnlinePaymentRoutes } from "../modules/onlinePayment/onlinePayment.routes";
@@ -41,6 +42,7 @@ const moduleRoutes: { path: string; route: Router }[] = [
   { path: "/tickets", route: ticketRoutes },
   { path: "/reports", route: reportRoutes },
   { path: "/notifications", route: notificationRoutes },
+  { path: "/announcements", route: announcementRoutes },
   { path: "/activity-logs", route: activityLogRoutes },
   { path: "/admin", route: adminRoutes },
 ];
