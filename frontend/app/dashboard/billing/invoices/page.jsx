@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -39,7 +39,7 @@ export default function InvoicesPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty="No invoices. Set a customer's billing type to Postpaid to start."
@@ -65,7 +65,6 @@ export default function InvoicesPage() {
               },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

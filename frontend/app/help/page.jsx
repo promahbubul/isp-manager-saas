@@ -1,6 +1,7 @@
+import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { fetchList } from "@/components/marketing/Article";
-import { SitePage } from "@/components/marketing/SiteLayout";
+import { PageHero, SitePage } from "@/components/marketing/SiteLayout";
 
 export const metadata = { title: "Help Center", description: "How to set up and use ISP Manager: routers, customers, billing, SMS and payments." };
 
@@ -13,21 +14,29 @@ export default async function HelpPage() {
   }, {});
   return (
     <SitePage>
-      <section className="mx-auto max-w-5xl px-6 py-16">
-        <h1 className="text-3xl font-extrabold text-zinc-900">Help Center</h1>
-        <p className="mt-2 text-zinc-600">
-          Step-by-step guides. Can&apos;t find it? <Link href="/faq" className="text-primary-700 hover:underline">See the FAQ</Link> or{" "}
-          <Link href="/contact" className="text-primary-700 hover:underline">contact us</Link>. Logged-in ISPs can also open a request under Help &amp; Support.
-        </p>
-        {articles.length === 0 && <p className="mt-10 text-zinc-500">Articles are coming soon.</p>}
-        <div className="mt-10 grid gap-8 sm:grid-cols-2">
+      <PageHero eyebrow="Help Center" title="How can we help?">
+        Step-by-step guides. Can&apos;t find it?{" "}
+        <Link href="/faq" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          See the FAQ
+        </Link>{" "}
+        or{" "}
+        <Link href="/contact" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          contact us
+        </Link>
+        .
+      </PageHero>
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+        {articles.length === 0 && <p className="text-muted">Articles are coming soon.</p>}
+        <div className="grid gap-4 sm:grid-cols-2">
           {Object.entries(groups).map(([cat, list]) => (
-            <div key={cat}>
-              <h2 className="text-lg font-bold text-zinc-900">{cat}</h2>
-              <ul className="mt-3 space-y-2">
+            <div key={cat} className="rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-card)]">
+              <h2 className="flex items-center gap-2 font-semibold text-ink">
+                <BookOpen className="size-4 text-primary-600 dark:text-primary-400" /> {cat}
+              </h2>
+              <ul className="mt-4 space-y-2.5 text-sm">
                 {list.map((a) => (
                   <li key={a._id}>
-                    <Link href={`/help/${a.slug}`} className="text-primary-700 hover:underline">
+                    <Link href={`/help/${a.slug}`} className="text-muted transition hover:text-primary-600">
                       {a.title}
                     </Link>
                   </li>
@@ -36,6 +45,7 @@ export default async function HelpPage() {
             </div>
           ))}
         </div>
+        <p className="mt-10 text-sm text-muted">Logged-in ISPs can also open a request under Help &amp; Support.</p>
       </section>
     </SitePage>
   );

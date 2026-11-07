@@ -201,7 +201,7 @@ Router-এ public IP না থাকলে VPN লাগবে (WireGuard — P
 
 ## ১০. চালুর পর checklist
 
-- [ ] `https://app.yourdomain.com/admin/login` → super admin login → password বদলাও
+- [ ] `https://app.yourdomain.com/login` → super admin login (সব role একই login page) → password বদলাও
 - [ ] `/admin/gateways` → অন্তত একটা method চালু (প্রথমে **Sandbox**), একটা test payment
 - [ ] Gateway merchant panel-এ IPN / webhook URL দাও (README → "Callback URLs")
 - [ ] Forgot password দিয়ে SMS আসছে কিনা দেখো

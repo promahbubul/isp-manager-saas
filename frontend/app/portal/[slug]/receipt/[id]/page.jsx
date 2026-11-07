@@ -36,7 +36,7 @@ export default function PortalReceiptPage() {
           Print / Save PDF
         </Button>
       </div>
-      <div className="rounded-lg border border-zinc-300 bg-white p-6">
+      <div className="rounded-lg border border-zinc-300 bg-surface p-6">
         <div className="text-center">
           <h1 className="text-xl font-extrabold">{r.company?.name}</h1>
           <p className="text-xs text-zinc-500">

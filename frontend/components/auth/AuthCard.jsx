@@ -1,5 +1,6 @@
 import { CheckCircle2, Wifi } from "lucide-react";
 import Link from "next/link";
+import ThemeToggle from "@/components/shell/ThemeToggle";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "ISP Manager";
 
@@ -31,7 +32,8 @@ export default function AuthCard({ title, subtitle, children, footer }) {
         <p className="relative text-sm text-primary-200/70">© {new Date().getFullYear()} {APP_NAME}</p>
       </div>
 
-      <div className="flex items-center justify-center px-4 py-10 sm:px-6">
+      <div className="relative flex items-center justify-center px-4 py-10 sm:px-6">
+        <ThemeToggle className="absolute right-4 top-4" />
         <div className="w-full max-w-md">
           <Link href="/" className="mb-8 flex items-center justify-center gap-2 text-lg font-semibold text-ink lg:hidden">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary-600 text-white">

@@ -227,7 +227,7 @@ Type 1 for WireGuard (RouterOS 7, recommended) or 2 for SSTP (RouterOS 6).`, "1"
       </Modal>
       <Modal open={Boolean(vpnScript)} onClose={() => setVpnScript(null)} title="Router setup script" size="lg">
         <p className="mb-2 text-sm text-zinc-600">Open Winbox → New Terminal on the router and paste this.</p>
-        <pre className="max-h-80 overflow-auto rounded bg-zinc-900 p-3 text-xs text-zinc-100">{vpnScript}</pre>
+        <pre className="max-h-80 overflow-auto rounded bg-[#18181b] p-3 text-xs text-[#e4e4e7] ring-1 ring-line">{vpnScript}</pre>
         <Button className="mt-3" variant="secondary" onClick={() => navigator.clipboard.writeText(vpnScript ?? "")}>
           Copy script
         </Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminMutation } from "@/lib/adminHooks";
 import { usePaged } from "@/lib/usePaged";
@@ -44,7 +44,7 @@ export default function AdminPaymentsPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             columns={[
@@ -90,7 +90,6 @@ export default function AdminPaymentsPage() {
               },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

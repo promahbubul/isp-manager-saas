@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ErrorBox, Loading, PageHeader, Pagination, Select, StatusBadge, Table } from "@/components/ui";
+import { ErrorBox, Loading, PageHeader, Select, StatusBadge, Table } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 
 import { usePaged } from "@/lib/usePaged";
@@ -28,7 +28,7 @@ export default function SmsHistoryPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             columns={[
@@ -37,10 +37,9 @@ export default function SmsHistoryPage() {
               { key: "event", header: "Type", render: (l) => l.event.replace("_", " ") },
               { key: "message", header: "Message", className: "max-w-md whitespace-normal", render: (l) => <span className="line-clamp-2">{l.message}</span> },
               { key: "segments", header: "Credits" },
-              { key: "status", header: "Status", render: (l) => <span title={l.error}><StatusBadge status={l.status === "sent" ? "success" : l.status} /></span> },
+              { key: "status", header: "Status", render: (l) => <span title={l.error}><StatusBadge status={l.status} /></span> },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, InfoList, Loading, PageHeader, Pagination, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, InfoList, Loading, PageHeader, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -76,7 +76,7 @@ export default function ResellerDetailPage() {
           <Loading />
         ) : (
           <>
-            <Table
+            <Table pager={ledger.pager}
               rows={ledger.data?.data ?? []}
               empty="No transactions."
               columns={[
@@ -89,7 +89,6 @@ export default function ResellerDetailPage() {
                 { key: "by", header: "By", render: (t) => t.by?.name },
               ]}
             />
-            <Pagination {...ledger.pager} />
           </>
         )}
       </Card>

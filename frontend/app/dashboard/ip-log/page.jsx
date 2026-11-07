@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Input, Loading, PageHeader, Pagination, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Input, Loading, PageHeader, Table } from "@/components/ui";
 import { downloadFile, getErrorMessage } from "@/lib/api";
 import { formatDateTime, toDateInput } from "@/lib/format";
 
@@ -51,7 +51,7 @@ export default function IpLogPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty="No sessions in this period."
@@ -65,7 +65,6 @@ export default function IpLogPage() {
               { key: "endedAt", header: "Logout", render: (s) => (s.endedAt ? formatDateTime(s.endedAt) : <Badge color="green">online</Badge>) },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, ErrorBox, Loading, PageHeader, Pagination, Select, StatusBadge, Table } from "@/components/ui";
+import { Button, ErrorBox, Loading, PageHeader, Select, StatusBadge, Table } from "@/components/ui";
 import QuickForm from "@/components/common/QuickForm";
 import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { daysUntil, formatDate, taka } from "@/lib/format";
@@ -123,7 +123,7 @@ function CustomersList() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             rows={data?.data ?? []}
             onRowClick={(c) => router.push(`/dashboard/customers/${c._id}`)}
             columns={[
@@ -167,7 +167,6 @@ function CustomersList() {
               },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

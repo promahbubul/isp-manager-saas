@@ -3,7 +3,7 @@
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Pagination, Select, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Select, Stat, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka, toDateInput } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -113,7 +113,7 @@ function Entries({ range }) {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data?.entries ?? []}
             empty="Nothing in this period."
@@ -139,7 +139,6 @@ function Entries({ range }) {
               },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
       {adding && (
@@ -169,7 +168,7 @@ export default function AccountsPage() {
     <div>
       <PageHeader title="Accounts" subtitle="Expenses, other income and profit & loss" />
       <div className="mb-6 flex flex-wrap items-end gap-3">
-        <div className="flex rounded-md border border-zinc-300 bg-white p-0.5">
+        <div className="flex rounded-md border border-zinc-300 bg-surface p-0.5">
           {[
             ["pnl", "Profit & loss"],
             ["entries", "Income & expenses"],

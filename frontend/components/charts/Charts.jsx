@@ -6,8 +6,8 @@ import { taka } from "@/lib/format";
 const PRIMARY = "#4f46e5";
 const GREEN = "#10b981";
 const ROSE = "#f43f5e";
-const GRID = "#e4e4e7";
-const TICK = { fontSize: 11, fill: "#71717a" };
+const GRID = "var(--color-line)";
+const TICK = { fontSize: 11, fill: "var(--color-muted)" };
 const compact = (n) => (n >= 1e5 ? `${(n / 1e5).toFixed(1)}L` : n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(n));
 
 function TooltipBox({ active, payload, label }) {
@@ -58,7 +58,7 @@ export function IncomeExpenseChart({ data }) {
           <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="month" tick={TICK} tickLine={false} axisLine={false} />
           <YAxis tick={TICK} tickLine={false} axisLine={false} tickFormatter={compact} width={48} />
-          <Tooltip content={<TooltipBox />} cursor={{ fill: "#f4f4f5" }} />
+          <Tooltip content={<TooltipBox />} cursor={{ fill: "var(--color-subtle)" }} />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="income" name="Income" fill={GREEN} radius={[4, 4, 0, 0]} maxBarSize={28} />
           <Bar dataKey="expense" name="Expense" fill={ROSE} radius={[4, 4, 0, 0]} maxBarSize={28} />

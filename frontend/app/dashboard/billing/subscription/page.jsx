@@ -159,7 +159,7 @@ function SubscriptionContent() {
 
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Plans</h3>
-        <div className="flex rounded-md border border-zinc-300 bg-white p-0.5">
+        <div className="flex rounded-md border border-zinc-300 bg-surface p-0.5">
           {["monthly", "yearly"].map((i) => (
             <button key={i} type="button" onClick={() => setBillingInterval(i)} className={`cursor-pointer rounded px-3 py-1 text-sm capitalize ${billingInterval === i ? "bg-primary-600 text-white" : "text-zinc-600"}`}>
               {i} {i === "yearly" && <span className="text-xs">(2 months free)</span>}
@@ -172,7 +172,7 @@ function SubscriptionContent() {
           const price = p.priceBDT[billingInterval];
           const isCurrent = current?._id === p._id && subscription?.status === "active";
           return (
-            <div key={p._id} className={`flex flex-col rounded-lg border bg-white p-5 ${isCurrent ? "border-primary-600 ring-2 ring-primary-200" : "border-zinc-200"}`}>
+            <div key={p._id} className={`flex flex-col rounded-lg border bg-surface p-5 ${isCurrent ? "border-primary-600 ring-2 ring-primary-200" : "border-zinc-200"}`}>
               <div className="flex items-center justify-between">
                 <h4 className="text-lg font-bold">{p.name}</h4>
                 {isCurrent && <Badge color="purple">current</Badge>}
@@ -210,7 +210,7 @@ function SubscriptionContent() {
             { key: "amount", header: "Amount", render: (i) => money(i.amount, i.currency) },
             { key: "gateway", header: "Method" },
             { key: "period", header: "Period", render: (i) => (i.periodEnd ? `${formatDate(i.periodStart)} – ${formatDate(i.periodEnd)}` : "—") },
-            { key: "status", header: "Status", render: (i) => <StatusBadge status={i.status === "paid" ? "success" : i.status === "void" ? "failed" : "pending"} /> },
+            { key: "status", header: "Status", render: (i) => <StatusBadge status={i.status === "open" ? "unpaid" : i.status} /> },
           ]}
         />
       </Card>

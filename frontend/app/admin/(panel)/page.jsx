@@ -45,7 +45,7 @@ export default function AdminHome() {
             columns={[
               { key: "name", header: "ISP", render: (c) => <Link className="text-primary-700 hover:underline" href={`/admin/companies/${c._id}`}>{c.name}</Link> },
               { key: "slug", header: "Subdomain" },
-              { key: "status", header: "Status", render: (c) => <StatusBadge status={c.status === "trial" ? "pending" : c.status} /> },
+              { key: "status", header: "Status", render: (c) => <StatusBadge status={c.status} /> },
               { key: "customers", header: "Customers", render: (c) => c.usage?.customers ?? 0 },
               { key: "createdAt", header: "Joined", render: (c) => formatDate(c.createdAt) },
             ]}

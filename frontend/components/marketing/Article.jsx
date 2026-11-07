@@ -70,11 +70,11 @@ export async function ArticlePage({ slug, back }) {
   if (!p) notFound();
   return (
     <SitePage>
-      <article className="mx-auto max-w-3xl px-6 py-16">
-        <Link href={back.href} className="text-sm text-primary-700 hover:underline">
+      <article className="mx-auto max-w-6xl px-4 py-14 sm:px-6 [&>*]:max-w-3xl">
+        <Link href={back.href} className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
           ← {back.label}
         </Link>
-        <h1 className="mt-4 text-3xl font-extrabold text-zinc-900">{p.title}</h1>
+        <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{p.title}</h1>
         {p.publishedAt && <p className="mt-2 text-sm text-zinc-500">{new Date(p.publishedAt).toLocaleDateString("en-GB")}</p>}
         <div className="mt-8">
           <ArticleBody body={p.body} />

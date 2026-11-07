@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Card, ErrorBox, Input, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
+import { Card, ErrorBox, Input, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { formatDate, formatDateTime, taka, toDateInput } from "@/lib/format";
 
 import { usePaged } from "@/lib/usePaged";
@@ -34,7 +34,7 @@ export default function PaymentsPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             rows={data?.data ?? []}
             columns={[
               {
@@ -67,7 +67,6 @@ export default function PaymentsPage() {
               { key: "receivedBy", header: "Collected by", render: (p) => p.receivedBy?.name },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

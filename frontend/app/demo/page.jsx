@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SitePage } from "@/components/marketing/SiteLayout";
+import { PageHero, SitePage } from "@/components/marketing/SiteLayout";
 import { Button, ErrorBox, Input, Textarea } from "@/components/ui";
 import { api, getErrorMessage } from "@/lib/api";
 
@@ -28,13 +28,15 @@ export default function DemoPage() {
 
   return (
     <SitePage>
-      <section className="mx-auto max-w-2xl px-6 py-16">
-        <h1 className="text-3xl font-extrabold text-zinc-900">Book a free demo</h1>
-        <p className="mt-2 text-zinc-600">We will call you, show the software with your own routers in mind and help you move your customers.</p>
+      <PageHero eyebrow="Demo" title="Book a free demo">
+        We will call you, show the software with your own routers in mind and help you move your customers.
+      </PageHero>
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 [&>*]:max-w-2xl">
+        <div className="rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-card)] sm:p-8">
         {done ? (
-          <p className="mt-8 rounded-lg bg-emerald-50 p-4 font-medium text-emerald-900">{done}</p>
+          <p className="rounded-lg bg-emerald-50 p-4 font-medium text-emerald-900">{done}</p>
         ) : (
-          <form onSubmit={submit} className="mt-8 grid gap-4 sm:grid-cols-2">
+          <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
             <Input label="Your name" required value={f.name} onChange={set("name")} />
             <Input label="ISP / company name" required value={f.company} onChange={set("company")} />
             <Input label="Mobile" required placeholder="01XXXXXXXXX" value={f.phone} onChange={set("phone")} />
@@ -54,6 +56,7 @@ export default function DemoPage() {
             </div>
           </form>
         )}
+        </div>
       </section>
     </SitePage>
   );

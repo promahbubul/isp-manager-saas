@@ -36,7 +36,8 @@ are replica sets already. Put the connection string in `backend/.env` → `DB_UR
 cd backend
 pnpm install
 cp .env.example .env        # first time only — then set secrets (see below)
-pnpm seed                   # creates plans + super admin (SUPER_ADMIN_EMAIL / PASSWORD)
+pnpm seed                   # creates plans + super admin (SUPER_ADMIN_EMAIL / PASSWORD) + starter Help/Blog articles
+pnpm seed:demo-data company1   # (dev only) fills one ISP with sample customers, payments, tickets, expenses
 pnpm dev                    # http://localhost:5000/api/v1/health
 ```
 
@@ -278,7 +279,14 @@ Not built (need hardware or a separate project): mobile app, RADIUS, OLT, Nagad 
 
 - **Design system** in `frontend/app/globals.css` (`@theme` tokens: `primary-*` indigo, `canvas/surface/subtle/line/ink/muted`).
   Shared UI kit in `components/ui` (Button with variants, fields, Card, Badge, Stat, skeleton Loading, Radix Modal that is a
-  bottom sheet on phones, Table with sticky header + row numbers + `100dvh - top bar` height, Pagination).
+  bottom sheet on phones, Table built on TanStack Table v8 — sticky header, row numbers, `100dvh - top bar` height,
+  click-to-sort columns and rows-per-page on every table; pass `pager={list.pager}` from `usePaged()` for server lists).
+- **Light / dark / system theme** via next-themes (`.dark` token overrides in `globals.css`); the icon switch
+  `components/shell/ThemeToggle.jsx` is in the dashboard, admin, portal, auth pages and the marketing header.
+- **Marketing site**: real app screenshots (`public/screens/*-light|dark.png`, switched with the theme) in
+  `components/marketing/Screenshot.jsx`, scroll reveal + typing headline (`Motion.jsx`), per-plan colours
+  (`PlanCards.jsx`). One-click light/dark button (`components/shell/ThemeToggle.jsx`; follows the OS until clicked).
+- **One login page** `/login` for every role: ISP staff → `/dashboard`, platform staff → `/admin` (2FA step inline).
 - **App shell** `components/shell/AppShell.jsx`: sidebar on desktop, drawer on phones, sticky top bar, user menu — used by
   the ISP dashboard and the platform admin. Icons: lucide-react. Toasts: sonner. Charts: recharts.
 - **Cursor pagination**: every list returns `meta.nextCursor`; pass it as `?cursor=` (stable under inserts, fast on big

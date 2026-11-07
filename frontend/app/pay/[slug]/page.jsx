@@ -182,7 +182,7 @@ function ResultView({ result, company }) {
 function Shell({ company, children }) {
   return (
     <div className="flex min-h-screen items-start justify-center bg-zinc-100 px-4 py-10">
-      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg sm:p-8">
+      <div className="w-full max-w-lg rounded-xl bg-surface p-6 shadow-lg sm:p-8">
         {company && (
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-extrabold text-primary-700">{company.name}</h1>

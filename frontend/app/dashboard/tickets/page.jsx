@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import TicketForm, { CATEGORIES } from "@/components/ticket/TicketForm";
-import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, Pagination, Select, Stat, StatusBadge, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, Select, Stat, StatusBadge, Table } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import { useApi } from "@/lib/hooks";
 import { usePaged } from "@/lib/usePaged";
@@ -65,7 +65,7 @@ export default function TicketsPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             onRowClick={(t) => router.push(`/dashboard/tickets/${t._id}`)}
@@ -76,11 +76,10 @@ export default function TicketsPage() {
               { key: "category", header: "Category", render: (t) => categoryLabel[t.category] ?? t.category },
               { key: "priority", header: "Priority", render: (t) => <Badge color={PRIORITY_COLOR[t.priority]}>{t.priority}</Badge> },
               { key: "assignedTo", header: "Assigned", render: (t) => t.assignedTo?.name ?? <span className="text-zinc-400">—</span> },
-              { key: "status", header: "Status", render: (t) => <StatusBadge status={t.status === "solved" || t.status === "closed" ? "success" : t.status === "open" ? "failed" : "pending"} /> },
+              { key: "status", header: "Status", render: (t) => <StatusBadge status={t.status} /> },
               { key: "createdAt", header: "Created", render: (t) => formatDateTime(t.createdAt) },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
       <Modal open={creating} onClose={() => setCreating(false)} title="New ticket" size="lg">

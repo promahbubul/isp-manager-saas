@@ -3,7 +3,7 @@
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Pagination, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Stat, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka, toDateInput } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -108,7 +108,7 @@ export default function EmployeesPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             rows={data?.data ?? []}
             empty="No employees yet."
             onRowClick={can("employee.manage") ? (e) => setEditing(e) : undefined}
@@ -122,7 +122,6 @@ export default function EmployeesPage() {
               { key: "isActive", header: "", render: (e) => <Badge color={e.isActive ? "green" : "slate"}>{e.isActive ? "active" : "left"}</Badge> },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
       {can("employee.salary") && <SalarySheet />}

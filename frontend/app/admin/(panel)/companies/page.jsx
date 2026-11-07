@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { ErrorBox, Loading, PageHeader, Pagination, Select, StatusBadge, Table } from "@/components/ui";
+import { ErrorBox, Loading, PageHeader, Select, StatusBadge, Table } from "@/components/ui";
 
 import { usePaged } from "@/lib/usePaged";
 import { formatDate } from "@/lib/format";
@@ -30,7 +30,7 @@ function CompaniesList() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             rows={data?.data ?? []}
             onRowClick={(c) => router.push(`/admin/companies/${c._id}`)}
             columns={[
@@ -49,7 +49,6 @@ function CompaniesList() {
               { key: "createdAt", header: "Joined", render: (c) => formatDate(c.createdAt) },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

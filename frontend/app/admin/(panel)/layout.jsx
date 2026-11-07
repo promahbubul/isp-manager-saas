@@ -4,6 +4,7 @@ import { Bug, Building2, CreditCard, HeartPulse, KeyRound, Landmark, Layers, Lay
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/shell/AppShell";
 import UserMenu from "@/components/shell/UserMenu";
+import ThemeToggle from "@/components/shell/ThemeToggle";
 import { createContext, useContext, useEffect, useState } from "react";
 import { adminApi, refreshAdminToken, setAdminFailureHandler, setAdminToken } from "@/lib/adminApi";
 
@@ -48,20 +49,20 @@ export default function AdminPanelLayout({ children }) {
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
-    setAdminFailureHandler(() => router.replace("/admin/login"));
+    setAdminFailureHandler(() => router.replace("/login"));
     refreshAdminToken()
       .then(() => adminApi.get("/auth/admin/me"))
       .then((r) => {
         setAdmin(r.data.data);
         setStatus("ready");
       })
-      .catch(() => router.replace("/admin/login"));
+      .catch(() => router.replace("/login"));
   }, [router]);
 
   const logout = async () => {
     await adminApi.post("/auth/admin/logout").catch(() => undefined);
     setAdminToken(null);
-    router.replace("/admin/login");
+    router.replace("/login");
   };
 
   if (status !== "ready") {
@@ -75,7 +76,7 @@ export default function AdminPanelLayout({ children }) {
   const nav = NAV.map((sec) => ({ ...sec, items: sec.items.filter((n) => !n.superOnly || admin.role === "super_admin") })).filter((sec) => sec.items.length);
   const brand = (
     <>
-      <span className="flex size-8 items-center justify-center rounded-lg bg-zinc-900 text-white">
+      <span className="flex size-8 items-center justify-center rounded-lg bg-ink text-surface">
         <ShieldCheck className="size-4" />
       </span>
       <span className="min-w-0">
@@ -87,6 +88,7 @@ export default function AdminPanelLayout({ children }) {
   const topbar = (
     <>
       <div className="min-w-0 flex-1" />
+      <ThemeToggle />
       <UserMenu
         name={admin.name}
         subtitle={admin.role.replace("_", " ")}

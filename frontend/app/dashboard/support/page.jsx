@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PRIORITY_COLOR, SUPPORT_CATEGORIES, SUPPORT_PRIORITIES, SUPPORT_STATUS, supportCategoryLabel } from "@/components/support/supportMeta";
-import { Badge, Button, ErrorBox, Input, Loading, Modal, PageHeader, Pagination, Select, Table, Textarea } from "@/components/ui";
+import { Badge, Button, ErrorBox, Input, Loading, Modal, PageHeader, Select, Table, Textarea } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -62,7 +62,7 @@ export default function SupportPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty="No requests yet."
@@ -76,7 +76,6 @@ export default function SupportPage() {
               { key: "lastMessageAt", header: "Last update", render: (t) => formatDateTime(t.lastMessageAt) },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
       {creating && <NewTicket onClose={() => setCreating(false)} />}

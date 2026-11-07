@@ -31,7 +31,7 @@ export default function AppShell({ brand, nav, topbar, banners, footer, children
 
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 animate-fade-in bg-zinc-950/40 lg:hidden" />
+          <Dialog.Overlay className="fixed inset-0 z-40 animate-fade-in bg-black/50 lg:hidden" />
           <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] animate-slide-in-left bg-surface shadow-[var(--shadow-pop)] outline-none lg:hidden">
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
             <Dialog.Description className="sr-only">Main menu</Dialog.Description>

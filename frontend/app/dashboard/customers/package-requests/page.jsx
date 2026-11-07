@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -28,7 +28,7 @@ export default function PackageRequestsPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             rows={data?.data ?? []}
             empty="No requests."
             columns={[
@@ -58,7 +58,6 @@ export default function PackageRequestsPage() {
               },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

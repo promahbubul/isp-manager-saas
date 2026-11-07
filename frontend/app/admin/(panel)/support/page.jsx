@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PRIORITY_COLOR, SUPPORT_CATEGORIES, SUPPORT_STATUS, supportCategoryLabel } from "@/components/support/supportMeta";
-import { Badge, ErrorBox, Loading, PageHeader, Pagination, Select, Stat, Table } from "@/components/ui";
+import { Badge, ErrorBox, Loading, PageHeader, Select, Stat, Table } from "@/components/ui";
 
 import { usePaged } from "@/lib/usePaged";
 import { formatDateTime } from "@/lib/format";
@@ -35,7 +35,7 @@ export default function AdminSupportPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data?.tickets ?? []}
             empty="Nothing here."
@@ -50,7 +50,6 @@ export default function AdminSupportPage() {
               { key: "lastMessageAt", header: "Last message", render: (t) => formatDateTime(t.lastMessageAt) },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

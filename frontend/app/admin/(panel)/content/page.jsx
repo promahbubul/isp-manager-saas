@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Pagination, Select, Table, Textarea } from "@/components/ui";
+import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, Table, Textarea } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
 import { usePaged } from "@/lib/usePaged";
@@ -70,7 +70,7 @@ export default function ContentPage() {
             <Loading />
           ) : (
             <>
-              <Table
+              <Table pager={demos.pager}
                 rows={demos.data?.data?.requests ?? []}
                 empty="No requests yet."
                 columns={[
@@ -96,7 +96,6 @@ export default function ContentPage() {
                   },
                 ]}
               />
-              <Pagination {...demos.pager} />
             </>
           )}
         </Card>
@@ -106,7 +105,7 @@ export default function ContentPage() {
             <Loading />
           ) : (
             <>
-              <Table
+              <Table pager={posts.pager}
                 rows={posts.data?.data ?? []}
                 empty="No articles yet."
                 onRowClick={(p) => setEditing(p._id)}
@@ -127,7 +126,6 @@ export default function ContentPage() {
                   },
                 ]}
               />
-              <Pagination {...posts.pager} />
             </>
           )}
         </Card>

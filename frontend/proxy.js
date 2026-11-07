@@ -66,9 +66,13 @@ export async function proxy(request) {
   const { pathname, search } = request.nextUrl;
   const hasSession = request.cookies.has(REFRESH_COOKIE);
 
-  // Super admin panel has its own session cookie.
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !request.cookies.has(ADMIN_COOKIE)) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+  const hasAdminSession = request.cookies.has(ADMIN_COOKIE);
+
+  // Platform panel has its own session cookie; everyone logs in on /login.
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !hasAdminSession) {
+    const url = new URL("/login", request.url);
+    url.searchParams.set("next", pathname + search);
+    return NextResponse.redirect(url);
   }
 
   if (PROTECTED.some((p) => pathname.startsWith(p)) && !hasSession) {

@@ -1,29 +1,41 @@
-import { SitePage } from "@/components/marketing/SiteLayout";
+import { Building2, Clock, FileBadge, Mail, MapPin, Phone } from "lucide-react";
+import Link from "next/link";
+import { PageHero, SitePage } from "@/components/marketing/SiteLayout";
 import { site } from "@/lib/site";
 
 export const metadata = { title: "Contact" };
 
 export default function ContactPage() {
+  const items = [
+    [Building2, "Company", site.legalName],
+    [MapPin, "Office", site.address],
+    [Phone, "Phone", site.phone],
+    [Mail, "Email", site.email],
+    [FileBadge, "Trade licence", site.tradeLicense],
+    [Clock, "Support hours", "Saturday – Thursday, 10:00 – 19:00"],
+  ];
   return (
     <SitePage>
-      <section className="mx-auto max-w-3xl px-6 py-16">
-        <h1 className="text-3xl font-extrabold text-zinc-900">Contact us</h1>
-        <p className="mt-3 text-zinc-600">Sales, support, demo or billing questions — we are happy to help.</p>
-        <dl className="mt-8 grid gap-6 sm:grid-cols-2">
-          {[
-            ["Company", site.legalName],
-            ["Office", site.address],
-            ["Phone", site.phone],
-            ["Email", site.email],
-            ["Trade licence", site.tradeLicense],
-            ["Support hours", "Saturday – Thursday, 10:00 – 19:00"],
-          ].map(([k, v]) => (
-            <div key={k} className="rounded-lg border border-zinc-200 p-4">
-              <dt className="text-xs uppercase tracking-wide text-zinc-500">{k}</dt>
-              <dd className="mt-1 font-medium text-zinc-900">{v}</dd>
+      <PageHero eyebrow="Contact" title="We are happy to help">
+        Sales, support, demo or billing questions — reach us any way you like.
+      </PageHero>
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map(([Icon, k, v]) => (
+            <div key={k} className="rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+              <Icon className="size-5 text-primary-600 dark:text-primary-400" />
+              <dt className="mt-3 text-xs font-medium uppercase tracking-wide text-muted">{k}</dt>
+              <dd className="mt-1 font-medium text-ink">{v}</dd>
             </div>
           ))}
         </dl>
+        <p className="mt-10 text-muted">
+          Prefer a walkthrough?{" "}
+          <Link href="/demo" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
+            Book a free demo
+          </Link>
+          .
+        </p>
       </section>
     </SitePage>
   );

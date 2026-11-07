@@ -42,7 +42,7 @@ export default function ReceiptPage() {
         </Link>
       </div>
 
-      <div id="receipt" className="mx-auto max-w-md rounded-lg border border-zinc-300 bg-white p-6 text-zinc-900 print:border-0">
+      <div id="receipt" className="mx-auto max-w-md rounded-lg border border-zinc-300 bg-surface p-6 text-zinc-900 print:border-0">
         <div className="text-center">
           <h2 className="text-xl font-bold">{p.company?.name}</h2>
           {p.company?.address && <p className="text-sm">{p.company.address}</p>}

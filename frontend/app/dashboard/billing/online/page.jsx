@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -38,7 +38,7 @@ export default function OnlinePaymentsPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             empty={q.status === "pending_review" ? "Nothing waiting for verification." : "No payments."}
@@ -103,7 +103,6 @@ export default function OnlinePaymentsPage() {
               },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

@@ -15,7 +15,7 @@ export default function Modal({ open, onClose, title, description, children, foo
   return (
     <Dialog.Root open={Boolean(open)} onOpenChange={(v) => !v && onClose?.()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 animate-fade-in bg-zinc-950/40 backdrop-blur-[2px]" />
+        <Dialog.Overlay className="fixed inset-0 z-50 animate-fade-in bg-black/50 backdrop-blur-[2px]" />
         <Dialog.Content
           className={cn(
             "fixed z-50 flex max-h-[92dvh] w-full flex-col bg-surface shadow-[var(--shadow-pop)] outline-none",

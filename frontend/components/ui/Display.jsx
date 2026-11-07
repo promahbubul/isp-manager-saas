@@ -61,12 +61,27 @@ const STATUS_COLORS = {
   unknown: "slate",
   pending: "amber",
   free: "blue",
+  open: "red",
+  in_progress: "amber",
+  solved: "green",
+  closed: "slate",
+  trial: "blue",
+  paid: "green",
+  sent: "green",
+  delivered: "green",
+  void: "slate",
+  unpaid: "amber",
+  overdue: "red",
+  past_due: "red",
+  suspended: "red",
+  cancelled: "slate",
+  queued: "amber",
 };
 
 export function StatusBadge({ status }) {
   return (
     <Badge color={STATUS_COLORS[status] ?? "slate"} dot>
-      {String(status ?? "—").replace("_", " ")}
+      {String(status ?? "—").replaceAll("_", " ")}
     </Badge>
   );
 }

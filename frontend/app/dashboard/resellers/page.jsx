@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Pagination, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { taka } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -33,7 +33,7 @@ export default function ResellersPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             rows={data?.data ?? []}
             empty="No resellers yet."
             onRowClick={(r) => router.push(`/dashboard/resellers/${r._id}`)}
@@ -46,7 +46,6 @@ export default function ResellersPage() {
               { key: "isActive", header: "Status", render: (r) => <Badge color={r.isActive ? "green" : "slate"}>{r.isActive ? "active" : "inactive"}</Badge> },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
       {creating && (

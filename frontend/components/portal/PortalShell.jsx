@@ -1,5 +1,7 @@
 "use client";
 
+import ThemeToggle from "@/components/shell/ThemeToggle";
+
 
 /** Mobile-first frame for the customer portal, in the ISP's own name and colour. */
 export default function PortalShell({ isp, children, actions, wide = false }) {
@@ -10,7 +12,7 @@ export default function PortalShell({ isp, children, actions, wide = false }) {
         <div className={`mx-auto flex items-center gap-3 px-4 py-4 ${wide ? "max-w-3xl" : "max-w-lg"}`}>
           {isp?.logo && (
             // eslint-disable-next-line @next/next/no-img-element -- ISP logo is an arbitrary external URL
-            <img src={isp.logo} alt="" className="h-9 w-9 rounded bg-white object-contain p-0.5" />
+            <img src={isp.logo} alt="" className="h-9 w-9 rounded bg-surface object-contain p-0.5" />
           )}
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-extrabold">{isp?.name ?? "…"}</h1>
@@ -20,6 +22,7 @@ export default function PortalShell({ isp, children, actions, wide = false }) {
               </a>
             )}
           </div>
+          <ThemeToggle className="text-white/90 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10" />
           {actions}
         </div>
       </header>

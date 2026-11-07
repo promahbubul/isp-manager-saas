@@ -1462,6 +1462,12 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Security: Next.js 16.4.5, nodemailer 10, transitive dependency patch — `pnpm audit` দুই দিকেই ০
 - [x] Bug fix: dark-mode OS-এ কালো background, Geist font আসলে load হচ্ছিল না, reseller dashboard-এ ০ customer, RADIUS secret edit-এ মুছে যাওয়া
 
+- [x] Light / Dark / System theme (next-themes) + সব জায়গায় icon switch
+- [x] সব table TanStack Table v8: column sort, প্রতি পেজে কতগুলো (10/25/50/100), server list-এ cursor pager table-এর ভিতরে
+- [x] Marketing website নতুন design (header + mobile menu, hero, features, how it works, pricing card, CTA, footer)
+- [x] সব role-এর জন্য একটাই login page (`/login`): ISP staff → /dashboard, platform staff → /admin (2FA সহ); `/admin/login` → `/login`
+- [x] Demo company/account মুছে প্রতিটি role-এর জন্য একটা করে account (password 123456)
+
 ### Feature list (§4) থেকে বাকি থাকা কাজ — শেষ
 - [x] Marketing: Blog, Help Center (super admin লেখে), FAQ, Demo request form
 - [x] Super admin: Email/SMTP setting + test, Error log (5xx group করা, ৩০ দিন), Refund record (SMS credit কাটে / invoice void)

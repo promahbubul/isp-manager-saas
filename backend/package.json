@@ -15,7 +15,10 @@
     "start:worker": "node dist/worker.js",
     "seed:prod": "node dist/scripts/seed.js",
     "db:indexes": "ts-node-dev --transpile-only src/scripts/syncIndexes.ts",
-    "db:indexes:prod": "node dist/scripts/syncIndexes.js"
+    "db:indexes:prod": "node dist/scripts/syncIndexes.js",
+    "seed:content": "ts-node-dev --transpile-only src/scripts/seedContent.ts",
+    "seed:content:prod": "node dist/scripts/seedContent.js",
+    "seed:demo-data": "ts-node-dev --transpile-only src/scripts/seedDemoData.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

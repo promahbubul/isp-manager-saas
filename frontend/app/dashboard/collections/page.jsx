@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Pagination, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Stat, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -73,7 +73,7 @@ export default function CollectionsPage() {
           <Loading />
         ) : (
           <>
-            <Table
+            <Table pager={handovers.pager}
               rows={handovers.data?.data ?? []}
               empty="No handovers."
               columns={[
@@ -101,7 +101,6 @@ export default function CollectionsPage() {
                 },
               ]}
             />
-            <Pagination {...handovers.pager} />
           </>
         )}
       </Card>

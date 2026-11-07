@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, ErrorBox, Loading, Modal, PageHeader, Pagination, Table } from "@/components/ui";
+import { Button, ErrorBox, Loading, Modal, PageHeader, Table } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
 import { usePaged } from "@/lib/usePaged";
@@ -23,7 +23,7 @@ export default function ErrorLogPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             rows={data?.data ?? []}
             empty="No server errors. 🎉"
             onRowClick={(e) => setOpen(e._id)}
@@ -35,7 +35,6 @@ export default function ErrorLogPage() {
               { key: "company", header: "ISP", render: (e) => e.company?.name ?? "—" },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
       <Modal open={Boolean(open)} onClose={() => setOpen(null)} title="Error details" size="lg">
@@ -50,7 +49,7 @@ export default function ErrorLogPage() {
               <p className="text-zinc-600">
                 {detail.data.data.method} {detail.data.data.path} · {detail.data.data.count}× · first {formatDateTime(detail.data.data.firstAt)}
               </p>
-              <pre className="max-h-80 overflow-auto rounded bg-zinc-900 p-3 text-xs text-zinc-100">{detail.data.data.stack}</pre>
+              <pre className="max-h-80 overflow-auto rounded bg-[#18181b] p-3 text-xs text-[#e4e4e7] ring-1 ring-line">{detail.data.data.stack}</pre>
               <Button variant="success" loading={fixed.isPending} onClick={() => fixed.mutate(open)}>
                 Mark fixed
               </Button>

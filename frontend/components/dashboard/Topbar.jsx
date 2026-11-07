@@ -6,6 +6,7 @@ import UserMenu from "@/components/shell/UserMenu";
 import { useAuth } from "@/providers/AuthProvider";
 import { AnnouncementBanners, ImpersonationBanner } from "./Banners";
 import NotificationBell from "./NotificationBell";
+import ThemeToggle from "@/components/shell/ThemeToggle";
 
 const daysLeft = (date) => Math.max(0, Math.ceil((new Date(date) - Date.now()) / 86_400_000));
 
@@ -44,6 +45,7 @@ export default function Topbar() {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-ink lg:hidden">{company?.name}</p>
       </div>
+      <ThemeToggle />
       <NotificationBell />
       <UserMenu
         name={user?.name}

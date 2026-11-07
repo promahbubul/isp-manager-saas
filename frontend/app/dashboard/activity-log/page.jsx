@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ErrorBox, Input, Loading, PageHeader, Pagination, Select, Table } from "@/components/ui";
+import { ErrorBox, Input, Loading, PageHeader, Select, Table } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 
 import { usePaged } from "@/lib/usePaged";
@@ -28,7 +28,7 @@ export default function ActivityLogPage() {
         <Loading />
       ) : (
         <>
-          <Table
+          <Table pager={list.pager}
             indexOffset={list.indexOffset}
             rows={data?.data ?? []}
             columns={[
@@ -39,7 +39,6 @@ export default function ActivityLogPage() {
               { key: "ip", header: "IP" },
             ]}
           />
-          <Pagination {...list.pager} />
         </>
       )}
     </div>

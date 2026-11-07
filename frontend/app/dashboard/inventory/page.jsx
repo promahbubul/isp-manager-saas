@@ -3,7 +3,7 @@
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Pagination, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Stat, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -101,7 +101,7 @@ export default function InventoryPage() {
           <Loading />
         ) : (
           <>
-            <Table
+            <Table pager={items.pager}
               rows={items.data?.data ?? []}
               empty="No items yet."
               columns={[
@@ -128,7 +128,6 @@ export default function InventoryPage() {
                 },
               ]}
             />
-            <Pagination {...items.pager} />
           </>
         )
       ) : (
@@ -137,7 +136,7 @@ export default function InventoryPage() {
             <Loading />
           ) : (
             <>
-              <Table
+              <Table pager={moves.pager}
                 rows={moves.data?.data ?? []}
                 empty="No stock movements."
                 columns={[
@@ -151,7 +150,6 @@ export default function InventoryPage() {
                   { key: "stockAfter", header: "Stock after" },
                 ]}
               />
-              <Pagination {...moves.pager} />
             </>
           )}
         </Card>

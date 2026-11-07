@@ -1,62 +1,70 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
+import SiteHeader, { Logo } from "./SiteHeader";
 
-export function SiteHeader() {
-  return (
-    <header className="border-b border-zinc-800 bg-zinc-900 text-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-2xl font-extrabold italic text-primary-400">
-          {site.name}
-        </Link>
-        <nav className="flex items-center gap-5 text-sm">
-          <Link href="/pricing" className="hover:text-primary-300">
-            Pricing
-          </Link>
-          <Link href="/help" className="hover:text-primary-300">
-            Help
-          </Link>
-          <Link href="/blog" className="hover:text-primary-300">
-            Blog
-          </Link>
-          <Link href="/demo" className="hover:text-primary-300">
-            Book a demo
-          </Link>
-          <Link href="/login" className="hover:text-primary-300">
-            Login
-          </Link>
-          <Link href="/signup" className="rounded-md bg-primary-600 px-4 py-2 font-semibold hover:bg-primary-500">
-            Free trial
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
-}
+export { SiteHeader };
+
+const FOOTER = [
+  {
+    title: "Product",
+    links: [
+      ["/#features", "Features"],
+      ["/pricing", "Pricing"],
+      ["/demo", "Book a demo"],
+      ["/signup", "Free trial"],
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      ["/help", "Help Center"],
+      ["/blog", "Blog"],
+      ["/faq", "FAQ"],
+      ["/contact", "Contact"],
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      ["/terms", "Terms & Conditions"],
+      ["/privacy", "Privacy Policy"],
+      ["/refund-policy", "Refund & Cancellation"],
+    ],
+  },
+];
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-zinc-800 bg-zinc-950 text-zinc-400">
-      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 text-sm sm:grid-cols-3">
-        <div>
-          <p className="font-semibold text-white">{site.name}</p>
-          <p className="mt-2">ISP billing & management for Bangladesh.</p>
-          <p className="mt-2">© {new Date().getFullYear()} {site.legalName}</p>
-        </div>
-        <div className="flex flex-col gap-1">
-          <Link href="/pricing" className="hover:text-white">Pricing</Link>
-          <Link href="/terms" className="hover:text-white">Terms & Conditions</Link>
-          <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
-          <Link href="/refund-policy" className="hover:text-white">Refund & Cancellation Policy</Link>
-          <Link href="/contact" className="hover:text-white">Contact</Link>
-          <Link href="/faq" className="hover:text-white">FAQ</Link>
-          <Link href="/help" className="hover:text-white">Help Center</Link>
-          <Link href="/blog" className="hover:text-white">Blog</Link>
-        </div>
-        <div>
-          <p>{site.address}</p>
+    <footer className="border-t border-line bg-surface">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div className="text-sm text-muted">
+          <Logo />
+          <p className="mt-4 max-w-xs">ISP billing, MikroTik automation and customer management for Bangladesh.</p>
+          <p className="mt-4">{site.address}</p>
           <p className="mt-1">{site.phone}</p>
           <p className="mt-1">{site.email}</p>
-          <p className="mt-3 text-xs">We accept: SSLCommerz (Visa, Mastercard, bKash, Nagad, Rocket), bKash, Stripe</p>
+        </div>
+        {FOOTER.map((col) => (
+          <div key={col.title}>
+            <p className="text-sm font-semibold text-ink">{col.title}</p>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              {col.links.map(([href, label]) => (
+                <li key={href}>
+                  <Link href={href} className="text-muted transition hover:text-ink">
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-line">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p>
+            © {new Date().getFullYear()} {site.legalName}. All rights reserved.
+          </p>
+          <p>Payments: SSLCommerz (Visa, Mastercard, bKash, Nagad, Rocket) · bKash · Stripe</p>
         </div>
       </div>
     </footer>
@@ -65,7 +73,7 @@ export function SiteFooter() {
 
 export function SitePage({ children }) {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />
@@ -73,13 +81,27 @@ export function SitePage({ children }) {
   );
 }
 
+/** Centered page title block used by the inner marketing pages. */
+export function PageHero({ eyebrow, title, children }) {
+  return (
+    <section className="border-b border-line bg-surface">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+        {eyebrow && <p className="animate-pop-in text-sm font-medium text-primary-600 dark:text-primary-400">{eyebrow}</p>}
+        <h1 className="mt-2 max-w-3xl animate-pop-in text-4xl font-semibold tracking-tight text-ink [animation-delay:80ms] sm:text-5xl">{title}</h1>
+        {children && <div className="mt-4 max-w-2xl animate-pop-in text-lg text-muted [animation-delay:160ms]">{children}</div>}
+      </div>
+    </section>
+  );
+}
+
 /** Wrapper for long legal text. */
 export function LegalPage({ title, updated, children }) {
   return (
     <SitePage>
-      <article className="mx-auto max-w-3xl px-6 py-12 text-zinc-800 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-bold [&_li]:mt-1 [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
-        <h1 className="text-3xl font-extrabold">{title}</h1>
-        <p className="mt-2 text-sm text-zinc-500">Last updated: {updated}</p>
+      <PageHero eyebrow="Legal" title={title}>
+        <p className="text-sm">Last updated: {updated}</p>
+      </PageHero>
+      <article className="mx-auto max-w-6xl px-4 py-12 leading-relaxed [&>*]:max-w-3xl text-ink sm:px-6 [&_a]:text-primary-600 [&_a]:underline [&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-semibold [&_li]:mt-1.5 [&_p]:mt-3 [&_p]:text-muted [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:text-muted">
         {children}
       </article>
     </SitePage>

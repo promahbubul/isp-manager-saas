@@ -1,5 +1,5 @@
 /**
- * Idempotent seed: default plans + first super admin.
+ * Idempotent seed: default plans + first super admin + starter Help/Blog articles.
  * Usage: pnpm seed
  */
 import config from "../app/config";
@@ -7,6 +7,7 @@ import { connectDB, disconnectDB } from "../app/config/db";
 import { Plan } from "../app/modules/plan/plan.model";
 import { DEFAULT_PLANS } from "../app/modules/plan/plan.seed";
 import { PlatformUser } from "../app/modules/platformUser/platformUser.model";
+import { seedContent } from "./seedContent";
 
 export async function seedPlans() {
   for (const plan of DEFAULT_PLANS) {
@@ -34,6 +35,7 @@ async function main() {
   await connectDB();
   await seedPlans();
   await seedSuperAdmin();
+  await seedContent();
   await disconnectDB();
 }
 
