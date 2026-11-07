@@ -1,7 +1,9 @@
-# Backend → cPanel (Node.js app) over FTPS.
-# Runs on every push to main that touches backend/. Needs these repo secrets:
-#   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   (cPanel FTP account whose folder = the Node.js "Application root")
-# After a dependency change (package.json), press "Run NPM Install" once in cPanel → Setup Node.js App.
+# Backend → cPanel (Node.js app) over FTPS. Fully automatic:
+#   push to main → typecheck + build → upload dist/, package.json and cpanel-cron.sh → app restarts.
+# Repo secrets: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD (FTP account whose folder = the Node.js "Application root").
+# One cPanel cron job (every 5 min) installs packages when package.json changed and keeps the app awake:
+#   /bin/bash $HOME/isp.rsitlink.com/cpanel-cron.sh >/dev/null 2>&1
+# Default plans, super admin and starter articles are created by the app itself on start (SEED_ON_START).
 name: Deploy backend (cPanel)
 
 on:
@@ -37,11 +39,11 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
 
-      # What goes to the server: compiled code + package.json (cPanel installs node_modules itself).
+      # What goes to the server: compiled code + package.json (the cron job runs npm install there).
       - name: Prepare upload folder
         run: |
           mkdir -p ../upload/tmp
-          cp -r dist package.json ../upload/
+          cp -r dist package.json deploy/cpanel-cron.sh ../upload/
           date > ../upload/tmp/restart.txt   # Passenger restarts the app when this file changes
 
       - name: Upload over FTPS
@@ -58,3 +60,11 @@ jobs:
           exclude: |
             **/.git*
             **/node_modules/**
+
+      - name: Check the API
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS -m 20 https://isp.rsitlink.com/api/v1/health/live; then echo " ✅ backend is up"; exit 0; fi
+            echo "not up yet (packages may still be installing by the cron job) — retry in 30s"; sleep 30
+          done
+          echo "::warning::API did not answer yet. If package.json changed, the cPanel cron job installs packages within 5 minutes."

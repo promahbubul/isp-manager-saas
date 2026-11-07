@@ -6,12 +6,22 @@ import { startJobs } from "./app/jobs";
 import { syncAllPeers } from "./app/services/wireguard/wireguard.service";
 import { markShuttingDown } from "./app/utils/lifecycle";
 import { logger } from "./app/utils/logger";
+import { seedContent } from "./scripts/seedContent";
+import { seedPlans, seedSuperAdmin } from "./scripts/seed";
 
 let server: Server | undefined;
 let stopJobs: (() => Promise<unknown>) | undefined;
 
 async function bootstrap() {
   await connectDB();
+  // Default plans, first super admin and starter articles. Idempotent: never overwrites existing data.
+  if (config.seedOnStart) {
+    await Promise.resolve()
+      .then(seedPlans)
+      .then(seedSuperAdmin)
+      .then(seedContent)
+      .catch((e) => logger.error({ err: e }, "Startup seed failed"));
+  }
   // WireGuard peers added at runtime vanish when wg0 restarts; put them back.
   await syncAllPeers()
     .then((n) => n && logger.info({ peers: n }, "WireGuard router peers synced"))

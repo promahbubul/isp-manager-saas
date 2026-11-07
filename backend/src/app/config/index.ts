@@ -22,6 +22,8 @@ const envSchema = z.object({
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i, "ENCRYPTION_KEY must be 64 hex chars (32 bytes)"),
   TRIAL_DAYS: z.coerce.number().int().positive().default(365),
   /** how many reverse proxies sit in front of the app (Nginx = 1; Vercel rewrite + cPanel = 2) */
+  /** create default plans, super admin and starter articles on boot (only inserts what is missing) */
+  SEED_ON_START: z.enum(["true", "false"]).default("true"),
   TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(1),
   /** run cron jobs in this process — enable in exactly one instance */
   RUN_JOBS: z.enum(["true", "false"]).default("true"),
@@ -98,6 +100,7 @@ const config = {
   corsOrigins: env.CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean),
   cookieDomain: env.COOKIE_DOMAIN || undefined,
   trustProxy: env.TRUST_PROXY,
+  seedOnStart: env.SEED_ON_START === "true",
   apiPublicUrl: env.API_PUBLIC_URL.replace(/\/$/, ""),
   appUrl: env.APP_URL.replace(/\/$/, ""),
   jwt: {
