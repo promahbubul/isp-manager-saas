@@ -9,13 +9,19 @@ import { normalizeBdPhone } from "../../utils/phone";
 import { Company } from "../company/company.model";
 import { CustomerDoc } from "../customer/customer.model";
 import { getSettings } from "../setting/setting.model";
+import { companyFeatures } from "../subscription/planFeature";
+import { ownProviderFor } from "./ownGateway";
+import { sendEventWhatsApp } from "./whatsapp";
 import { DEFAULT_TEMPLATES, ISmsLog, SMS_EVENTS, SmsEvent, SmsLog, SmsTemplate } from "./sms.model";
 
 type Id = string | Types.ObjectId;
 
 /** Replace {var} placeholders; unknown variables are left as-is so mistakes are visible. */
 export function renderTemplate(template: string, vars: Record<string, string | number | undefined>) {
-  return template.replace(/\{(\w+)\}/g, (m, k: string) => (vars[k] === undefined ? m : String(vars[k])));
+  return template
+    .replace(/\{(\w+)\}/g, (m, k: string) => (vars[k] === undefined ? m : String(vars[k])))
+    .replace(/[ \t]{2,}/g, " ") // an empty link variable must not leave a gap
+    .trim();
 }
 
 /** Common variables for a customer. */
@@ -70,6 +76,15 @@ export async function sendSms(company: Id, input: SendInput) {
   };
   if (!to) return SmsLog.create({ ...base, status: "failed", error: "Invalid mobile number" });
 
+  // The ISP's own gateway: no platform credits involved.
+  const own = await ownProviderFor(company);
+  if (own) {
+    const log = await SmsLog.create({ ...base, status: "queued", provider: own.name, ownGateway: true });
+    const result = await own.send(to, input.message);
+    log.set({ status: result.ok ? "sent" : "failed", error: result.error, providerResponse: result.response });
+    return log.save();
+  }
+
   const reserved = await Company.findOneAndUpdate(
     { _id: company, smsBalance: { $gte: seg.segments } },
     { $inc: { smsBalance: -seg.segments } },
@@ -103,14 +118,19 @@ export function sendEventSms(
     const tpl = templates.find((t) => t.event === event);
     if (!tpl?.isActive) return;
     const companyDoc = await Company.findById(company).select("name slug");
-    const payLink = companyDoc ? `${config.appUrl}/pay/${companyDoc.slug}?c=${customer.customerId}` : undefined;
-    const message = renderTemplate(tpl.message, { company: companyDoc?.name, pay_link: payLink, ...customerVars(customer), ...extra });
+    // Links only when the ISP's plan has the feature, otherwise they would open a 404 page.
+    const features = companyDoc ? await companyFeatures(companyDoc._id) : [];
+    const payLink = companyDoc && features.includes("online_payment") ? `${config.appUrl}/pay/${companyDoc.slug}?c=${customer.customerId}` : "";
+    const portalLink = companyDoc && features.includes("customer_portal") ? `${config.appUrl}/portal/${companyDoc.slug}` : "";
+    const message = renderTemplate(tpl.message, { company: companyDoc?.name, pay_link: payLink, portal_link: portalLink, ...customerVars(customer), ...extra });
     await sendSms(company, { to: customer.phone!, message, event, customer: customer._id });
+    await sendEventWhatsApp(company, event, customer.phone!, { company: companyDoc?.name, pay_link: payLink, portal_link: portalLink, ...customerVars(customer), ...extra });
   });
 }
 
 /** Up-front balance check for bulk sends. */
 export async function assertBalance(company: Id, needed: number) {
+  if (await ownProviderFor(company)) return; // own gateway: credits are not used
   const c = await Company.findById(company).select("smsBalance");
   const have = c?.smsBalance ?? 0;
   if (have < needed) {

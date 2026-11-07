@@ -5,6 +5,7 @@ import { ActiveSession, PppSecret, RouterDriver, SecretInput } from "../app/serv
 export class FakeRouterState {
   secrets = new Map<string, PppSecret>();
   active = new Map<string, ActiveSession>();
+  traffic = new Map<string, { downloadBytes: number; uploadBytes: number }>();
   profiles = ["5M", "10M", "20M"];
   reachable = true;
   password = "routerpass";
@@ -71,6 +72,10 @@ class FakeDriver implements RouterDriver {
   }
   async kick(name: string) {
     return this.r.active.delete(name);
+  }
+  async sessionTraffic(name: string) {
+    if (!this.r.active.has(name)) return null;
+    return this.r.traffic.get(name) ?? { downloadBytes: 0, uploadBytes: 0 };
   }
   close() {}
 }

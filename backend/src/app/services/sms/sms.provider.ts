@@ -25,10 +25,15 @@ class LogProvider implements SmsProvider {
  *   SMS_HTTP_URL=https://bulksmsbd.net/api/smsapi?api_key={apiKey}&type=text&number={to}&senderid={senderId}&message={message}
  *   SMS_SUCCESS_PATTERN="response_code\":\s*202"
  */
+export type HttpGatewayConfig = { httpUrl?: string; httpMethod: "GET" | "POST"; successPattern: string; apiKey?: string; senderId?: string };
+
 class HttpProvider implements SmsProvider {
-  readonly name = "http";
+  constructor(
+    private readonly cfg: () => HttpGatewayConfig = () => config.sms,
+    readonly name = "http",
+  ) {}
   async send(to: string, message: string): Promise<SmsSendResult> {
-    const { httpUrl, httpMethod, successPattern, apiKey, senderId } = config.sms;
+    const { httpUrl, httpMethod, successPattern, apiKey, senderId } = this.cfg();
     if (!httpUrl) return { ok: false, error: "SMS_HTTP_URL is not configured" };
     const values: Record<string, string> = {
       to: toInternational(to),
@@ -60,6 +65,9 @@ class HttpProvider implements SmsProvider {
 let provider: SmsProvider = config.sms.provider === "http" ? new HttpProvider() : new LogProvider();
 
 export const getSmsProvider = () => provider;
+
+/** An ISP's own gateway account (same URL-template format as SMS_HTTP_URL). */
+export const createHttpProvider = (cfg: HttpGatewayConfig, name = "own-http"): SmsProvider => new HttpProvider(() => cfg, name);
 
 /** Tests swap in a fake provider. */
 export function setSmsProvider(p?: SmsProvider) {

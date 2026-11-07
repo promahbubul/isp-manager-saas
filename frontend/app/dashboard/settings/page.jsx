@@ -9,6 +9,43 @@ import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { useApi, useApiMutation } from "@/lib/hooks";
 import { useAuth } from "@/providers/AuthProvider";
 
+/** Links to share with customers (Facebook page, SMS, printed on the receipt). */
+function CustomerLinks() {
+  const { company, subscription } = useAuth();
+  const features = subscription?.plan?.features ?? [];
+  if (!company) return null;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const links = [
+    { feature: "customer_portal", label: "Customer portal (login with SMS code)", url: `${origin}/portal/${company.slug}` },
+    { feature: "online_payment", label: "Pay bill online", url: `${origin}/pay/${company.slug}` },
+  ];
+  const copy = (url) => navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
+  return (
+    <Card title="Links for your customers">
+      <ul className="space-y-3">
+        {links.map((l) => (
+          <li key={l.url}>
+            <p className="text-sm font-medium">{l.label}</p>
+            {features.includes(l.feature) ? (
+              <div className="mt-1 flex items-center gap-2">
+                <code className="flex-1 truncate rounded bg-slate-100 px-2 py-1 text-sm">{l.url}</code>
+                <Button size="sm" variant="secondary" onClick={() => copy(l.url)}>
+                  Copy
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-1 text-sm text-slate-500">🔒 Not in your plan — upgrade under My Subscription.</p>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs text-slate-500">
+        Reminder and expiry SMS include the pay link automatically. Add {"{portal_link}"} to an SMS template to send the portal link.
+      </p>
+    </Card>
+  );
+}
+
 /** Owner-only: everything in one JSON file (customers, payments, packages, logs...). Passwords are never included. */
 function DataExport() {
   const { user } = useAuth();
@@ -112,7 +149,8 @@ export default function SettingsPage() {
           </Button>
         </div>
       </form>
-      <div className="mt-6 max-w-2xl">
+      <div className="mt-6 max-w-2xl space-y-6">
+        <CustomerLinks />
         <DataExport />
       </div>
     </div>

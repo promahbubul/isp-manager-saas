@@ -103,6 +103,7 @@ router.get("/", auth(), authorize("dashboard.view"), async (req: Request, res: R
     role: req.user!.role,
     company: req.user!.company,
     zones: req.user!.zones,
+    reseller: req.user!.reseller,
   });
   sendResponse(res, { message: "Dashboard", data });
 });

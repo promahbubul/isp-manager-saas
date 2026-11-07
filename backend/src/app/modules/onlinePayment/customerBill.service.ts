@@ -69,7 +69,11 @@ function billFor(customer: CustomerDoc, months: number) {
 
 async function publicInfo(slug: string) {
   const company = await companyBySlug(slug);
-  return { company: { name: company.name, slug: company.slug, logo: company.logo, phone: company.phone }, methods: await enabledMethods(company._id) };
+  return {
+    company: { name: company.name, slug: company.slug, logo: company.logo, phone: company.phone },
+    methods: await enabledMethods(company._id),
+    whiteLabel: await hasFeature(company._id, "white_label"),
+  };
 }
 
 async function lookup(slug: string, input: z.infer<typeof lookupSchema>) {

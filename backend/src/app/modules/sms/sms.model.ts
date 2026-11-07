@@ -6,18 +6,18 @@ export type SmsEvent = (typeof SMS_EVENTS)[number];
 
 /** Variables each template may use (shown in the UI). */
 export const SMS_VARIABLES: Record<SmsEvent, string[]> = {
-  welcome: ["name", "customerId", "username", "password", "package", "company"],
+  welcome: ["name", "customerId", "username", "password", "package", "company", "portal_link"],
   payment_success: ["name", "customerId", "amount", "expiry", "due", "receiptNo", "company"],
-  expiry_reminder: ["name", "customerId", "expiry", "amount", "due", "company", "pay_link"],
-  expired: ["name", "customerId", "amount", "due", "company", "pay_link"],
+  expiry_reminder: ["name", "customerId", "expiry", "amount", "due", "company", "pay_link", "portal_link"],
+  expired: ["name", "customerId", "amount", "due", "company", "pay_link", "portal_link"],
   ticket_update: ["name", "ticketNo", "status", "company"],
 };
 
 export const DEFAULT_TEMPLATES: Record<SmsEvent, string> = {
   welcome: "প্রিয় {name}, {company}-এ স্বাগতম। ইউজারনেম: {username}, পাসওয়ার্ড: {password}, প্যাকেজ: {package}।",
   payment_success: "প্রিয় {name}, {amount} টাকা গ্রহণ করা হয়েছে। নতুন মেয়াদ: {expiry}। রসিদ: {receiptNo}। ধন্যবাদ - {company}",
-  expiry_reminder: "প্রিয় {name}, আপনার ইন্টারনেটের মেয়াদ {expiry} তারিখে শেষ হবে। বিল: {amount} টাকা। - {company}",
-  expired: "প্রিয় {name}, আপনার ইন্টারনেটের মেয়াদ শেষ হয়েছে। সংযোগ চালু করতে {amount} টাকা পরিশোধ করুন। - {company}",
+  expiry_reminder: "প্রিয় {name}, আপনার ইন্টারনেটের মেয়াদ {expiry} তারিখে শেষ হবে। বিল: {amount} টাকা। - {company} {pay_link}",
+  expired: "প্রিয় {name}, আপনার ইন্টারনেটের মেয়াদ শেষ হয়েছে। সংযোগ চালু করতে {amount} টাকা পরিশোধ করুন। - {company} {pay_link}",
   ticket_update: "প্রিয় {name}, আপনার অভিযোগ {ticketNo} এর অবস্থা: {status}। - {company}",
 };
 
@@ -44,7 +44,7 @@ export interface ISmsLog {
   company: Types.ObjectId;
   to: string;
   message: string;
-  event: SmsEvent | "manual" | "bulk";
+  event: SmsEvent | "manual" | "bulk" | "otp";
   customer?: Types.ObjectId;
   segments: number;
   encoding: "GSM" | "UNICODE";
@@ -52,6 +52,8 @@ export interface ISmsLog {
   error?: string;
   providerResponse?: string;
   provider?: string;
+  /** sent through the ISP's own gateway (no credits used) */
+  ownGateway?: boolean;
   sentBy?: Types.ObjectId;
 }
 
@@ -67,6 +69,7 @@ const logSchema = new Schema<ISmsLog>(
     error: String,
     providerResponse: String,
     provider: String,
+    ownGateway: Boolean,
     sentBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true },

@@ -8,6 +8,7 @@ import { Customer } from "../customer/customer.model";
 import { Plan } from "../plan/plan.model";
 import { PlatformUser } from "../platformUser/platformUser.model";
 import { Subscription } from "../subscription/subscription.model";
+import { JOBS } from "../../jobs";
 import { recordJobRun } from "../system/jobRun.model";
 
 async function platformAdmin(role: "super_admin" | "support" | "finance" = "super_admin", email = `${role}@example.com`) {
@@ -112,7 +113,7 @@ describe("system health", () => {
     expect(h.body.data.database).toMatchObject({ ok: true, replicaSet: expect.any(String) });
     expect(h.body.data.jobs.warn).toMatch(/worker/);
 
-    for (const name of ["expireCustomers", "retryFailedSyncs", "expiryReminders", "subscriptionLifecycle"]) {
+    for (const { name } of JOBS) {
       await recordJobRun(name, new Date(), { ok: true, result: { done: 1 } });
     }
     await recordJobRun("retryFailedSyncs", new Date(), { ok: false, error: new Error("router timeout") });

@@ -8,6 +8,11 @@ import { audit } from "../activityLog/activityLog.service";
 import { bdPhone } from "../auth/auth.validation";
 import { Company } from "../company/company.model";
 import AppError from "../../errors/AppError";
+import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
+import config from "../../config";
+import { imageExtension, uploadImage } from "../../middlewares/upload";
 import { streamTenantExport } from "../admin/tenantData";
 import { getSettings } from "./setting.model";
 
@@ -87,6 +92,23 @@ router.patch(
     sendResponse(res, { message: "Company profile saved", data: company });
   },
 );
+
+/** Upload the ISP's logo (receipts, portal, pay page). Replaces the previous uploaded file. */
+router.post("/company/logo", authorize("setting.manage"), uploadImage, audit("setting.logo", "setting"), async (req: Request, res: Response) => {
+  if (!req.file) throw new AppError(400, "Attach the image as 'file'");
+  const ext = imageExtension(req.file.buffer);
+  if (!ext) throw new AppError(400, "The file is not a valid PNG, JPG or WebP image");
+  const name = `${req.user!.company}-${crypto.randomBytes(4).toString("hex")}.${ext}`;
+  await fs.writeFile(path.join(config.uploadDir, "logos", name), req.file.buffer);
+
+  const company = await Company.findById(req.user!.company).select(COMPANY_FIELDS);
+  const prefix = `${config.apiPublicUrl}/uploads/logos/`;
+  const old = company!.logo?.startsWith(prefix) ? path.basename(company!.logo.slice(prefix.length)) : null;
+  company!.logo = prefix + name;
+  await company!.save();
+  if (old) await fs.unlink(path.join(config.uploadDir, "logos", old)).catch(() => undefined);
+  sendResponse(res, { message: "Logo updated", data: company });
+});
 
 router.patch("/", authorize("setting.manage"), validateBody(updateSettingSchema), audit("setting.update", "setting"), async (req: Request, res: Response) => {
   const settings = await getSettings(req.user!.company);

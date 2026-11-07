@@ -12,6 +12,9 @@ import { Package } from "../package/package.model";
 import { getSettings } from "../setting/setting.model";
 import { sendEventSms } from "../sms/sms.service";
 import { formatDhakaDate } from "../../utils/date";
+import { allocateToInvoices } from "../invoice/invoice.service";
+import { Reseller, resellerRate } from "../reseller/reseller.model";
+import { changeResellerBalance } from "../reseller/reseller.service";
 import { IPayment, Payment } from "./payment.model";
 import { RechargeInput } from "./payment.validation";
 
@@ -63,6 +66,8 @@ export type ApplyRechargeInput = {
   receivedBy?: string;
   source?: IPayment["source"];
   onlinePayment?: mongoose.Types.ObjectId;
+  /** recharge done by this reseller: the reseller rate is taken from their balance */
+  chargeReseller?: string;
 };
 
 /**
@@ -74,8 +79,12 @@ export async function applyRecharge(input: ApplyRechargeInput) {
   const current = await Customer.findOne({ _id: input.customerId, deletedAt: null });
   if (!current) throw new AppError(404, "Customer not found");
   if (current.status === "free") throw new AppError(400, "Free customers do not need recharge");
-  const pkg = await Package.findById(current.package).select("validityDays");
+  const pkg = await Package.findById(current.package).select("validityDays price");
   if (!pkg) throw new AppError(400, "Customer's package not found");
+  const postpaid = current.billingType === "postpaid";
+  if (input.chargeReseller && String(current.reseller ?? "") !== input.chargeReseller) throw new AppError(404, "Customer not found");
+  const reseller = input.chargeReseller ? await Reseller.findById(input.chargeReseller) : null;
+  if (input.chargeReseller && !reseller) throw new AppError(403, "Reseller account not found");
 
   const session = await mongoose.startSession();
   let paymentId!: mongoose.Types.ObjectId;
@@ -85,31 +94,40 @@ export async function applyRecharge(input: ApplyRechargeInput) {
       // Re-read inside the transaction so concurrent recharges cannot double-count.
       const customer = await Customer.findById(current._id).session(session).orFail();
       const discount = input.discount ?? 0;
+      // Postpaid: the bill is already on the invoices, the payment only settles due.
       const calc = calculateRecharge({
-        months: input.months,
+        months: postpaid ? 0 : input.months,
         monthlyFee: customer.monthlyFee,
         customerDiscount: customer.discount,
-        discount,
+        discount: postpaid ? 0 : discount,
         previousDue: customer.dueAmount,
         balance: customer.balance,
         amount: input.amount,
       });
+      if (postpaid && calc.amount <= 0) throw new AppError(400, "Nothing is due for this postpaid customer");
 
       const now = new Date();
       const previousExpiry = customer.expiryDate;
       const previousDue = customer.dueAmount;
       const base = previousExpiry > now ? previousExpiry : now;
-      const newExpiry = addDays(base, input.months * pkg.validityDays);
+      const newExpiry = postpaid ? previousExpiry : addDays(base, input.months * pkg.validityDays);
 
-      reconnect = customer.status === "expired";
+      // Postpaid is reconnected once nothing is due any more.
+      const settled = !postpaid || calc.dueAfter <= 0;
+      reconnect = customer.status === "expired" && settled;
       customer.set({
         expiryDate: newExpiry,
         dueAmount: calc.dueAfter,
         balance: calc.balanceAfter,
         // Manually disabled customers stay disabled until staff enable them.
-        status: customer.status === "disabled" ? "disabled" : "active",
+        status: customer.status === "disabled" ? "disabled" : settled ? "active" : customer.status,
       });
       await customer.save({ session });
+      const settledAmount = round2(previousDue - calc.dueAfter);
+      const invoices = postpaid ? await allocateToInvoices(customer._id, settledAmount, session) : undefined;
+      // Postpaid: the reseller pays their rate in proportion to the bill settled.
+      const rate = reseller ? resellerRate(reseller, pkg) : 0;
+      const resellerCost = reseller ? round2(postpaid ? (settledAmount * rate) / Math.max(pkg.price, 1) : input.months * rate) : undefined;
 
       const [payment] = await Payment.create(
         [
@@ -132,11 +150,22 @@ export async function applyRecharge(input: ApplyRechargeInput) {
             source: input.source ?? "staff",
             onlinePayment: input.onlinePayment,
             note: input.note,
+            reseller: reseller?._id ?? null,
+            resellerCost,
+            invoices,
           },
         ],
         { session },
       );
       paymentId = payment._id;
+      if (reseller && resellerCost) {
+        await changeResellerBalance(
+          reseller._id,
+          { type: "recharge", amount: -resellerCost, customer: customer._id, payment: payment._id, note: `${customer.customerId} ${postpaid ? "bill" : `${input.months} month(s)`}`, by: input.receivedBy ? new mongoose.Types.ObjectId(input.receivedBy) : undefined },
+          session,
+          -reseller.creditLimit,
+        );
+      }
     });
   } finally {
     await session.endSession();
@@ -173,6 +202,7 @@ async function recharge(actor: Actor, input: RechargeInput) {
     trxId: input.trxId,
     note: input.note,
     receivedBy: actor.id,
+    chargeReseller: actor.role === "reseller" ? actor.reseller : undefined,
   });
   return { payment: await receipt(actor, String(payment._id)), sync };
 }

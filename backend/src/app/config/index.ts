@@ -32,6 +32,19 @@ const envSchema = z.object({
   SMS_SUCCESS_PATTERN: z.string().default("."),
   SMS_API_KEY: z.string().optional(),
   SMS_SENDER_ID: z.string().optional(),
+  /** WireGuard VPN for routers without a public IP (see DEPLOY.md) */
+  WG_ENABLED: z.enum(["true", "false"]).default("false"),
+  /** public host:port routers dial, e.g. vpn.example.com:51820 */
+  WG_ENDPOINT: z.string().optional(),
+  /** server's WireGuard public key (wg pubkey < /etc/wireguard/server.key) */
+  WG_SERVER_PUBLIC_KEY: z.string().optional(),
+  /** /16 tunnel network; .0.1 is the server */
+  WG_SUBNET: z.string().regex(/^\d+\.\d+\.0\.0\/16$/, "WG_SUBNET must look like 10.200.0.0/16").default("10.200.0.0/16"),
+  WG_INTERFACE: z.string().default("wg0"),
+  /** run `wg set` to add/remove peers on this server (needs CAP_NET_ADMIN / sudo rule) */
+  WG_APPLY: z.enum(["true", "false"]).default("false"),
+  /** folder for uploaded logos (served at /uploads) */
+  UPLOAD_DIR: z.string().optional(),
   SUPER_ADMIN_EMAIL: z.email().optional(),
   SUPER_ADMIN_PASSWORD: z.string().min(8).optional(),
 });
@@ -90,6 +103,15 @@ const config = {
     senderId: env.SMS_SENDER_ID,
   },
   superAdmin: { email: env.SUPER_ADMIN_EMAIL, password: env.SUPER_ADMIN_PASSWORD },
+  uploadDir: path.resolve(env.UPLOAD_DIR ?? path.join(process.cwd(), "uploads")),
+  wireguard: {
+    enabled: env.WG_ENABLED === "true",
+    endpoint: env.WG_ENDPOINT,
+    serverPublicKey: env.WG_SERVER_PUBLIC_KEY,
+    subnet: env.WG_SUBNET,
+    iface: env.WG_INTERFACE,
+    apply: env.WG_APPLY === "true",
+  },
 };
 
 export default config;

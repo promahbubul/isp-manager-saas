@@ -19,7 +19,7 @@ export interface ITicket {
   status: TicketStatus;
   assignedTo?: Types.ObjectId | null;
   createdBy?: Types.ObjectId;
-  comments: { by?: Types.ObjectId; text: string; at: Date; system?: boolean }[];
+  comments: { by?: Types.ObjectId; text: string; at: Date; system?: boolean; fromCustomer?: boolean }[];
   solvedAt?: Date;
 }
 
@@ -43,6 +43,8 @@ const schema = new Schema<ITicket>(
         text: { type: String, required: true, maxlength: 2000 },
         at: { type: Date, default: () => new Date() },
         system: Boolean,
+        /** written by the customer in the self-care portal */
+        fromCustomer: Boolean,
         _id: false,
       },
     ],

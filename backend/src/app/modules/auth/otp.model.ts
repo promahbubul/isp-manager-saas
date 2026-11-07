@@ -1,10 +1,12 @@
 import crypto from "crypto";
-import { model, Schema } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 import config from "../../config";
 
 export interface IOtp {
   phone: string;
-  purpose: "password_reset";
+  purpose: "password_reset" | "portal_login";
+  /** set for portal_login: the same number can be a customer of several ISPs */
+  company?: Types.ObjectId;
   codeHash: string;
   attempts: number;
   expiresAt: Date;
@@ -13,13 +15,14 @@ export interface IOtp {
 
 const schema = new Schema<IOtp>({
   phone: { type: String, required: true },
-  purpose: { type: String, enum: ["password_reset"], required: true },
+  purpose: { type: String, enum: ["password_reset", "portal_login"], required: true },
+  company: { type: Schema.Types.ObjectId, ref: "Company" },
   codeHash: { type: String, required: true },
   attempts: { type: Number, default: 0 },
   expiresAt: { type: Date, required: true },
   lastSentAt: { type: Date, required: true },
 });
-schema.index({ phone: 1, purpose: 1 }, { unique: true });
+schema.index({ phone: 1, purpose: 1, company: 1 }, { unique: true });
 schema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // MongoDB removes expired codes
 
 export const Otp = model<IOtp>("Otp", schema);

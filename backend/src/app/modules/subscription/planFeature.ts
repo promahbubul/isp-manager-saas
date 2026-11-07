@@ -15,6 +15,7 @@ const FEATURE_NAMES: Record<PlanFeature, string> = {
   own_sms_gateway: "your own SMS gateway",
   api_access: "API access",
   white_label: "white labelling",
+  whatsapp: "WhatsApp notifications",
 };
 
 export async function companyFeatures(companyId: string | Types.ObjectId): Promise<PlanFeature[]> {

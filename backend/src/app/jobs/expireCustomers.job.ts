@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import { Company } from "../modules/company/company.model";
+import { overduePostpaidCustomerIds } from "../modules/invoice/invoice.service";
 import { Customer, CustomerDoc } from "../modules/customer/customer.model";
 import { MikrotikRouter } from "../modules/router/router.model";
 import { getSettings } from "../modules/setting/setting.model";
@@ -29,12 +30,16 @@ export async function expireCustomers(now = new Date()): Promise<ExpireResult> {
       result.companies += 1;
 
       const cutoff = addDays(now, -settings.billing.graceDays);
+      // prepaid: validity ended; postpaid: an invoice is unpaid past its due date + grace days
+      const overduePostpaid = await overduePostpaidCustomerIds(company.id, now);
       const due = await Customer.find({
         status: "active",
         autoDisable: true,
-        billingType: "prepaid",
         deletedAt: null,
-        expiryDate: { $lt: cutoff },
+        $or: [
+          { billingType: "prepaid", expiryDate: { $lt: cutoff } },
+          { billingType: "postpaid", _id: { $in: overduePostpaid } },
+        ],
       });
       if (!due.length) return;
 

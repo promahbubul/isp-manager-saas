@@ -48,6 +48,20 @@ function GettingStarted({ d }) {
   );
 }
 
+/** A reseller sees their balance first: every recharge they do is paid from it. */
+function ResellerBalance() {
+  const { data } = useApi("reseller-me", "/resellers/me");
+  const r = data?.data;
+  if (!r) return null;
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      <Stat label="My balance" value={taka(r.reseller.balance)} tone={r.reseller.balance <= 0 ? "red" : "green"} />
+      <Stat label="Active customers" value={r.customers.active ?? 0} />
+      <Stat label="Expired customers" value={r.customers.expired ?? 0} tone="amber" />
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, company, subscription } = useAuth();
   const { data, isLoading, error } = useApi("dashboard", "/dashboard", undefined, { refetchInterval: 60_000 });
@@ -66,7 +80,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <GettingStarted d={d} />
+      {user?.role === "reseller" ? <ResellerBalance /> : <GettingStarted d={d} />}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Today's collection" value={taka(d.collection.today.amount)} hint={`${d.collection.today.count} payment(s)`} tone="green" href="/dashboard/billing/payments" />

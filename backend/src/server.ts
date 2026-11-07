@@ -2,6 +2,7 @@ import { Server } from "http";
 import app from "./app";
 import config from "./app/config";
 import { connectDB, disconnectDB } from "./app/config/db";
+import { syncAllPeers } from "./app/services/wireguard/wireguard.service";
 import { startJobs } from "./app/jobs";
 
 let server: Server | undefined;
@@ -9,6 +10,8 @@ let stopJobs: (() => Promise<unknown>) | undefined;
 
 async function bootstrap() {
   await connectDB();
+  // WireGuard peers added at runtime vanish when wg0 restarts; put them back.
+  await syncAllPeers().then((n) => n && console.log(`🔐 ${n} WireGuard router peer(s) synced`)).catch((e) => console.error("[wg] sync failed:", e.message));
   server = app.listen(config.port, () => {
     console.log(`🚀 API running on http://localhost:${config.port} (${config.env})`);
   });

@@ -76,6 +76,8 @@ export default function RoutersPage() {
   const { data, isLoading, error } = useApi("routers", "/routers");
   const test = useApiMutation((id) => api.post(`/routers/${id}/test`), { invalidate: ["routers"] });
   const remove = useApiMutation((id) => api.delete(`/routers/${id}`), { invalidate: ["routers"] });
+  const [vpnScript, setVpnScript] = useState(null);
+  const vpn = useApiMutation((id) => api.post(`/routers/${id}/vpn`), { invalidate: ["routers"], onSuccess: (res) => setVpnScript(res.data.script) });
   const loadSessions = useApiMutation((r) => api.get(`/routers/${r._id}/active`), {
     successToast: false,
     onSuccess: (res, r) => setSessions({ router: r, rows: res.data }),
@@ -135,6 +137,15 @@ export default function RoutersPage() {
                       <Button size="sm" variant="secondary" onClick={() => setEditing(r)}>
                         Edit
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        title="For routers without a public IP: the router connects to us over WireGuard"
+                        loading={vpn.isPending && vpn.variables === r._id}
+                        onClick={() => (r.connectionMode === "vpn" || confirm(`Switch "${r.name}" to VPN mode? You will get a script to paste into the router (RouterOS 7+).`)) && vpn.mutate(r._id)}
+                      >
+                        {r.connectionMode === "vpn" ? "VPN script" : "Use VPN"}
+                      </Button>
                       <Button size="sm" variant="danger" onClick={() => confirm(`Delete router "${r.name}"?`) && remove.mutate(r._id)}>
                         Delete
                       </Button>
@@ -151,6 +162,13 @@ export default function RoutersPage() {
         {editing !== null && <RouterForm router={editing._id ? editing : null} onDone={() => setEditing(null)} />}
       </Modal>
 
+      <Modal open={Boolean(vpnScript)} onClose={() => setVpnScript(null)} title="VPN setup script (RouterOS 7+)" size="lg">
+        <p className="mb-2 text-sm text-slate-600">Open Winbox → New Terminal on the router and paste this. The router then connects to our server over WireGuard; no public IP or port forwarding is needed.</p>
+        <pre className="max-h-80 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{vpnScript}</pre>
+        <Button className="mt-3" variant="secondary" onClick={() => navigator.clipboard.writeText(vpnScript ?? "")}>
+          Copy script
+        </Button>
+      </Modal>
       <Modal open={Boolean(sessions)} onClose={() => setSessions(null)} title={`Online on ${sessions?.router.name ?? ""}`} size="lg">
         {sessions && (
           <Table

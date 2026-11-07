@@ -43,6 +43,7 @@ export const auth = () => async (req: Request, _res: Response, next: NextFunctio
     company: company.id,
     permissions: resolvePermissions(user.role, user.permissions),
     zones: user.zones.map(String),
+    reseller: user.reseller ? String(user.reseller) : undefined,
     impersonatedBy: payload.imp,
   };
   req.company = company;

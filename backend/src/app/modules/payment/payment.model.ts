@@ -27,6 +27,12 @@ export interface IPayment {
   onlinePayment?: Types.ObjectId;
   status: "success" | "refunded";
   note?: string;
+  /** recharge done by a reseller from their balance — the money is the reseller's, not the ISP's */
+  reseller?: Types.ObjectId | null;
+  /** what the reseller paid the ISP for this recharge (deducted from their balance) */
+  resellerCost?: number;
+  /** postpaid: invoices this payment settled */
+  invoices?: Types.ObjectId[];
 }
 
 export type PaymentDoc = HydratedDocument<IPayment>;
@@ -51,6 +57,9 @@ const paymentSchema = new Schema<IPayment>(
     onlinePayment: { type: Schema.Types.ObjectId, ref: "PaymentAttempt" },
     status: { type: String, enum: ["success", "refunded"], default: "success" },
     note: String,
+    reseller: { type: Schema.Types.ObjectId, ref: "Reseller", default: null },
+    resellerCost: Number,
+    invoices: [{ type: Schema.Types.ObjectId, ref: "CustomerInvoice" }],
   },
   { timestamps: true },
 );

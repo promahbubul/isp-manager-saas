@@ -40,6 +40,10 @@ const base = {
   /** free customers never expire (staff, VIP) */
   isFree: z.boolean().default(false),
   autoDisable: z.boolean().default(true),
+  /** prepaid = pay first, valid until expiry; postpaid = monthly invoice, pay after use */
+  billingType: z.enum(["prepaid", "postpaid"]).default("prepaid"),
+  /** put the customer under a reseller (ignored when a reseller creates it: always theirs) */
+  reseller: objectId.optional(),
   connectionDate: date.optional(),
   dueAmount: money.default(0),
   device: z
@@ -70,6 +74,8 @@ export const updateCustomerSchema = z
     expiryDate: date,
     isFree: z.boolean(),
     autoDisable: z.boolean(),
+    billingType: z.enum(["prepaid", "postpaid"]),
+    reseller: objectId.nullable(),
     device: base.device,
     note: base.note,
   })

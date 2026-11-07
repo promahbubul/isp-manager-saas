@@ -68,7 +68,7 @@ export const ROLE_PERMISSIONS: Record<TenantRole, Permission[]> = {
     "report.view",
     "report.export",
   ],
-  collector: ["dashboard.view", "customer.view", "payment.view", "payment.recharge", "report.view"],
+  collector: ["dashboard.view", "customer.view", "payment.view", "payment.recharge", "collection.handover", "report.view"],
   technician: [
     "dashboard.view",
     "customer.view",

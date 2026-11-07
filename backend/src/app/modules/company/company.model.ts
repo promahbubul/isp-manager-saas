@@ -15,6 +15,9 @@ export interface ICompany {
   status: CompanyStatus;
   trialEndsAt?: Date;
   customDomain?: string;
+  /** TXT record _isp-manager.<domain> matched customDomainToken */
+  customDomainVerified?: boolean;
+  customDomainToken?: string;
   portalTheme: { primaryColor: string };
   locale: "bn" | "en";
   timezone: string;
@@ -40,6 +43,8 @@ const companySchema = new Schema<ICompany>(
     status: { type: String, enum: COMPANY_STATUSES, default: "trial", index: true },
     trialEndsAt: Date,
     customDomain: { type: String, lowercase: true, trim: true },
+    customDomainVerified: Boolean,
+    customDomainToken: String,
     portalTheme: { primaryColor: { type: String, default: "#2563eb" } },
     locale: { type: String, enum: ["bn", "en"], default: "bn" },
     timezone: { type: String, default: "Asia/Dhaka" },

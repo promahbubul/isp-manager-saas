@@ -207,6 +207,49 @@ Also in Phase 4:
 - **Archive / restore / delete / export:** `POST /admin/companies/:id/{archive,restore}`, `DELETE /admin/companies/:id`
   (only when archived, body `{ confirmSlug }`; keeps invoices, platform payments and audit log), `GET
   /admin/companies/:id/export` and owner self-export `GET /settings/export` (streamed JSON, passwords never included).
+### Phase 5 — customer portal
+
+- `/portal/<slug>`: the ISP's customer logs in with a 6-digit SMS code (sent from the ISP's SMS balance; unknown numbers
+  get the same answer). One number can hold several connections. Shows package, validity, due, payment history, a
+  "Pay bill" button (pre-filled `/pay/<slug>?c=&p=`) and complaints (creates a `source: "portal"` ticket; replies are
+  marked `fromCustomer`). Needs the `customer_portal` plan feature; complaints also need `ticket`.
+- API: `GET /portal/isp/:slug`, `POST /portal/isp/:slug/{otp,verify}`, then Bearer: `GET /portal/me`,
+  `GET /portal/accounts/:id/payments`, `GET|POST /portal/tickets`, `GET /portal/tickets/:id`, `POST /portal/tickets/:id/comments`.
+  The 7-day portal token has `scope: "customer"` and cannot call any staff API.
+- SMS: reminder/expired templates end with `{pay_link}` (empty when the plan has no online payment); `{portal_link}` is available.
+- Optional subdomains: set `NEXT_PUBLIC_ROOT_DOMAIN` (frontend) and add a wildcard DNS record + certificate; `proxy.js`
+  rewrites `speednet.<domain>/` to `/portal/speednet`.
+
+- Portal also shows live router status (`GET /portal/accounts/:id/live`) and takes package change requests
+  (`POST /portal/accounts/:id/package-request`; staff decide at `/package-requests/:id/decide`).
+
+### Phase 6 — advanced ISP
+
+| Area | UI | API |
+|---|---|---|
+| Accounts / P&L | `/dashboard/accounts` | `/accounts/entries`, `/accounts/pnl`, `/accounts/categories` |
+| Resellers | `/dashboard/resellers` | `/resellers`, `/:id/deposit`, `/:id/adjust`, `/:id/ledger`, `/resellers/me` |
+| Postpaid invoices | `/dashboard/billing/invoices` | `/invoices`, `/invoices/issue`, `/invoices/:id/void` |
+| Employees & salary | `/dashboard/employees` | `/employees`, `/employees/salaries`, `/employees/salary-sheet?month=` |
+| Cash handover | `/dashboard/collections` | `/collections/{me,summary,receivers,handovers}`, `/handovers/:id/decide` |
+| Inventory | `/dashboard/inventory` | `/inventory/{summary,items,movements}` |
+| BTRC IP log | `/dashboard/ip-log` | `/ip-logs`, `/ip-logs/export` (worker polls every 5 min) |
+| WireGuard VPN | Routers → Use VPN | `POST/DELETE /routers/:id/vpn` (`WG_*` env, see DEPLOY.md §১১) |
+
+Rules worth knowing: a reseller's recharge is paid from their balance (rate = package price − discount %, or a
+per-package override) and is **not** ISP income — their deposit is. Postpaid payments settle the oldest invoice first;
+the connection is cut when an invoice is unpaid past due date + grace days and restored when nothing is due. Salary,
+purchases and reseller deposits are written to Accounts automatically.
+
+### Phase 7 — growth
+
+Settings → **Integrations** (`/dashboard/settings/integrations`): logo upload (`POST /settings/company/logo`), own SMS
+gateway (`/settings/sms-gateway`, no credits used), WhatsApp Cloud API templates (`/settings/whatsapp`), API keys
+(`/settings/api-keys`) for the public API `/public-api/v1/{customers,customers/:id,customers/:id/recharge,payments,packages}`
+with header `X-API-Key`, and a custom portal domain (`/settings/custom-domain`, TXT verify; `GET /public/domain/:host`,
+`GET /public/domain-check?domain=` for Caddy). Analytics: `/dashboard/analytics` (`GET /analytics`).
+Not built (need hardware or a separate project): mobile app, RADIUS, OLT, Nagad direct API.
+
 - `pnpm seed` only inserts missing default plans — it never overwrites prices or limits edited in the admin panel.
 
 Response shape: `{ success, message, meta?, data }`; errors: `{ success: false, message, errors?: [{ path, message }] }`.

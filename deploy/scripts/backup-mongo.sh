@@ -23,6 +23,18 @@ FILE="$BACKUP_DIR/isp-$STAMP.archive.gz"
 mongodump --uri="$DB_URL" --archive="$FILE" --gzip
 echo "$(date -Is) backup ok: $FILE ($(du -h "$FILE" | cut -f1))"
 
+# Off-site copy (recommended). Set RCLONE_REMOTE, e.g. "gdrive:isp-backups" after `rclone config`.
+# Uploaded logos are copied too.
+if [ -n "${RCLONE_REMOTE:-}" ]; then
+  rclone copy "$FILE" "$RCLONE_REMOTE/mongo/" --quiet
+  [ -d "$ROOT/backend/uploads" ] && rclone sync "$ROOT/backend/uploads" "$RCLONE_REMOTE/uploads" --quiet
+  rclone delete "$RCLONE_REMOTE/mongo/" --min-age "${KEEP_DAYS}d" --quiet || true
+  echo "$(date -Is) off-site copy ok: $RCLONE_REMOTE"
+fi
+
+# Uptime monitor ping (e.g. healthchecks.io): alerts you if this backup stops running.
+[ -n "${BACKUP_PING_URL:-}" ] && curl -fsS -m 10 "$BACKUP_PING_URL" >/dev/null || true
+
 find "$BACKUP_DIR" -name 'isp-*.archive.gz' -mtime +"$KEEP_DAYS" -delete
 
 # Restore (careful — overwrites data):

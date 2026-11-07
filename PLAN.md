@@ -1373,7 +1373,7 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Excel import (dry-run + commit) / export, MikroTik import (router অপরিবর্তিত)
 - [x] Activity log (`audit()` middleware), in-app notifications
 - [x] Tests: মোট ৭৪টি
-- [ ] Forgot/reset password (OTP SMS) — Phase 3-এ
+- [x] Forgot/reset password (OTP SMS) — Phase 3-এ হয়েছে
 
 **🎯 Milestone: Internal Beta — ২-৩টা ISP-কে ফ্রিতে দিয়ে test**
 
@@ -1385,7 +1385,7 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Health check-এ DB status (503 when down)
 - [x] ধাপে ধাপে বাংলা guide — `DEPLOY.md`
 - [ ] আসল VPS-এ deploy + আসল MikroTik/SMS/gateway দিয়ে test
-- [ ] Off-site backup (rclone), uptime monitor
+- [x] Off-site backup (rclone, `RCLONE_REMOTE`), uptime monitor (`/health` + backup ping) — DEPLOY.md §৮
 
 ### Phase 3 — SaaS Billing (সপ্তাহ ১০–১২)
 - [x] Plan/Subscription/Invoice module (invoice-based renew, সব gateway-তে একই নিয়ম)
@@ -1406,8 +1406,8 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Forgot/reset password (SMS OTP, hashed, 5 বার ভুল হলে lock)
 - [x] Marketing site: landing, pricing (live plans), terms, privacy, refund, contact — ⚠️ আইনি লেখা template, আইনজীবী দিয়ে দেখিয়ে নিতে হবে
 - [x] Tests: মোট ৯৯টি
-- [ ] Logo file upload (এখন URL)
-- [ ] Nagad direct API (এখন SSLCommerz-এর মাধ্যমে Nagad চলে)
+- [x] Logo file upload (PNG/JPG/WebP, magic-byte যাচাই, SVG বন্ধ)
+- [ ] Nagad direct API — ⏸ Nagad merchant account + তাদের API document ছাড়া বানানো ঝুঁকিপূর্ণ (RSA sign/encrypt); এখন SSLCommerz-এর মাধ্যমে Nagad চলে
 
 ### Phase 4 — Super Admin (সপ্তাহ ১৩–১৪)
 - [x] Super admin dashboard (MRR/ARR, tenant status, revenue 30 দিন, end customers, recent signups)
@@ -1426,29 +1426,34 @@ main → deploy staging (auto) → production (manual approve)
 **🚀 Milestone: Public Launch (v1.0)**
 
 ### Phase 5 — Online Payment & Portal (সপ্তাহ ১৫–১৭)
-- [ ] TenantGateway settings (SSLCommerz, bKash, Nagad)
-- [ ] Customer portal (OTP login, dashboard, pay, ticket) + subdomain routing
-- [ ] Payment link in SMS
-- [ ] Manual bKash TrxID verify
+- [x] TenantGateway settings (SSLCommerz, bKash, Stripe, Manual — Phase 3-এই হয়েছে)
+- [x] Customer portal: SMS OTP login (ISP-এর SMS balance থেকে), এক নম্বরে একাধিক connection, package/মেয়াদ/due, payment history, bill pay, অভিযোগ (ticket) + reply; plan feature `customer_portal`
+- [x] Subdomain routing (`<slug>.<NEXT_PUBLIC_ROOT_DOMAIN>` → portal; wildcard DNS + TLS লাগবে)
+- [x] Payment link in SMS (reminder/expired SMS-এ `{pay_link}`, plan-এ online payment থাকলেই), `{portal_link}` variable
+- [x] Manual bKash TrxID verify (Phase 3-এই হয়েছে)
+- [x] Tests: মোট ১১৯টি
+- [x] Portal-এ live status (online/IP/uptime/এই session-এর download-upload, MikroTik থেকে)
+- [x] Portal থেকে package change request → staff approve করলে package, bill ও router profile বদলায়
 
 ### Phase 6 — Advanced ISP (সপ্তাহ ১৮–২১)
-- [ ] Reseller + balance + ledger
-- [ ] Postpaid invoice billing
-- [ ] Employee/salary, cash handover
-- [ ] Expense/income/P&L
-- [ ] Inventory
-- [ ] WireGuard VPN router mode
-- [ ] IP log (BTRC)
+- [x] Reseller + balance + ledger (নিজের login, শুধু নিজের কাস্টমার, recharge-এ rate অনুযায়ী balance কাটে, credit limit, plan limit)
+- [x] Postpaid invoice billing (১ তারিখে invoice, পুরোনোটা আগে শোধ, overdue হলে cut-off, শোধ হলে reconnect)
+- [x] Employee/salary (advance/bonus/deduction, salary sheet), cash handover (collector → office, receiver confirm করে)
+- [x] Expense/income/P&L (salary, মাল কেনা, reseller deposit নিজে থেকে হিসাবে যায়; ১২ মাসের trend)
+- [x] Inventory (serial/MAC, purchase → expense, customer/staff-কে issue, low stock)
+- [x] WireGuard VPN router mode (key তৈরি, tunnel IP, RouterOS script, server peer sync)
+- [x] IP log (BTRC) — প্রতি ৫ মিনিটে PPPoE session, IP/MAC, Excel export
+- [x] Tests: মোট ১৩৬টি
 
 ### Phase 7 — Growth (সপ্তাহ ২২+)
-- [ ] Custom domain (portal), white label
-- [ ] Own SMS gateway option
-- [ ] Public API + API key (Enterprise)
-- [ ] Mobile app (collector + customer) — React Native
-- [ ] RADIUS (FreeRADIUS) support
-- [ ] OLT integration (ONU signal)
-- [ ] WhatsApp notification
-- [ ] Analytics (churn prediction, collection forecast)
+- [x] Custom domain (TXT verify, Caddy on-demand TLS hook), white label flag
+- [x] Own SMS gateway option (credit লাগে না; test SMS)
+- [x] Public API + API key (Enterprise; scope, hashed key, revoke, rate limit)
+- [ ] Mobile app (collector + customer) — ⏸ আলাদা React Native project; এখন web + portal মোবাইলে চলে
+- [ ] RADIUS (FreeRADIUS) support — ⏸ আলাদা RADIUS server ও আসল NAS দিয়ে test লাগবে
+- [ ] OLT integration (ONU signal) — ⏸ vendor (BDCOM/VSOL/Huawei) অনুযায়ী আলাদা, আসল OLT ছাড়া বানানো যাবে না
+- [x] WhatsApp notification (WhatsApp Cloud API, approved template; plan feature `whatsapp`)
+- [x] Analytics (নিয়মভিত্তিক churn risk, collection forecast, renewal rate)
 
 ---
 

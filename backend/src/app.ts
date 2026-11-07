@@ -8,6 +8,10 @@ import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
 import { notFound } from "./app/middlewares/notFound";
 import { apiLimiter } from "./app/middlewares/rateLimiter";
 import routes from "./app/routes";
+import fs from "node:fs";
+
+const UPLOAD_DIR = config.uploadDir;
+fs.mkdirSync(`${UPLOAD_DIR}/logos`, { recursive: true });
 
 const app = express();
 
@@ -34,6 +38,11 @@ app.get("/api/v1/health", async (_req, res) => {
   res.status(db === "up" ? 200 : 503).json({ success: db === "up", message: db === "up" ? "OK" : "Database unavailable", data: { uptime: process.uptime(), db } });
 });
 
+// Uploaded logos. Nginx can serve this folder directly in production (see deploy/nginx).
+app.use(
+  "/uploads",
+  express.static(UPLOAD_DIR, { maxAge: "7d", fallthrough: false, setHeaders: (res) => res.setHeader("Cross-Origin-Resource-Policy", "cross-origin") }),
+);
 app.use("/api/v1", apiLimiter, routes);
 
 app.use(notFound);

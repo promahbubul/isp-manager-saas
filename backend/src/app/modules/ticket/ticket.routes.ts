@@ -13,6 +13,7 @@ const actor = (req: Request): Actor => ({
   role: req.user!.role,
   company: req.user!.company,
   zones: req.user!.zones,
+  reseller: req.user!.reseller,
 });
 const id = (req: Request) => String(req.params.id);
 

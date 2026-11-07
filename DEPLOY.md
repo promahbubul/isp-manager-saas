@@ -175,7 +175,14 @@ crontab -e
 30 3 * * * bash /home/deploy/isp-manager-saas/deploy/scripts/backup-mongo.sh >> /home/deploy/backup.log 2>&1
 ```
 
-⚠️ Backup **server-এর বাইরেও** রাখো (rclone দিয়ে Google Drive / S3)। মাসে একবার restore করে দেখো।
+**Off-site copy (দরকারি):** `sudo apt install rclone`, তারপর `rclone config` দিয়ে Google Drive/S3 যোগ করো, আর crontab-এ লাইনের আগে
+`RCLONE_REMOTE=gdrive:isp-backups` বসাও। Script নিজেই backup আর logo-গুলো (`backend/uploads`) কপি করবে, পুরোনোগুলো মুছবে।
+
+**Uptime monitor:** [UptimeRobot](https://uptimerobot.com) বা healthchecks.io-তে `https://api.yourdomain.com/api/v1/health` যোগ করো
+(DB বন্ধ হলে 503 দেয়)। Backup চলছে কিনা জানতে healthchecks.io-র ping URL `BACKUP_PING_URL=` হিসেবে crontab-এ দাও।
+Super admin panel → **System** page-এ worker job, router, SMS-এর অবস্থা দেখা যায়।
+
+⚠️ মাসে একবার restore করে দেখো।
 `ENCRYPTION_KEY` আর `backend/.env`-এর কপিও আলাদা নিরাপদ জায়গায় রাখো — এগুলো ছাড়া backup কাজে আসবে না।
 
 ## ৯. MikroTik-কে server-এর সাথে যুক্ত করা
@@ -203,6 +210,48 @@ Router-এ public IP না থাকলে VPN লাগবে (WireGuard — P
 - [ ] Uptime monitor (UptimeRobot ইত্যাদি) → `https://api.yourdomain.com/api/v1/health`
 - [ ] Backup cron চলছে, server-এর বাইরে কপি হচ্ছে
 - [ ] Terms / Privacy / Refund page-এ কোম্পানির আসল তথ্য দেখাচ্ছে (SSLCommerz live approval-এর জন্য)
+
+## ১১. ঐচ্ছিক সুবিধা
+
+### Logo upload
+Logo `backend/uploads/logos`-এ থাকে, API `/uploads/...` থেকে দেয়। অন্য folder চাইলে `.env`-এ `UPLOAD_DIR=` দাও। Backup script এগুলোও rclone-এ পাঠায়।
+
+### WireGuard VPN (public IP ছাড়া MikroTik)
+```bash
+sudo apt install wireguard
+wg genkey | sudo tee /etc/wireguard/server.key | wg pubkey | sudo tee /etc/wireguard/server.pub
+sudo tee /etc/wireguard/wg0.conf <<EOF
+[Interface]
+Address = 10.200.0.1/16
+ListenPort = 51820
+PrivateKey = $(sudo cat /etc/wireguard/server.key)
+EOF
+sudo systemctl enable --now wg-quick@wg0
+sudo ufw allow 51820/udp
+# API (deploy user) যেন peer যোগ/বাদ দিতে পারে — শুধু wg কমান্ডকে network-admin অনুমতি:
+sudo setcap cap_net_admin+ep /usr/bin/wg
+```
+`backend/.env`:
+```
+WG_ENABLED=true
+WG_ENDPOINT=vpn.yourdomain.com:51820
+WG_SERVER_PUBLIC_KEY=<server.pub-এর লেখা>
+WG_APPLY=true
+```
+ISP তখন Routers page-এ **Use VPN** চাপলে একটা RouterOS 7 script পাবে; router-এ paste করলেই সংযোগ হবে।
+API চালু হওয়ার সময় সব peer আবার যোগ হয় (server restart হলেও)।
+
+### ISP-এর subdomain / নিজের domain-এ customer portal
+- **Subdomain** (`speednet.yourdomain.com`): DNS-এ `*.yourdomain.com` → server IP (A record), wildcard SSL
+  (`certbot certonly --manual --preferred-challenges dns -d '*.yourdomain.com'`), frontend `.env`-এ
+  `NEXT_PUBLIC_ROOT_DOMAIN=yourdomain.com`, Nginx-এ `server_name *.yourdomain.com;` দিয়ে frontend-এ proxy।
+- **নিজের domain** (Pro/Enterprise): ISP Settings → Integrations-এ domain দিয়ে TXT record verify করে, তারপর CNAME দেয়
+  `app.yourdomain.com`-এ। Frontend `.env`-এ `NEXT_PUBLIC_APP_HOSTS=yourdomain.com,www.yourdomain.com,app.yourdomain.com` দাও।
+  প্রতিটা domain-এর SSL: সহজ উপায় **Caddy** on-demand TLS — `ask https://api.yourdomain.com/api/v1/public/domain-check`
+  দিলে শুধু verified domain-এর জন্যই certificate নেয়। Nginx রাখতে চাইলে প্রতি domain-এ `certbot --nginx -d my.isp.com`।
+
+### ISP-এর নিজের SMS gateway, WhatsApp, API key
+এগুলো ISP নিজেই Settings → Integrations থেকে চালু করে (plan-এ থাকলে)। Server-এ কিছু করতে হয় না।
 
 ## আপডেট
 

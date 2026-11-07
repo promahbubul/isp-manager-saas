@@ -82,7 +82,7 @@ export default function TicketDetailPage() {
                 ) : (
                   <>
                     <p className="text-xs text-slate-500">
-                      <strong className="text-slate-700">{c.by?.name}</strong> · {formatDateTime(c.at)}
+                      <strong className="text-slate-700">{c.fromCustomer ? `${t.customer?.name ?? "Customer"} (customer, via portal)` : c.by?.name}</strong> · {formatDateTime(c.at)}
                     </p>
                     <p className="mt-1 whitespace-pre-wrap">{c.text}</p>
                   </>

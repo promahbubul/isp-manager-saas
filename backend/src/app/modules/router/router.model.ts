@@ -15,6 +15,8 @@ export interface IRouter {
   lastCheckedAt?: Date;
   lastError?: string;
   info?: { identity?: string; version?: string; board?: string };
+  /** WireGuard tunnel (connectionMode "vpn"): the router dials the server, the API talks to `address` */
+  vpn?: { publicKey: string; privateKey: string /* encrypted */; address: string; createdAt: Date };
   isActive: boolean;
 }
 
@@ -33,6 +35,12 @@ const routerSchema = new Schema<IRouter>(
     lastCheckedAt: Date,
     lastError: String,
     info: { identity: String, version: String, board: String },
+    vpn: {
+      publicKey: String,
+      privateKey: { type: String, select: false },
+      address: String,
+      createdAt: Date,
+    },
     isActive: { type: Boolean, default: true },
   },
   {
@@ -40,6 +48,7 @@ const routerSchema = new Schema<IRouter>(
     toJSON: {
       transform: (_doc, ret: Record<string, unknown>) => {
         delete ret.password;
+        if (ret.vpn && typeof ret.vpn === "object") delete (ret.vpn as Record<string, unknown>).privateKey;
         delete ret.__v;
         return ret;
       },

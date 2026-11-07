@@ -4,6 +4,8 @@ import { expireCustomers } from "./expireCustomers.job";
 import { sendExpiryReminders } from "./expiryReminder.job";
 import { retryFailedSyncs } from "./retrySync.job";
 import { runSubscriptionLifecycle } from "./subscriptionLifecycle.job";
+import { issueInvoicesForAll } from "../modules/invoice/invoice.service";
+import { pollIpSessions } from "../modules/iplog/iplog.service";
 
 /** maxGapMinutes: health page flags the job as stale when its last run is older than this. */
 type Job = { name: string; schedule: string; maxGapMinutes: number; run: () => Promise<unknown> };
@@ -13,6 +15,10 @@ export const JOBS: Job[] = [
   { name: "retryFailedSyncs", schedule: "*/10 * * * *", maxGapMinutes: 30, run: retryFailedSyncs },
   { name: "expiryReminders", schedule: "0 10 * * *", maxGapMinutes: 26 * 60, run: () => sendExpiryReminders() }, // 10:00 Dhaka
   { name: "subscriptionLifecycle", schedule: "5 * * * *", maxGapMinutes: 90, run: () => runSubscriptionLifecycle() },
+  // 00:10 on the 1st; daily re-runs are no-ops but catch a missed 1st (server down).
+  { name: "postpaidInvoices", schedule: "10 0 * * *", maxGapMinutes: 26 * 60, run: () => issueInvoicesForAll() },
+  // BTRC user/IP log; only ISPs whose plan has ip_log are polled.
+  { name: "ipLogPoll", schedule: "*/5 * * * *", maxGapMinutes: 20, run: () => pollIpSessions() },
 ];
 
 /**

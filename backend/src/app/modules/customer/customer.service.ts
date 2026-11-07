@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { isValidObjectId } from "mongoose";
+import { isValidObjectId, Types } from "mongoose";
 import { TenantRole } from "../../constants/roles";
 import AppError from "../../errors/AppError";
 import { withRouter } from "../../services/mikrotik/mikrotik.service";
@@ -9,6 +9,7 @@ import { paginate } from "../../utils/paginate";
 import { nextSequence } from "../counter/counter.model";
 import { findPackageOrThrow } from "../package/package.service";
 import { MikrotikRouter } from "../router/router.model";
+import { Reseller } from "../reseller/reseller.model";
 import { assertPlanLimit, changeUsage } from "../subscription/planLimit";
 import { sendEventSms } from "../sms/sms.service";
 import { Zone } from "../zone/zone.model";
@@ -16,11 +17,16 @@ import { Customer, CustomerDoc, CustomerStatus, ICustomer } from "./customer.mod
 import { isConnectionEnabled, removeCustomerFromRouter, syncCustomer } from "./customer.sync";
 import { CreateCustomerInput, UpdateCustomerInput } from "./customer.validation";
 
-export type Actor = { id: string; role: TenantRole; company: string; zones: string[] };
+/** reseller = the Reseller id when the staff user is a reseller's login */
+export type Actor = { id: string; role: TenantRole; company: string; zones: string[]; reseller?: string };
 
-/** Collectors and technicians assigned to zones only see customers in those zones. */
+/**
+ * Collectors and technicians assigned to zones only see customers in those zones.
+ * A reseller only ever sees their own customers.
+ */
 export function customerScope(actor: Actor): Record<string, unknown> {
   const scope: Record<string, unknown> = { deletedAt: null };
+  if (actor.role === "reseller") scope.reseller = actor.reseller ?? { $in: [] }; // no reseller link → sees nothing
   if ((actor.role === "collector" || actor.role === "technician") && actor.zones.length) {
     scope.zone = { $in: actor.zones };
   }
@@ -39,8 +45,10 @@ export async function findCustomerOrThrow(actor: Actor, id: string, withSecret =
 const generatePassword = () => crypto.randomBytes(6).toString("base64url").slice(0, 8);
 
 /** Billing status from expiry, unless staff set a manual status. */
-function statusFromExpiry(expiry: Date, isFree: boolean): CustomerStatus {
+function statusFromExpiry(expiry: Date, isFree: boolean, billingType: "prepaid" | "postpaid" = "prepaid"): CustomerStatus {
   if (isFree) return "free";
+  // Postpaid connections are cut by unpaid invoices (invoice job), not by a date.
+  if (billingType === "postpaid") return "active";
   return expiry.getTime() > Date.now() ? "active" : "expired";
 }
 
@@ -90,6 +98,18 @@ async function getById(actor: Actor, id: string) {
   return customer;
 }
 
+/** Resellers always own what they create; ISP staff may assign an active reseller. */
+async function resellerFor(actor: Actor, requested?: string | null) {
+  if (actor.role === "reseller") {
+    if (!actor.reseller) throw new AppError(403, "Your login is not linked to a reseller account");
+    return actor.reseller;
+  }
+  if (!requested) return null;
+  const ok = await Reseller.exists({ _id: requested, isActive: true });
+  if (!ok) throw new AppError(400, "Reseller not found or inactive");
+  return requested;
+}
+
 async function create(actor: Actor, input: CreateCustomerInput) {
   await assertPlanLimit(actor.company, "customers");
   const pkg = await findPackageOrThrow(input.package);
@@ -110,7 +130,8 @@ async function create(actor: Actor, input: CreateCustomerInput) {
     router: pkg.router,
     monthlyFee: input.monthlyFee ?? pkg.price,
     expiryDate,
-    status: statusFromExpiry(expiryDate, isFree),
+    status: statusFromExpiry(expiryDate, isFree, input.billingType),
+    reseller: await resellerFor(actor, input.reseller),
     syncStatus: "pending",
   });
   await changeUsage(actor.company, "customers", 1);
@@ -128,9 +149,11 @@ async function create(actor: Actor, input: CreateCustomerInput) {
 async function update(actor: Actor, id: string, input: UpdateCustomerInput) {
   const customer = await findCustomerOrThrow(actor, id, true);
   const previous = { router: customer.router, username: customer.pppoe.username };
-  const { pppoeUsername, pppoePassword, isFree, package: packageId, ...rest } = input;
+  const { pppoeUsername, pppoePassword, isFree, package: packageId, reseller, ...rest } = input;
 
   if (rest.zone !== undefined) await assertZone(rest.zone);
+  // A reseller cannot move customers to someone else; ISP staff can (null = back to the ISP).
+  if (reseller !== undefined && actor.role !== "reseller") customer.reseller = reseller ? new Types.ObjectId((await resellerFor(actor, reseller)) as string) : null;
 
   if (pppoeUsername && pppoeUsername !== customer.pppoe.username) {
     const taken = await Customer.exists({ "pppoe.username": pppoeUsername, deletedAt: null, _id: { $ne: id } });
@@ -157,7 +180,7 @@ async function update(actor: Actor, id: string, input: UpdateCustomerInput) {
   // Recompute billing status when expiry or free flag changed (manual "disabled" stays).
   if (isFree === true) customer.status = "free";
   else if (customer.status !== "disabled" && (isFree === false || rest.expiryDate)) {
-    customer.status = statusFromExpiry(customer.expiryDate, false);
+    customer.status = statusFromExpiry(customer.expiryDate, false, customer.billingType);
   }
 
   await customer.save();
@@ -177,7 +200,7 @@ async function setEnabled(actor: Actor, id: string, enabled: boolean) {
   const customer = await findCustomerOrThrow(actor, id, true);
   if (enabled) {
     if (customer.status !== "disabled") throw new AppError(400, "Customer is not manually disabled");
-    customer.status = statusFromExpiry(customer.expiryDate, false);
+    customer.status = statusFromExpiry(customer.expiryDate, false, customer.billingType);
   } else {
     if (customer.status === "disabled") throw new AppError(400, "Customer is already disabled");
     customer.status = "disabled";

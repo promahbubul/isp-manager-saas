@@ -11,6 +11,7 @@ export const PLAN_FEATURES = [
   "own_sms_gateway",
   "api_access",
   "white_label",
+  "whatsapp",
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
 

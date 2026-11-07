@@ -15,6 +15,7 @@ export interface IUser {
   /** explicit permission overrides (required for role "custom") */
   permissions: string[];
   zones: Types.ObjectId[];
+  /** set for role "reseller": the Reseller this login belongs to */
   reseller?: Types.ObjectId;
   isActive: boolean;
   lastLogin?: Date;

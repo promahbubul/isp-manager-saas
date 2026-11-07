@@ -6,6 +6,7 @@ import { Button, Card, Checkbox, Input, Select, Textarea } from "@/components/ui
 import { api, applyFieldErrors, getErrorMessage } from "@/lib/api";
 import { toDateInput } from "@/lib/format";
 import { useApi } from "@/lib/hooks";
+import { useAuth } from "@/providers/AuthProvider";
 
 const clean = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== "" && v !== undefined));
 
@@ -17,6 +18,8 @@ export default function CustomerForm({ customer, onSaved }) {
   const isEdit = Boolean(customer);
   const packages = useApi(["packages", "active"], "/packages", { active: "true" });
   const zones = useApi("zones", "/zones");
+  const { user, can, subscription } = useAuth();
+  const resellers = useApi(["resellers", "all"], "/resellers", { limit: 100 }, { enabled: can("reseller.view") && (subscription?.plan?.features ?? []).includes("reseller") });
 
   const { register, handleSubmit, setError, control, setValue, formState } = useForm({
     defaultValues: {
@@ -35,6 +38,8 @@ export default function CustomerForm({ customer, onSaved }) {
       expiryDate: toDateInput(customer?.expiryDate),
       isFree: customer?.status === "free",
       autoDisable: customer?.autoDisable ?? true,
+      billingType: customer?.billingType ?? "prepaid",
+      reseller: customer?.reseller?._id ?? customer?.reseller ?? "",
       dueAmount: 0,
       onuMac: customer?.device?.onuMac ?? "",
       boxNo: customer?.device?.boxNo ?? "",
@@ -44,6 +49,7 @@ export default function CustomerForm({ customer, onSaved }) {
   });
   const e = formState.errors;
   const packageList = packages.data?.data ?? [];
+  const resellerList = (resellers.data?.data ?? []).filter((r) => r.isActive);
 
   const onPackageChange = (ev) => {
     const pkg = packageList.find((p) => p._id === ev.target.value);
@@ -69,6 +75,7 @@ export default function CustomerForm({ customer, onSaved }) {
       // allow clearing optional fields
       for (const k of ["altPhone", "email"]) if (!v[k] && customer?.[k]) body[k] = null;
       if (!v.zone && customer?.zone) body.zone = null;
+      if (!v.reseller && customer?.reseller) body.reseller = null;
     }
     try {
       const res = isEdit ? await api.patch(`/customers/${customer._id}`, body) : await api.post("/customers", body);
@@ -140,6 +147,18 @@ export default function CustomerForm({ customer, onSaved }) {
           />
           {!isEdit && (
             <Input label="Previous due (৳)" type="number" step="0.01" hint="Unpaid amount when migrating" error={e.dueAmount?.message} {...register("dueAmount")} />
+          )}
+          <Select
+            label="Billing type"
+            hint="Postpaid: invoice on the 1st, cut off when an invoice is overdue"
+            options={[
+              { value: "prepaid", label: "Prepaid (pay first)" },
+              { value: "postpaid", label: "Postpaid (monthly invoice)" },
+            ]}
+            {...register("billingType")}
+          />
+          {resellerList.length > 0 && user?.role !== "reseller" && (
+            <Select label="Reseller" placeholder="— Own customer —" options={resellerList.map((r) => ({ value: r._id, label: r.name }))} {...register("reseller")} />
           )}
           <div className="flex flex-col gap-3 pt-1">
             <Checkbox label="Free customer" hint="Never expires (staff, VIP)" {...register("isFree")} />

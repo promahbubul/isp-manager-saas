@@ -43,6 +43,8 @@ export interface ICustomer {
   syncError?: string;
   /** expiryDate the last reminder SMS was sent for (one reminder per billing period) */
   reminderSentFor?: Date;
+  /** customer belongs to this reseller (sub-dealer); null = ISP's own customer */
+  reseller?: Types.ObjectId | null;
   deletedAt?: Date | null;
 }
 
@@ -81,6 +83,7 @@ const customerSchema = new Schema<ICustomer>(
     syncStatus: { type: String, enum: ["synced", "pending", "failed"], default: "pending" },
     syncError: String,
     reminderSentFor: Date,
+    reseller: { type: Schema.Types.ObjectId, ref: "Reseller", default: null },
     deletedAt: { type: Date, default: null },
   },
   {

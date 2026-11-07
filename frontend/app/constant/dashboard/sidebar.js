@@ -1,5 +1,5 @@
-import { FaMoneyBill, FaNetworkWired, FaUserAlt, FaUsersCog } from "react-icons/fa";
-import { MdCardMembership, MdDashboard, MdHelpOutline, MdHistory, MdSettings, MdSms, MdSupportAgent } from "react-icons/md";
+import { FaBoxes, FaCalculator, FaHandshake, FaMoneyBill, FaNetworkWired, FaUserAlt, FaUsersCog, FaUserTie } from "react-icons/fa";
+import { MdCardMembership, MdDashboard, MdHelpOutline, MdHistory, MdInsights, MdPolicy, MdSettings, MdSms, MdSupportAgent } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 
 /**
@@ -18,6 +18,7 @@ const sidebarModules = [
       { id: "customers-all", title: "All Customers", path: "/dashboard/customers" },
       { id: "customers-create", title: "Add Customer", path: "/dashboard/customers/create", perm: "customer.create" },
       { id: "customers-import", title: "Import", path: "/dashboard/customers/import", perm: "customer.import" },
+      { id: "customers-requests", title: "Package Requests", path: "/dashboard/customers/package-requests", feature: "customer_portal" },
     ],
   },
   {
@@ -29,6 +30,8 @@ const sidebarModules = [
       { id: "billing-recharge", title: "Recharge", path: "/dashboard/billing/recharge", perm: "payment.recharge" },
       { id: "billing-payments", title: "Payment History", path: "/dashboard/billing/payments" },
       { id: "billing-online", title: "Online Payments", path: "/dashboard/billing/online", feature: "online_payment" },
+      { id: "billing-invoices", title: "Postpaid Invoices", path: "/dashboard/billing/invoices", perm: "invoice.view" },
+      { id: "billing-cash", title: "Cash Collection", path: "/dashboard/collections" },
     ],
   },
   { id: "tickets", title: "Support Tickets", icon: MdSupportAgent, path: "/dashboard/tickets", perm: "ticket.view", feature: "ticket" },
@@ -43,7 +46,13 @@ const sidebarModules = [
       { id: "sms-templates", title: "Templates", path: "/dashboard/sms/templates" },
     ],
   },
+  { id: "resellers", title: "Resellers", icon: FaHandshake, path: "/dashboard/resellers", perm: "reseller.view", feature: "reseller" },
   { id: "reports", title: "Reports", icon: TbReportAnalytics, path: "/dashboard/reports", perm: "report.view" },
+  { id: "analytics", title: "Analytics", icon: MdInsights, path: "/dashboard/analytics", perm: "report.view" },
+  { id: "accounts", title: "Accounts (P&L)", icon: FaCalculator, path: "/dashboard/accounts", perm: "expense.view" },
+  { id: "employees", title: "Employees & Salary", icon: FaUserTie, path: "/dashboard/employees", perm: "employee.view" },
+  { id: "inventory", title: "Inventory", icon: FaBoxes, path: "/dashboard/inventory", perm: "inventory.view", feature: "inventory" },
+  { id: "iplog", title: "IP Log (BTRC)", icon: MdPolicy, path: "/dashboard/ip-log", perm: "ip_log.view", feature: "ip_log" },
   {
     id: "network",
     title: "Network",
@@ -66,6 +75,7 @@ const sidebarModules = [
     subModules: [
       { id: "settings-general", title: "General", path: "/dashboard/settings" },
       { id: "settings-payments", title: "Payment Gateways", path: "/dashboard/settings/payments", feature: "online_payment" },
+      { id: "settings-integrations", title: "Integrations", path: "/dashboard/settings/integrations" },
     ],
   },
   { id: "help", title: "Help & Support", icon: MdHelpOutline, path: "/dashboard/support", perm: "setting.manage" },

@@ -12,7 +12,7 @@ router.use(auth());
 router.get("/:type", authorize("report.view"), async (req: Request, res: Response) => {
   const type = String(req.params.type) as ReportType;
   if (!REPORT_TYPES.includes(type)) throw new AppError(404, "Unknown report");
-  const actor: Actor = { id: req.user!.id, role: req.user!.role, company: req.user!.company, zones: req.user!.zones };
+  const actor: Actor = { id: req.user!.id, role: req.user!.role, company: req.user!.company, zones: req.user!.zones, reseller: req.user!.reseller };
   const report = await ReportService.buildReport(actor, type, req.query as Record<string, unknown>);
 
   if (req.query.format === "xlsx") {

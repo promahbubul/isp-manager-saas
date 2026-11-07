@@ -15,6 +15,19 @@ import reportRoutes from "../modules/report/report.routes";
 import smsRoutes from "../modules/sms/sms.routes";
 import ticketRoutes from "../modules/ticket/ticket.routes";
 import { ispSupportRoutes } from "../modules/support/support.routes";
+import portalRoutes from "../modules/portal/portal.routes";
+import accountsRoutes from "../modules/accounts/accounts.routes";
+import resellerRoutes from "../modules/reseller/reseller.routes";
+import invoiceRoutes from "../modules/invoice/invoice.routes";
+import inventoryRoutes from "../modules/inventory/inventory.routes";
+import ipLogRoutes from "../modules/iplog/iplog.routes";
+import { packageRequestRoutes } from "../modules/portal/packageRequest";
+import { ownGatewayRoutes } from "../modules/sms/ownGateway";
+import { apiKeyRoutes, publicApiRoutes } from "../modules/apiKey/apiKey";
+import { customDomainRoutes, publicDomainRoutes } from "../modules/company/customDomain";
+import { analyticsRoutes } from "../modules/report/analytics";
+import { whatsappRoutes } from "../modules/sms/whatsapp";
+import { collectionRoutes, employeeRoutes } from "../modules/employee/employee.routes";
 import adminRoutes from "../modules/admin/admin.routes";
 import announcementRoutes from "../modules/announcement/announcement.routes";
 import billingRoutes from "../modules/billing/billing.routes";
@@ -36,12 +49,28 @@ const moduleRoutes: { path: string; route: Router }[] = [
   { path: "/customers", route: customerRoutes },
   { path: "/payments", route: paymentRoutes },
   { path: "/settings/payment-gateways", route: tenantGatewayRoutes },
+  { path: "/settings/sms-gateway", route: ownGatewayRoutes },
+  { path: "/settings/whatsapp", route: whatsappRoutes },
+  { path: "/settings/api-keys", route: apiKeyRoutes },
+  { path: "/settings/custom-domain", route: customDomainRoutes },
+  { path: "/public", route: publicDomainRoutes },
+  { path: "/analytics", route: analyticsRoutes },
+  { path: "/public-api/v1", route: publicApiRoutes },
   { path: "/settings", route: settingRoutes },
   { path: "/billing", route: billingRoutes },
   { path: "/online-payments", route: tenantOnlinePaymentRoutes },
   { path: "/sms", route: smsRoutes },
   { path: "/tickets", route: ticketRoutes },
   { path: "/support", route: ispSupportRoutes },
+  { path: "/portal", route: portalRoutes },
+  { path: "/accounts", route: accountsRoutes },
+  { path: "/resellers", route: resellerRoutes },
+  { path: "/invoices", route: invoiceRoutes },
+  { path: "/inventory", route: inventoryRoutes },
+  { path: "/ip-logs", route: ipLogRoutes },
+  { path: "/package-requests", route: packageRequestRoutes },
+  { path: "/employees", route: employeeRoutes },
+  { path: "/collections", route: collectionRoutes },
   { path: "/reports", route: reportRoutes },
   { path: "/notifications", route: notificationRoutes },
   { path: "/announcements", route: announcementRoutes },

@@ -7,14 +7,14 @@ import { Button, ErrorBox, Input, Loading } from "@/components/ui";
 import { api, getErrorMessage } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
 
-/** Public bill payment page: /pay/<isp-slug>?c=<customerId> */
+/** Public bill payment page: /pay/<isp-slug>?c=<customerId>&p=<mobile> (p is filled in from the customer portal) */
 function PayContent() {
   const { slug } = useParams();
   const params = useSearchParams();
   const [info, setInfo] = useState(null);
   const [infoError, setInfoError] = useState(null);
   const [account, setAccount] = useState(params.get("c") ?? "");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(params.get("p") ?? "");
   const [bill, setBill] = useState(null);
   const [months, setMonths] = useState(1);
   const [gateway, setGateway] = useState("");

@@ -1,7 +1,8 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 import config from "../config";
 
-export type TokenScope = "tenant" | "platform";
+/** customer = ISP's end customer in the self-care portal (sub = mobile number) */
+export type TokenScope = "tenant" | "platform" | "customer";
 
 export type AccessPayload = {
   sub: string;
@@ -29,6 +30,10 @@ export const signRefreshToken = (payload: RefreshPayload, expiresIn = config.jwt
   jwt.sign(payload, config.jwt.refreshSecret, {
     expiresIn: expiresIn as SignOptions["expiresIn"],
   });
+
+/** Portal session: no refresh token, the customer logs in again with a new OTP after 7 days. */
+export const signPortalToken = (phone: string, company: string) =>
+  jwt.sign({ sub: phone, scope: "customer", role: "customer", company } satisfies AccessPayload, config.jwt.accessSecret, { expiresIn: "7d" });
 
 export const verifyAccessToken = (token: string) => jwt.verify(token, config.jwt.accessSecret) as AccessPayload;
 

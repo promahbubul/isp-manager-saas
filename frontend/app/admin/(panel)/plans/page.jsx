@@ -8,7 +8,7 @@ import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
 import { applyFieldErrors } from "@/lib/api";
 import { taka } from "@/lib/format";
 
-const FEATURES = ["online_payment", "customer_portal", "ticket", "reseller", "inventory", "ip_log", "custom_domain", "own_sms_gateway", "api_access", "white_label"];
+const FEATURES = ["online_payment", "customer_portal", "ticket", "reseller", "inventory", "ip_log", "custom_domain", "own_sms_gateway", "api_access", "white_label", "whatsapp"];
 const lim = (n) => (n === -1 ? "∞" : n);
 
 function PlanForm({ plan, onDone }) {

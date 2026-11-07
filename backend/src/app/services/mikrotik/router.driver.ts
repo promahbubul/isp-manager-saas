@@ -26,6 +26,9 @@ export type ActiveSession = {
   uptime?: string;
 };
 
+/** download = router → customer (tx on the interface), upload = customer → router (rx) */
+export type SessionTraffic = { downloadBytes: number; uploadBytes: number };
+
 export type SecretInput = {
   name: string;
   password: string;
@@ -49,6 +52,8 @@ export interface RouterDriver {
   findActive(name: string): Promise<ActiveSession | null>;
   /** disconnect the active PPP session (if any); returns true if one was removed */
   kick(name: string): Promise<boolean>;
+  /** bytes on the customer's dynamic PPPoE interface since they connected (null if offline) */
+  sessionTraffic(name: string): Promise<SessionTraffic | null>;
   close(): void;
 }
 
@@ -146,6 +151,13 @@ export class RouterOsDriver implements RouterDriver {
     const ids = rows.map((r) => r[".id"]).filter(Boolean);
     for (const id of ids) await this.client.write("/ppp/active/remove", { ".id": id });
     return ids.length > 0;
+  }
+
+  async sessionTraffic(name: string) {
+    // RouterOS names the dynamic PPPoE server interface <pppoe-USERNAME>
+    const [r] = await this.client.write("/interface/print", {}, { name: `<pppoe-${name}>` });
+    if (!r?.name) return null;
+    return { downloadBytes: Number(r["tx-byte"] ?? 0), uploadBytes: Number(r["rx-byte"] ?? 0) };
   }
 
   close() {
