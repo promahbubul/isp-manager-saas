@@ -61,7 +61,7 @@ cp .env.example .env.local  # first time only
 pnpm dev                    # http://localhost:3000
 ```
 
-Open http://localhost:3000/signup to create an ISP account (starts a 14-day trial).
+Open http://localhost:3000/signup to create an ISP account (starts a 1-year trial, `TRIAL_DAYS`).
 
 ## API (Phase 0)
 
@@ -253,7 +253,7 @@ Not built (need hardware or a separate project): mobile app, RADIUS, OLT, Nagad 
 
 ### Remaining feature-list items (also done)
 
-- Marketing: `/blog`, `/help` (articles written in super admin → Content), `/faq`, `/demo` (requests land in Content).
+- Marketing: `/blog`, `/help` (articles written in super admin → Content), `/faq`. (Demo booking was removed; `/demo` redirects to `/signup`.)
 - Super admin: SMTP in Settings (test button), **Errors** page (5xx grouped, 30 days), refund on Payments.
 - Customers: photo/NID upload (private: `POST|GET /customers/:id/documents/:kind`), fiber length, timeline
   (`/customers/:id/timeline`), bulk zone actions (`/customers/bulk`), package change now/prorate/next cycle

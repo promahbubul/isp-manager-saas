@@ -13,7 +13,7 @@ const FAQ = [
   ["Is my data safe?", "Each ISP's data is isolated. Router, payment gateway and SMS passwords are encrypted. You can export all your data at any time from Settings."],
   ["Does it keep the BTRC IP log?", "On Pro and Enterprise, PPPoE sessions (username, IP, MAC, login and logout time) are recorded every 5 minutes and can be exported to Excel."],
   ["Can my resellers use it?", "Yes. Each reseller gets a login, sees only their own customers and recharges from a prepaid balance you manage."],
-  ["Is there a free trial?", "Yes, 14 days with no card needed. You can import your customers from Excel or directly from MikroTik."],
+  ["Is there a free trial?", "Yes, a full year free with no card needed. You can import your customers from Excel or directly from MikroTik."],
   ["How do I cancel?", "You can stop renewing at any time. See the refund policy for paid periods."],
 ];
 
@@ -41,8 +41,8 @@ export default function FaqPage() {
             Help Center
           </Link>
           , or{" "}
-          <Link href="/demo" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
-            book a free demo
+          <Link href="/signup" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
+            start your free trial
           </Link>
           .
         </p>

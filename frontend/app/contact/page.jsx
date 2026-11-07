@@ -17,7 +17,7 @@ export default function ContactPage() {
   return (
     <SitePage>
       <PageHero eyebrow="Contact" title="We are happy to help">
-        Sales, support, demo or billing questions — reach us any way you like.
+        Sales, support or billing questions — reach us any way you like.
       </PageHero>
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -30,9 +30,9 @@ export default function ContactPage() {
           ))}
         </dl>
         <p className="mt-10 text-muted">
-          Prefer a walkthrough?{" "}
-          <Link href="/demo" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
-            Book a free demo
+          Want to try it yourself?{" "}
+          <Link href="/signup" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
+            Start your free trial
           </Link>
           .
         </p>

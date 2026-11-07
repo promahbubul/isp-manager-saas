@@ -6,7 +6,7 @@ export const metadata = { title: "Pricing" };
 export const revalidate = 300;
 
 const NOTES = [
-  ["Free trial", "Every plan starts with 14 days free. No card required."],
+  ["Free trial", "Every plan starts with 1 year free. No card required."],
   ["Yearly billing", "Pay for a year and get 2 months free."],
   ["SMS", "SMS credits are bought separately, or use your own gateway on Pro."],
   ["Change any time", "Upgrade or downgrade from My subscription inside the panel."],

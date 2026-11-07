@@ -1465,6 +1465,7 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Light / Dark / System theme (next-themes) + সব জায়গায় icon switch
 - [x] সব table TanStack Table v8: column sort, প্রতি পেজে কতগুলো (10/25/50/100), server list-এ cursor pager table-এর ভিতরে
 - [x] Marketing website নতুন design (header + mobile menu, hero, features, how it works, pricing card, CTA, footer)
+- [x] Trial ১ বছর (`TRIAL_DAYS=365`); plan-এর দাম: Starter ১০০, Growth ২০০, Pro ৩০০, Enterprise ৫০০ টাকা/মাস (yearly = ১০ গুণ)
 - [x] সব role-এর জন্য একটাই login page (`/login`): ISP staff → /dashboard, platform staff → /admin (2FA সহ); `/admin/login` → `/login`
 - [x] Demo company/account মুছে প্রতিটি role-এর জন্য একটা করে account (password 123456)
 

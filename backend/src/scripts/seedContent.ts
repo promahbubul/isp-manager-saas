@@ -15,7 +15,7 @@ const POSTS: Seed[] = [
     category: "Getting started",
     title: "Set up your ISP account in 10 minutes",
     slug: "getting-started",
-    body: `After you sign up you land on the dashboard with a 14-day trial. Work through these steps once and the system runs by itself.
+    body: `After you sign up you land on the dashboard with a 1-year free trial. Work through these steps once and the system runs by itself.
 
 1. Settings → General: add your logo, phone and address. They appear on receipts and the customer portal.
 2. Network → Routers: add your MikroTik (see "Connect a MikroTik router").

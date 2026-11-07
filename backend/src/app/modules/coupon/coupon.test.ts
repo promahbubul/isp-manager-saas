@@ -33,12 +33,12 @@ describe("coupons", () => {
     const isp = await setupIsp();
     const body = { plan: String(starter!._id), interval: "monthly", gateway: "sslcommerz" };
     const preview = await api().post("/api/v1/billing/coupon").set(isp.auth).send({ ...body, code: "Launch20" });
-    expect(preview.body.data).toMatchObject({ listPrice: 999, discount: 199.8, finalPrice: 799.2 });
+    expect(preview.body.data).toMatchObject({ listPrice: 100, discount: 20, finalPrice: 80 });
 
     const co = await api().post("/api/v1/billing/checkout").set(isp.auth).send({ ...body, coupon: "LAUNCH20" });
     expect(co.status).toBe(201);
     const inv = await SubscriptionInvoice.findOne({ company: isp.companyId });
-    expect(inv).toMatchObject({ amount: 799.2, listPrice: 999, coupon: "LAUNCH20" });
+    expect(inv).toMatchObject({ amount: 80, listPrice: 100, coupon: "LAUNCH20" });
 
     // not counted until paid
     expect((await Coupon.findOne({ code: "LAUNCH20" }))!.used).toBe(0);

@@ -41,95 +41,43 @@ function PostEditor({ postId, onClose }) {
   );
 }
 
-const DEMO_COLOR = { new: "red", contacted: "amber", converted: "green", closed: "slate" };
-
 export default function ContentPage() {
-  const [tab, setTab] = useState("demo");
   const [editing, setEditing] = useState(null); // null | "new" | id
-  const posts = usePaged("posts", "/admin/content/posts", {}, { client: "admin", defaultLimit: 50, enabled: tab === "posts" });
-  const demos = usePaged("demos", "/admin/content/demo-requests", {}, { client: "admin", defaultLimit: 50, enabled: tab === "demo" });
+  const posts = usePaged("posts", "/admin/content/posts", {}, { client: "admin", defaultLimit: 50 });
   const remove = useAdminMutation((id) => adminApi.delete(`/admin/content/posts/${id}`), { invalidate: ["posts"] });
-  const setDemo = useAdminMutation(({ id, ...b }) => adminApi.patch(`/admin/content/demo-requests/${id}`, b), { invalidate: ["demos"] });
-  const counts = demos.data?.data?.counts ?? {};
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Website content" subtitle="Demo requests from the website, Help Center articles and blog posts" actions={tab === "posts" && <Button onClick={() => setEditing("new")}>+ New article</Button>} />
-      <div className="flex gap-2">
-        <Button size="sm" variant={tab === "demo" ? "primary" : "secondary"} onClick={() => setTab("demo")}>
-          Demo requests {counts.new ? `(${counts.new} new)` : ""}
-        </Button>
-        <Button size="sm" variant={tab === "posts" ? "primary" : "secondary"} onClick={() => setTab("posts")}>
-          Articles
-        </Button>
-      </div>
-      {tab === "demo" ? (
-        <Card>
-          {demos.error && <ErrorBox error={demos.error} />}
-          {demos.isLoading ? (
-            <Loading />
-          ) : (
-            <>
-              <Table pager={demos.pager}
-                rows={demos.data?.data?.requests ?? []}
-                empty="No requests yet."
-                columns={[
-                  { key: "createdAt", header: "When", render: (d) => formatDateTime(d.createdAt) },
-                  { key: "name", header: "Name", render: (d) => <strong>{d.name}</strong> },
-                  { key: "company", header: "ISP" },
-                  { key: "phone", header: "Mobile", render: (d) => <a className="text-primary-700" href={`tel:${d.phone}`}>{d.phone}</a> },
-                  { key: "customers", header: "Customers" },
-                  { key: "district", header: "District" },
-                  { key: "message", header: "Message", className: "max-w-xs truncate" },
-                  {
-                    key: "status",
-                    header: "Status",
-                    render: (d) => (
-                      <select className="rounded border border-zinc-300 px-2 py-1 text-sm" value={d.status} onChange={(e) => setDemo.mutate({ id: d._id, status: e.target.value })}>
-                        {Object.keys(DEMO_COLOR).map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    ),
-                  },
-                ]}
-              />
-            </>
-          )}
-        </Card>
-      ) : (
-        <Card>
-          {posts.isLoading ? (
-            <Loading />
-          ) : (
-            <>
-              <Table pager={posts.pager}
-                rows={posts.data?.data ?? []}
-                empty="No articles yet."
-                onRowClick={(p) => setEditing(p._id)}
-                columns={[
-                  { key: "title", header: "Title", render: (p) => <strong>{p.title}</strong> },
-                  { key: "type", header: "Type", render: (p) => <Badge color={p.type === "help" ? "blue" : "purple"}>{p.type}</Badge> },
-                  { key: "category", header: "Category" },
-                  { key: "published", header: "", render: (p) => <Badge color={p.published ? "green" : "slate"}>{p.published ? "published" : "draft"}</Badge> },
-                  { key: "updatedAt", header: "Updated", render: (p) => formatDateTime(p.updatedAt) },
-                  {
-                    key: "x",
-                    header: "",
-                    render: (p) => (
-                      <Button size="sm" variant="danger" onClick={(e) => (e.stopPropagation(), confirm(`Delete "${p.title}"?`) && remove.mutate(p._id))}>
-                        Delete
-                      </Button>
-                    ),
-                  },
-                ]}
-              />
-            </>
-          )}
-        </Card>
-      )}
+      <PageHeader title="Website content" subtitle="Help Center articles and blog posts on the website" actions={<Button onClick={() => setEditing("new")}>+ New article</Button>} />
+      <Card>
+        {posts.isLoading ? (
+          <Loading />
+        ) : (
+          <>
+            <Table pager={posts.pager}
+              rows={posts.data?.data ?? []}
+              empty="No articles yet."
+              onRowClick={(p) => setEditing(p._id)}
+              columns={[
+                { key: "title", header: "Title", render: (p) => <strong>{p.title}</strong> },
+                { key: "type", header: "Type", render: (p) => <Badge color={p.type === "help" ? "blue" : "purple"}>{p.type}</Badge> },
+                { key: "category", header: "Category" },
+                { key: "published", header: "", render: (p) => <Badge color={p.published ? "green" : "slate"}>{p.published ? "published" : "draft"}</Badge> },
+                { key: "updatedAt", header: "Updated", render: (p) => formatDateTime(p.updatedAt) },
+                {
+                  key: "x",
+                  header: "",
+                  render: (p) => (
+                    <Button size="sm" variant="danger" onClick={(e) => (e.stopPropagation(), confirm(`Delete "${p.title}"?`) && remove.mutate(p._id))}>
+                      Delete
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          </>
+        )}
+      </Card>
       {editing && <PostEditor postId={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   );

@@ -39,7 +39,7 @@ describe("platform metrics & tenants", () => {
     const m = await api().get("/api/v1/admin/metrics").set(sa);
     expect(m.status).toBe(200);
     expect(m.body.data.tenants).toMatchObject({ total: 2, trial: 2, signups30: 2 });
-    expect(m.body.data.mrrBDT).toBe(999);
+    expect(m.body.data.mrrBDT).toBe(100);
     expect(m.body.data.paidByPlan).toEqual({ Starter: 1 });
 
     const list = await api().get("/api/v1/admin/companies").query({ search: "speed" }).set(sa);

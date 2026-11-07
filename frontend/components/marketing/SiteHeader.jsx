@@ -65,9 +65,6 @@ export default function SiteHeader() {
                 {n.label}
               </Link>
             ))}
-            <Link href="/demo" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-ink hover:bg-subtle">
-              Book a demo
-            </Link>
           </nav>
           <div className="grid grid-cols-2 gap-2">
             <Link href="/login" className="rounded-lg border border-line py-2.5 text-center text-sm font-medium text-ink">

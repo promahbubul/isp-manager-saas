@@ -10,7 +10,6 @@ const FOOTER = [
     links: [
       ["/#features", "Features"],
       ["/pricing", "Pricing"],
-      ["/demo", "Book a demo"],
       ["/signup", "Free trial"],
     ],
   },

@@ -33,7 +33,7 @@ export default function SignupPage() {
   const onSubmit = async ({ confirmPassword: _confirm, ...values }) => {
     try {
       await signup(values);
-      toast.success("Your 14-day free trial has started!");
+      toast.success("Your 1-year free trial has started!");
       router.replace("/dashboard");
     } catch (err) {
       if (!applyFieldErrors(err, setError)) {
@@ -46,7 +46,7 @@ export default function SignupPage() {
   return (
     <AuthCard
       title="Create your ISP account"
-      subtitle="14 days free. No card required."
+      subtitle="1 year free. No card required."
       footer={
         <>
           Already have an account?{" "}

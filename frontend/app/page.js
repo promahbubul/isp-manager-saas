@@ -71,10 +71,7 @@ export default async function Home() {
             </p>
             <div className="mt-8 flex animate-pop-in flex-wrap items-center gap-3 [animation-delay:240ms]">
               <Link href="/signup" className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-500">
-                Start 14-day free trial <ArrowRight className="size-4" />
-              </Link>
-              <Link href="/demo" className="rounded-lg border border-line px-5 py-3 text-sm font-semibold text-ink transition hover:bg-subtle">
-                Book a demo
+                Start 1-year free trial <ArrowRight className="size-4" />
               </Link>
               <span className="text-sm text-muted">No card required</span>
             </div>
@@ -164,7 +161,7 @@ export default async function Home() {
         <Reveal className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <h2 className="text-3xl font-semibold tracking-tight text-ink">Simple pricing</h2>
-            <p className="mt-2 text-muted">Every plan starts with a 14-day free trial. Pay yearly and get 2 months free.</p>
+            <p className="mt-2 text-muted">Every plan starts with a 1-year free trial. Pay yearly and get 2 months free.</p>
           </div>
           <Link href="/pricing" className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline">
             Compare plans <ArrowRight className="size-4" />

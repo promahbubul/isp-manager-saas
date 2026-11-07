@@ -118,12 +118,13 @@ describe("SaaS subscription payment", () => {
     const isp = await setupIsp();
     const off = await api().post("/api/v1/billing/checkout").set(isp.auth).send({ plan: await starterId(), interval: "monthly", gateway: "sslcommerz" });
     expect(off.status).toBe(400);
-    const ent = await Plan.findOne({ slug: "enterprise" });
+    // a plan without a price (custom deal) cannot be bought online
+    const ent = await Plan.findOneAndUpdate({ slug: "enterprise" }, { priceBDT: { monthly: 0, yearly: 0 }, priceUSD: { monthly: 0, yearly: 0 } }, { new: true });
     const free = await api().post("/api/v1/billing/checkout").set(isp.auth).send({ plan: String(ent!._id), interval: "monthly", gateway: "stripe" });
     expect(free.status).toBe(400);
     await api().post("/api/v1/billing/checkout").set(isp.auth).send({ plan: await starterId(), interval: "yearly", gateway: "stripe" });
     const attempt = await PaymentAttempt.findOne({ company: isp.companyId, gateway: "stripe" });
-    expect(attempt).toMatchObject({ currency: "USD", amount: 90 });
+    expect(attempt).toMatchObject({ currency: "USD", amount: 10 });
   });
 
   it("a suspended ISP can still pay and gets reactivated", async () => {

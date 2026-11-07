@@ -20,7 +20,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES: z.string().default("30d"),
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i, "ENCRYPTION_KEY must be 64 hex chars (32 bytes)"),
-  TRIAL_DAYS: z.coerce.number().int().positive().default(14),
+  TRIAL_DAYS: z.coerce.number().int().positive().default(365),
   /** run cron jobs in this process — enable in exactly one instance */
   RUN_JOBS: z.enum(["true", "false"]).default("true"),
   /** "log" prints instead of sending; "http" calls SMS_HTTP_URL */
