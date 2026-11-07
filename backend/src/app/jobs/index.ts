@@ -1,16 +1,18 @@
 import cron from "node-cron";
+import { recordJobRun } from "../modules/system/jobRun.model";
 import { expireCustomers } from "./expireCustomers.job";
 import { sendExpiryReminders } from "./expiryReminder.job";
 import { retryFailedSyncs } from "./retrySync.job";
 import { runSubscriptionLifecycle } from "./subscriptionLifecycle.job";
 
-type Job = { name: string; schedule: string; run: () => Promise<unknown> };
+/** maxGapMinutes: health page flags the job as stale when its last run is older than this. */
+type Job = { name: string; schedule: string; maxGapMinutes: number; run: () => Promise<unknown> };
 
-const JOBS: Job[] = [
-  { name: "expireCustomers", schedule: "*/15 * * * *", run: () => expireCustomers() },
-  { name: "retryFailedSyncs", schedule: "*/10 * * * *", run: retryFailedSyncs },
-  { name: "expiryReminders", schedule: "0 10 * * *", run: () => sendExpiryReminders() }, // 10:00 Dhaka
-  { name: "subscriptionLifecycle", schedule: "5 * * * *", run: () => runSubscriptionLifecycle() },
+export const JOBS: Job[] = [
+  { name: "expireCustomers", schedule: "*/15 * * * *", maxGapMinutes: 45, run: () => expireCustomers() },
+  { name: "retryFailedSyncs", schedule: "*/10 * * * *", maxGapMinutes: 30, run: retryFailedSyncs },
+  { name: "expiryReminders", schedule: "0 10 * * *", maxGapMinutes: 26 * 60, run: () => sendExpiryReminders() }, // 10:00 Dhaka
+  { name: "subscriptionLifecycle", schedule: "5 * * * *", maxGapMinutes: 90, run: () => runSubscriptionLifecycle() },
 ];
 
 /**
@@ -25,12 +27,14 @@ export function startJobs() {
       async () => {
         if (running) return; // skip overlapping runs
         running = true;
-        const started = Date.now();
+        const started = new Date();
         try {
           const result = await job.run();
-          console.log(`[job] ${job.name} done in ${Date.now() - started}ms`, result);
+          console.log(`[job] ${job.name} done in ${Date.now() - started.getTime()}ms`, result);
+          await recordJobRun(job.name, started, { ok: true, result });
         } catch (err) {
           console.error(`[job] ${job.name} failed:`, err);
+          await recordJobRun(job.name, started, { ok: false, error: err });
         } finally {
           running = false;
         }

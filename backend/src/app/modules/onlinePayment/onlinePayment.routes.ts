@@ -7,6 +7,7 @@ import { validateBody } from "../../middlewares/validateRequest";
 import sendResponse from "../../utils/sendResponse";
 import { optionalText } from "../../utils/zod";
 import { audit } from "../activityLog/activityLog.service";
+import { requireFeature } from "../subscription/planFeature";
 import { listGatewaySettings, updateGatewaySchema, updateGatewaySettings } from "../paymentGateway/gatewayConfig.service";
 import { CustomerBillService, lookupSchema, payBillSchema } from "./customerBill.service";
 
@@ -73,7 +74,7 @@ tenantOnlinePaymentRoutes.post(
 /* ───────────── ISP gateway settings: /settings/payment-gateways ───────────── */
 
 export const tenantGatewayRoutes = Router();
-tenantGatewayRoutes.use(auth(), requireWritableTenant, authorize("setting.manage"));
+tenantGatewayRoutes.use(auth(), requireWritableTenant, authorize("setting.manage"), requireFeature("online_payment"));
 
 tenantGatewayRoutes.get("/", async (req: Request, res: Response) => {
   const gateways = await listGatewaySettings(req.user!.company);

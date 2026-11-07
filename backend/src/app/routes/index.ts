@@ -14,6 +14,7 @@ import notificationRoutes from "../modules/notification/notification.routes";
 import reportRoutes from "../modules/report/report.routes";
 import smsRoutes from "../modules/sms/sms.routes";
 import ticketRoutes from "../modules/ticket/ticket.routes";
+import { ispSupportRoutes } from "../modules/support/support.routes";
 import adminRoutes from "../modules/admin/admin.routes";
 import announcementRoutes from "../modules/announcement/announcement.routes";
 import billingRoutes from "../modules/billing/billing.routes";
@@ -40,6 +41,7 @@ const moduleRoutes: { path: string; route: Router }[] = [
   { path: "/online-payments", route: tenantOnlinePaymentRoutes },
   { path: "/sms", route: smsRoutes },
   { path: "/tickets", route: ticketRoutes },
+  { path: "/support", route: ispSupportRoutes },
   { path: "/reports", route: reportRoutes },
   { path: "/notifications", route: notificationRoutes },
   { path: "/announcements", route: announcementRoutes },

@@ -1416,11 +1416,12 @@ main → deploy staging (auto) → production (manual approve)
 - [x] Plan management (create/edit) — ⚠️ PATCH-এ default reset হওয়ার bug ধরা ও ঠিক করা হয়েছে (plan, announcement, ticket)
 - [x] Announcements (plan অনুযায়ী target, ISP dashboard-এ banner)
 - [x] Platform audit log, platform admin users (role), 2FA (TOTP, RFC 6238 test vector সহ), admin password change
-- [x] Tests: মোট ১০৮টি
-- [ ] Platform support ticket (ISP → platform)
-- [ ] System health page (queue/router stats)
-- [ ] Plan feature-flag enforcement (এখন শুধু limit enforce হয়)
-- [ ] Tenant archive/delete + data export
+- [x] Platform support ticket (ISP → platform; suspended ISP-ও পাঠাতে পারে; reply দিলে notification)
+- [x] System health page (DB/replica set, worker job run record, offline router, sync fail, SMS fail, pending payment)
+- [x] Plan feature-flag enforcement (ticket, online payment; sidebar-এ 🔒; trial = Growth features)
+- [x] Tenant archive/restore/delete + data export (super admin ও owner নিজে; password কখনো export হয় না)
+- [x] ⚠️ ঠিক করা হয়েছে: `seed` প্রতি deploy-এ admin-এর edit করা plan মুছে দিত; `support` role admin panel-এ ঢুকতেই পারত না
+- [x] Tests: মোট ১১৪টি
 
 **🚀 Milestone: Public Launch (v1.0)**
 

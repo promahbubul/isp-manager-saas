@@ -7,6 +7,8 @@ import { optionalText } from "../../utils/zod";
 import { audit } from "../activityLog/activityLog.service";
 import { bdPhone } from "../auth/auth.validation";
 import { Company } from "../company/company.model";
+import AppError from "../../errors/AppError";
+import { streamTenantExport } from "../admin/tenantData";
 import { getSettings } from "./setting.model";
 
 const updateSettingSchema = z
@@ -101,6 +103,12 @@ router.patch("/", authorize("setting.manage"), validateBody(updateSettingSchema)
   }
   await settings.save();
   sendResponse(res, { message: "Settings saved", data: settings });
+});
+
+/** Owner-only full JSON export of the ISP's data (leaving, migrating, own backup). Works while lapsed too. */
+router.get("/export", audit("company.export", "company"), async (req: Request, res: Response) => {
+  if (req.user!.role !== "owner") throw new AppError(403, "Only the owner can export all data");
+  await streamTenantExport(req.user!.company, res);
 });
 
 export default router;

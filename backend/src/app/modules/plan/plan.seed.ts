@@ -7,11 +7,11 @@ export const DEFAULT_PLANS: SeedPlan[] = [
   {
     name: "Trial",
     slug: "trial",
-    description: "14-day free trial with Starter features",
+    description: "14-day free trial with Growth features (smaller limits)",
     priceBDT: { monthly: 0, yearly: 0 },
     priceUSD: { monthly: 0, yearly: 0 },
     limits: { customers: 100, routers: 1, staff: 3, resellers: 0 },
-    features: [],
+    features: ["online_payment", "customer_portal", "ticket", "reseller"],
     isTrial: true,
     isPublic: false,
     sortOrder: 0,

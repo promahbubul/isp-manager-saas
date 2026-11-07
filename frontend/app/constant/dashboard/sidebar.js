@@ -1,9 +1,10 @@
 import { FaMoneyBill, FaNetworkWired, FaUserAlt, FaUsersCog } from "react-icons/fa";
-import { MdCardMembership, MdDashboard, MdHistory, MdSettings, MdSms, MdSupportAgent } from "react-icons/md";
+import { MdCardMembership, MdDashboard, MdHelpOutline, MdHistory, MdSettings, MdSms, MdSupportAgent } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 
 /**
  * `perm` hides the item when the user lacks that permission.
+ * `feature` (plan feature) shows it locked, linking to the upgrade page, when the plan lacks it.
  * Later phases (resellers, accounts, inventory...) are listed in PLAN.md §18.
  */
 const sidebarModules = [
@@ -27,10 +28,10 @@ const sidebarModules = [
     subModules: [
       { id: "billing-recharge", title: "Recharge", path: "/dashboard/billing/recharge", perm: "payment.recharge" },
       { id: "billing-payments", title: "Payment History", path: "/dashboard/billing/payments" },
-      { id: "billing-online", title: "Online Payments", path: "/dashboard/billing/online" },
+      { id: "billing-online", title: "Online Payments", path: "/dashboard/billing/online", feature: "online_payment" },
     ],
   },
-  { id: "tickets", title: "Support Tickets", icon: MdSupportAgent, path: "/dashboard/tickets", perm: "ticket.view" },
+  { id: "tickets", title: "Support Tickets", icon: MdSupportAgent, path: "/dashboard/tickets", perm: "ticket.view", feature: "ticket" },
   {
     id: "sms",
     title: "SMS",
@@ -64,9 +65,10 @@ const sidebarModules = [
     perm: "setting.manage",
     subModules: [
       { id: "settings-general", title: "General", path: "/dashboard/settings" },
-      { id: "settings-payments", title: "Payment Gateways", path: "/dashboard/settings/payments" },
+      { id: "settings-payments", title: "Payment Gateways", path: "/dashboard/settings/payments", feature: "online_payment" },
     ],
   },
+  { id: "help", title: "Help & Support", icon: MdHelpOutline, path: "/dashboard/support", perm: "setting.manage" },
 ];
 
 export default sidebarModules;

@@ -16,6 +16,8 @@ import { getPlatformSettings } from "../billing/billing.model";
 import { reviewManual } from "../onlinePayment/onlinePayment.service";
 import { IPaymentAttempt, PaymentAttempt } from "../onlinePayment/paymentAttempt.model";
 import { listGatewaySettings, updateGatewaySchema, updateGatewaySettings } from "../paymentGateway/gatewayConfig.service";
+import { platformSupportRoutes } from "../support/support.routes";
+import { SystemService } from "../system/system.service";
 import platformRoutes from "./admin.platform.routes";
 import { platformAudit } from "./platformAudit";
 
@@ -23,8 +25,15 @@ import { platformAudit } from "./platformAudit";
  * Platform (super admin) API. Phase 4 adds tenant management, plans, etc.
  */
 const router = Router();
-router.use(platformAuth("super_admin", "finance"));
+// Every platform role can read; writes are limited per route (finance = money, super_admin = everything).
+router.use(platformAuth());
+const financeOrSuper = platformAuth("super_admin", "finance");
 router.use(platformRoutes);
+router.use("/support-tickets", platformSupportRoutes);
+
+router.get("/system/health", async (_req: Request, res: Response) => {
+  sendResponse(res, { message: "System health", data: await SystemService.health() });
+});
 
 const creditSchema = z.object({
   /** positive = add, negative = deduct */
@@ -34,7 +43,7 @@ const creditSchema = z.object({
   note: optionalText(300),
 });
 
-router.post("/companies/:id/sms-credits", validateBody(creditSchema), platformAudit("tenant.sms_credits", "company", true), async (req: Request, res: Response) => {
+router.post("/companies/:id/sms-credits", financeOrSuper, validateBody(creditSchema), platformAudit("tenant.sms_credits", "company", true), async (req: Request, res: Response) => {
   const id = String(req.params.id);
   if (!isValidObjectId(id)) throw new AppError(400, "Invalid company id");
   const { credits, type, amount, note } = req.body as z.infer<typeof creditSchema>;
@@ -80,7 +89,7 @@ router.get("/payments", async (req: Request, res: Response) => {
 
 const reviewSchema = z.object({ approve: z.boolean(), reason: optionalText(300) });
 
-router.post("/payments/:id/review", validateBody(reviewSchema), platformAudit("payment.review", "payment"), async (req: Request, res: Response) => {
+router.post("/payments/:id/review", financeOrSuper, validateBody(reviewSchema), platformAudit("payment.review", "payment"), async (req: Request, res: Response) => {
   const data = await reviewManual(String(req.params.id), req.body.approve, req.platformUser!.id, req.body.reason);
   sendResponse(res, { message: req.body.approve ? "Payment approved" : "Payment rejected", data });
 });

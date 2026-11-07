@@ -1,5 +1,6 @@
 import { z } from "zod";
 import AppError from "../../errors/AppError";
+import { hasFeature } from "../subscription/planFeature";
 import { GATEWAY_IDS } from "../../services/payment/gateway.types";
 import { normalizeBdPhone } from "../../utils/phone";
 import { paginate } from "../../utils/paginate";
@@ -36,6 +37,7 @@ export const payBillSchema = lookupSchema
 async function companyBySlug(slug: string) {
   const company = await Company.findOne({ slug: slug.toLowerCase(), deletedAt: null, status: { $ne: "archived" } }).select("name slug logo phone");
   if (!company) throw new AppError(404, "ISP not found");
+  if (!(await hasFeature(company._id, "online_payment"))) throw new AppError(404, "Online payment is not available for this ISP");
   return company;
 }
 

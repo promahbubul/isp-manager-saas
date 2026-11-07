@@ -11,12 +11,14 @@ export const useAdmin = () => useContext(AdminContext);
 const NAV = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/companies", label: "ISPs" },
+  { href: "/admin/support", label: "Support" },
   { href: "/admin/payments", label: "Payments" },
   { href: "/admin/plans", label: "Plans" },
   { href: "/admin/coupons", label: "Coupons" },
   { href: "/admin/announcements", label: "Announcements" },
   { href: "/admin/gateways", label: "Gateways" },
   { href: "/admin/audit", label: "Audit log" },
+  { href: "/admin/system", label: "System" },
   { href: "/admin/users", label: "Admins", superOnly: true },
   { href: "/admin/settings", label: "Settings" },
 ];

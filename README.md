@@ -191,7 +191,23 @@ Also in Phase 3: `POST /auth/forgot-password` · `/auth/reset-password` (SMS OTP
 announcements, gateways, payments, audit log, platform admins, account (2FA). API under `/api/v1/admin/*`
 (`metrics`, `companies`, `companies/:id/{status,extend-trial,assign-plan,impersonate,sms-credits}`, `plans`, `announcements`,
 `platform-users`, `audit-logs`) and `/api/v1/auth/admin/{2fa/setup,2fa/enable,2fa/disable,change-password}`.
-Write actions need `super_admin`; `finance`/`support` can read. Turn on 2FA for every admin.
+Write actions need `super_admin`; `finance` can also approve payments and add SMS credits; `support` can read and answer
+support tickets. Turn on 2FA for every admin.
+
+Also in Phase 4:
+
+- **ISP → platform support:** ISPs use `/dashboard/support` (`/api/v1/support`, works even while suspended); platform
+  staff answer at `/admin/support` (`/api/v1/admin/support-tickets`, `:id/reply`, `:id/status`). Replies notify the ISP.
+- **System health:** `/admin/system` (`GET /api/v1/admin/system/health`) — database/replica set, worker jobs (each run is
+  recorded in `JobRun`; overdue or failed jobs are flagged), offline routers, failed MikroTik syncs, SMS failures,
+  payments waiting for review, urgent support tickets.
+- **Plan features are enforced:** `requireFeature("ticket")` on `/tickets`, `online_payment` on gateway settings and the
+  public pay page (403 `{ details: { code: "feature_locked" } }`). The sidebar shows locked items with 🔒 linking to the
+  upgrade page. Trial includes Growth features.
+- **Archive / restore / delete / export:** `POST /admin/companies/:id/{archive,restore}`, `DELETE /admin/companies/:id`
+  (only when archived, body `{ confirmSlug }`; keeps invoices, platform payments and audit log), `GET
+  /admin/companies/:id/export` and owner self-export `GET /settings/export` (streamed JSON, passwords never included).
+- `pnpm seed` only inserts missing default plans — it never overwrites prices or limits edited in the admin panel.
 
 Response shape: `{ success, message, meta?, data }`; errors: `{ success: false, message, errors?: [{ path, message }] }`.
 

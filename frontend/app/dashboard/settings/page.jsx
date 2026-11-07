@@ -1,11 +1,40 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import CompanyProfileForm from "@/components/settings/CompanyProfileForm";
 import { Button, Card, Checkbox, ErrorBox, Input, Loading, PageHeader } from "@/components/ui";
-import { api } from "@/lib/api";
+import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { useApi, useApiMutation } from "@/lib/hooks";
+import { useAuth } from "@/providers/AuthProvider";
+
+/** Owner-only: everything in one JSON file (customers, payments, packages, logs...). Passwords are never included. */
+function DataExport() {
+  const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
+  if (user?.role !== "owner") return null;
+  const run = async () => {
+    setBusy(true);
+    try {
+      await downloadFile("/settings/export", undefined, "isp-data-export.json");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card title="Export all data">
+      <p className="mb-4 text-sm text-slate-600">
+        Download a full copy of your ISP&apos;s data as JSON — customers, packages, payments, tickets, SMS and activity logs. Customer, staff and router passwords are not included. Large ISPs may take a minute.
+      </p>
+      <Button variant="secondary" loading={busy} onClick={run}>
+        Download export
+      </Button>
+    </Card>
+  );
+}
 
 export default function SettingsPage() {
   const { data, isLoading, error } = useApi("settings", "/settings");
@@ -83,6 +112,9 @@ export default function SettingsPage() {
           </Button>
         </div>
       </form>
+      <div className="mt-6 max-w-2xl">
+        <DataExport />
+      </div>
     </div>
   );
 }

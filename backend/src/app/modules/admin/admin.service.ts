@@ -28,9 +28,10 @@ const oid = (id: string) => new Types.ObjectId(id);
 async function metrics() {
   const now = new Date();
   const d30 = addDays(now, -30);
+  const closed = await Company.find({ $or: [{ status: "archived" }, { deletedAt: { $ne: null } }] }).distinct("_id");
   const [byStatus, activeSubs, signups30, trialsEnding, endCustomers, revenue30, revenueAll, pendingManual, recent] = await Promise.all([
     Company.aggregate<{ _id: string; count: number }>([{ $match: { deletedAt: null } }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
-    Subscription.find({ status: { $in: ["active", "past_due"] } }).populate<{ plan: { priceBDT: { monthly: number; yearly: number }; name: string } }>("plan", "name priceBDT"),
+    Subscription.find({ status: { $in: ["active", "past_due"] }, company: { $nin: closed } }).populate<{ plan: { priceBDT: { monthly: number; yearly: number }; name: string } }>("plan", "name priceBDT"),
     Company.countDocuments({ createdAt: { $gte: d30 } }),
     Company.countDocuments({ status: "trial", trialEndsAt: { $gte: now, $lte: addDays(now, 7) } }),
     Customer.countDocuments({ deletedAt: null }),
@@ -149,6 +150,7 @@ export const extendTrialSchema = z.object({ days: z.coerce.number().int().min(1)
 async function extendTrial(id: string, days: number) {
   const company = await Company.findById(id);
   if (!company) throw new AppError(404, "Company not found");
+  if (company.status === "archived") throw new AppError(400, "Restore the archived company first");
   const sub = await Subscription.findOne({ company: id });
   if (sub?.status === "active") throw new AppError(400, "This ISP already has a paid plan");
   const base = company.trialEndsAt && company.trialEndsAt > new Date() ? company.trialEndsAt : new Date();
@@ -171,6 +173,7 @@ export const assignPlanSchema = z.object({
 async function assignPlan(id: string, input: z.infer<typeof assignPlanSchema>) {
   const [company, plan] = await Promise.all([Company.findById(id), Plan.findById(input.plan)]);
   if (!company) throw new AppError(404, "Company not found");
+  if (company.status === "archived") throw new AppError(400, "Restore the archived company first");
   if (!plan) throw new AppError(404, "Plan not found");
   if (input.periodEnd <= new Date()) throw new AppError(400, "Paid-until date must be in the future");
   await Subscription.updateOne(

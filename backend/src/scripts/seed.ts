@@ -10,9 +10,10 @@ import { PlatformUser } from "../app/modules/platformUser/platformUser.model";
 
 export async function seedPlans() {
   for (const plan of DEFAULT_PLANS) {
-    await Plan.updateOne({ slug: plan.slug }, { $set: plan }, { upsert: true });
+    // $setOnInsert: never overwrite prices/limits edited later in the super admin panel.
+    await Plan.updateOne({ slug: plan.slug }, { $setOnInsert: plan }, { upsert: true });
   }
-  console.log(`✅ ${DEFAULT_PLANS.length} plans upserted`);
+  console.log(`✅ ${DEFAULT_PLANS.length} default plans ensured (existing ones are left unchanged)`);
 }
 
 export async function seedSuperAdmin() {

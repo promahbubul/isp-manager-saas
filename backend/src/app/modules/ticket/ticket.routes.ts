@@ -4,6 +4,7 @@ import { validateBody } from "../../middlewares/validateRequest";
 import sendResponse from "../../utils/sendResponse";
 import { audit } from "../activityLog/activityLog.service";
 import { Actor } from "../customer/customer.service";
+import { requireFeature } from "../subscription/planFeature";
 import { User } from "../user/user.model";
 import { assignSchema, commentSchema, createTicketSchema, statusSchema, TicketService, updateTicketSchema } from "./ticket.service";
 
@@ -16,7 +17,7 @@ const actor = (req: Request): Actor => ({
 const id = (req: Request) => String(req.params.id);
 
 const router = Router();
-router.use(auth(), requireWritableTenant);
+router.use(auth(), requireFeature("ticket"), requireWritableTenant);
 
 router.get("/", authorize("ticket.view"), async (req: Request, res: Response) => {
   const { data, meta } = await TicketService.list(actor(req), req.query as Record<string, unknown>);

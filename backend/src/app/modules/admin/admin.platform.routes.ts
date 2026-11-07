@@ -23,6 +23,7 @@ import {
   tenantStatusSchema,
 } from "./admin.service";
 import { IPlatformAuditLog, platformAudit, PlatformAuditLog } from "./platformAudit";
+import { archiveTenant, deleteTenant, restoreTenant, streamTenantExport } from "./tenantData";
 
 /** Mounted inside admin.routes.ts (already behind platformAuth super_admin/finance). */
 const router = Router();
@@ -71,6 +72,32 @@ router.post("/companies/:id/impersonate", superOnly, platformAudit("tenant.imper
   setTenantRefreshCookie(res, tokens.refreshToken, durationToMs("1h"));
   res.locals.auditSummary = `Impersonated owner of ${company.name}`;
   sendResponse(res, { message: `Opening ${company.name} as owner`, data: { accessToken: tokens.accessToken, redirect: "/dashboard" } });
+});
+
+/* ── Archive / restore / delete / export ── */
+const deleteSchema = z.object({ confirmSlug: z.string().min(1) });
+
+router.get("/companies/:id/export", superOnly, platformAudit("tenant.export", "company", true), async (req: Request, res: Response) => {
+  res.locals.auditSummary = "Downloaded full data export";
+  await streamTenantExport(id(req), res);
+});
+
+router.post("/companies/:id/archive", superOnly, platformAudit("tenant.archive", "company", true), async (req: Request, res: Response) => {
+  const c = await archiveTenant(id(req));
+  res.locals.auditSummary = `Archived ${c.name}`;
+  sendResponse(res, { message: `${c.name} archived. Everyone has been signed out.`, data: c });
+});
+
+router.post("/companies/:id/restore", superOnly, platformAudit("tenant.restore", "company", true), async (req: Request, res: Response) => {
+  const c = await restoreTenant(id(req));
+  res.locals.auditSummary = `Restored → ${c.status}`;
+  sendResponse(res, { message: `${c.name} restored (${c.status})`, data: c });
+});
+
+router.delete("/companies/:id", superOnly, validateBody(deleteSchema), platformAudit("tenant.delete", "company", true), async (req: Request, res: Response) => {
+  const r = await deleteTenant(id(req), req.body.confirmSlug);
+  res.locals.auditSummary = `Permanently deleted ${r.name} (${r.slug}): ${Object.entries(r.removed).map(([k, v]) => `${k} ${v}`).join(", ") || "no data"}`;
+  sendResponse(res, { message: `${r.name} deleted permanently`, data: r });
 });
 
 /* ── Plans ── */
