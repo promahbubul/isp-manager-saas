@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { SettingsList, SettingsSection } from "@/components/settings/SettingsSection";
@@ -24,7 +25,7 @@ export default function CustomerForm({ customer, onSaved }) {
   const { user, can, subscription } = useAuth();
   const resellers = useApi(["resellers", "all"], "/resellers", { limit: 100 }, { enabled: can("reseller.view") && (subscription?.plan?.features ?? []).includes("reseller") });
 
-  const { register, handleSubmit, setError, control, setValue, formState } = useForm({
+  const { register, handleSubmit, setError, control, setValue, getFieldState, formState } = useForm({
     defaultValues: {
       name: customer?.name ?? "",
       phone: customer?.phone ?? "",
@@ -52,7 +53,24 @@ export default function CustomerForm({ customer, onSaved }) {
     },
   });
   const e = formState.errors;
-  const packageList = packages.data?.data ?? [];
+
+  // Package / zone / reseller options arrive after the form mounts. A <select> cannot show a
+  // value whose <option> does not exist yet, so it fell back to the placeholder — and saving
+  // then cleared the zone. Re-apply the customer's values once each list has loaded.
+  useEffect(() => {
+    if (!isEdit) return;
+    const want = {
+      package: customer?.package?._id ?? customer?.package,
+      zone: customer?.zone?._id ?? customer?.zone,
+      reseller: customer?.reseller?._id ?? customer?.reseller,
+    };
+    for (const [k, v] of Object.entries(want)) if (v && !getFieldState(k).isDirty) setValue(k, v);
+  }, [isEdit, customer, packages.data, zones.data, resellers.data, getFieldState, setValue]);
+
+  // The customer's current package may be inactive (not in the "active" list) — keep it selectable.
+  const currentPkg = isEdit && customer?.package?._id ? customer.package : null;
+  const activePackages = packages.data?.data ?? [];
+  const packageList = currentPkg && !activePackages.some((p) => p._id === currentPkg._id) ? [currentPkg, ...activePackages] : activePackages;
   const resellerList = (resellers.data?.data ?? []).filter((r) => r.isActive);
 
   const onPackageChange = (ev) => {
@@ -122,7 +140,7 @@ export default function CustomerForm({ customer, onSaved }) {
             required
             className="sm:col-span-2"
             placeholder={packages.isLoading ? "Loading..." : "— Select package —"}
-            options={packageList.map((p) => ({ value: p._id, label: `${p.name} — ৳${p.price}` }))}
+            options={packageList.map((p) => ({ value: p._id, label: p.price != null ? `${p.name} — ৳${p.price}` : p.name }))}
             error={e.package?.message}
             {...register("package", { onChange: onPackageChange })}
           />

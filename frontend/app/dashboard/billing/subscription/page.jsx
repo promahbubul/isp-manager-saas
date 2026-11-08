@@ -129,7 +129,7 @@ function SubscriptionContent() {
           <div>
             <p className="text-2xl font-bold">{current?.name ?? "—"}</p>
             <p className="text-sm text-zinc-500">
-              <StatusBadge status={subscription?.status === "trialing" ? "pending" : subscription?.status === "active" ? "active" : "expired"} />{" "}
+              <StatusBadge status={subscription?.status} />{" "}
               {subscription?.status === "trialing" ? `Trial until ${formatDate(company.trialEndsAt)}` : `Paid until ${formatDate(subscription?.currentPeriodEnd)}`}
             </p>
           </div>

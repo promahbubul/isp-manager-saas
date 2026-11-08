@@ -25,7 +25,8 @@ async function list() {
   const [zones, counts] = await Promise.all([
     Zone.find().sort("name").lean(),
     Customer.aggregate<{ _id: unknown; count: number }>([
-      { $match: { deletedAt: { $exists: false } } },
+      // deletedAt defaults to null on every customer, so "$exists: false" never matched
+      { $match: { deletedAt: null } },
       { $group: { _id: "$zone", count: { $sum: 1 } } },
     ]),
   ]);

@@ -18,13 +18,17 @@ function AdminBreadcrumb() {
     if (item) {
       const trail = sec.title && sec.title !== item.title ? [sec.title, item.title] : [item.title];
       return (
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 truncate text-sm">
-          {trail.map((t, i) => (
-            <span key={t} className="flex items-center gap-1.5">
-              {i > 0 && <ChevronRight className="size-3.5 text-zinc-400" />}
-              <span className={i === trail.length - 1 ? "font-medium text-ink" : "text-muted"}>{t}</span>
-            </span>
-          ))}
+        <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+          {trail.map((t, i) => {
+            const last = i === trail.length - 1;
+            return (
+              // phones: only the page name, so it never gets cut off
+              <span key={t} className={last ? "flex min-w-0 items-center gap-1.5" : "hidden shrink-0 items-center gap-1.5 sm:flex"}>
+                {i > 0 && <ChevronRight className="hidden size-3.5 shrink-0 text-zinc-400 sm:block" />}
+                <span className={last ? "truncate font-medium text-ink" : "text-muted"}>{t}</span>
+              </span>
+            );
+          })}
         </nav>
       );
     }

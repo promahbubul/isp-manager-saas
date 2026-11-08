@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, Card, ErrorBox, InfoList, Loading, Modal, PageHeader, StatusBadge, Table, Tip, confirmDialog } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, InfoList, Loading, Modal, PageHeader, StatusBadge, Table, Tip, confirmDialog, statGroupClass } from "@/components/ui";
 import { api } from "@/lib/api";
 import { daysUntil, formatDate, formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -13,7 +13,7 @@ import { useAuth } from "@/providers/AuthProvider";
 
 function LiveStatus({ id }) {
   const live = useApi(["customer-live", id], `/customers/${id}/live`, undefined, { retry: false, refetchInterval: 30_000 });
-  if (live.isLoading) return <p className="text-sm text-zinc-500">Checking router...</p>;
+  if (live.isLoading) return <p className="text-xs font-medium text-muted sm:text-[13px]">Checking router...</p>;
   if (live.error) return <ErrorBox error={live.error} />;
   const d = live.data.data;
   const mismatch = d.secret.exists && d.secret.disabled === d.expectedEnabled;
@@ -98,30 +98,30 @@ export default function CustomerDetailPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-zinc-200 bg-surface p-4">
-          <p className="text-sm text-zinc-500">Status</p>
+      <div className={statGroupClass(4)}>
+        <div className="min-w-0 p-4 sm:p-5">
+          <p className="text-xs font-medium text-muted sm:text-[13px]">Status</p>
           <div className="mt-1 flex items-center gap-2">
             <StatusBadge status={c.status} />
             {c.syncStatus !== "synced" && <Badge color="amber">sync {c.syncStatus}</Badge>}
           </div>
           {c.syncError && <p className="mt-1 text-xs text-rose-600">{c.syncError}</p>}
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-surface p-4">
-          <p className="text-sm text-zinc-500">Expiry</p>
-          <p className={`mt-1 text-lg font-bold ${days < 0 ? "text-rose-600" : days <= 3 ? "text-amber-600" : ""}`}>
+        <div className="min-w-0 p-4 sm:p-5">
+          <p className="text-xs font-medium text-muted sm:text-[13px]">Expiry</p>
+          <p className={`tabular mt-1 text-xl font-semibold tracking-tight ${days < 0 ? "text-rose-600" : days <= 3 ? "text-amber-600" : ""}`}>
             {c.status === "free" ? "Never" : formatDate(c.expiryDate)}
           </p>
           {c.status !== "free" && <p className="text-xs text-zinc-500">{days < 0 ? `${-days} day(s) ago` : `${days} day(s) left`}</p>}
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-surface p-4">
-          <p className="text-sm text-zinc-500">Due</p>
-          <p className={`mt-1 text-lg font-bold ${c.dueAmount ? "text-rose-600" : ""}`}>{taka(c.dueAmount)}</p>
+        <div className="min-w-0 p-4 sm:p-5">
+          <p className="text-xs font-medium text-muted sm:text-[13px]">Due</p>
+          <p className={`tabular mt-1 text-xl font-semibold tracking-tight ${c.dueAmount ? "text-rose-600" : ""}`}>{taka(c.dueAmount)}</p>
           {c.balance > 0 && <p className="text-xs text-emerald-700">Advance {taka(c.balance)}</p>}
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-surface p-4">
-          <p className="text-sm text-zinc-500">Monthly bill</p>
-          <p className="mt-1 text-lg font-bold">{taka(c.monthlyFee - c.discount)}</p>
+        <div className="min-w-0 p-4 sm:p-5">
+          <p className="text-xs font-medium text-muted sm:text-[13px]">Monthly bill</p>
+          <p className="tabular mt-1 text-xl font-semibold tracking-tight">{taka(c.monthlyFee - c.discount)}</p>
           {c.discount > 0 && <p className="text-xs text-zinc-500">after {taka(c.discount)} discount</p>}
         </div>
       </div>

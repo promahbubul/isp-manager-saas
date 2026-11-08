@@ -8,7 +8,6 @@ import { usePaged } from "@/lib/usePaged";
 import { formatDate } from "@/lib/format";
 
 const STATUSES = ["trial", "active", "past_due", "suspended", "archived"].map((s) => ({ value: s, label: s.replace("_", " ") }));
-const tone = (s) => ({ trial: "pending", active: "active", past_due: "pending", suspended: "expired", archived: "disabled" })[s] ?? s;
 
 function CompaniesList() {
   const router = useRouter();
@@ -37,7 +36,7 @@ function CompaniesList() {
               { key: "name", header: "ISP", render: (c) => <strong>{c.name}</strong> },
               { key: "slug", header: "Subdomain" },
               { key: "phone", header: "Phone" },
-              { key: "status", header: "Status", render: (c) => <StatusBadge status={tone(c.status)} /> },
+              { key: "status", header: "Status", render: (c) => <StatusBadge status={c.status} /> },
               { key: "plan", header: "Plan", render: (c) => c.subscription?.plan ?? "—" },
               {
                 key: "until",

@@ -26,7 +26,7 @@ function SalarySheet() {
       <div className="mb-4 flex flex-wrap items-end gap-4">
         <Input label="Month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
         {s && (
-          <div className={statGroupClass(3, "flex-1")}>
+          <div className={statGroupClass(3, "w-full min-w-0 sm:w-auto sm:flex-1")}>
             <StatCell label="Total salary" value={taka(s.totals.monthlySalary)} />
             <StatCell label="Paid" value={taka(s.totals.paid)} tone="green" />
             <StatCell label="Remaining" value={taka(s.totals.remaining)} tone="red" />

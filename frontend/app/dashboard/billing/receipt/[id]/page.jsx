@@ -37,7 +37,7 @@ export default function ReceiptPage() {
 
   return (
     <div>
-      <div className="mb-4 flex gap-2 print:hidden">
+      <div className="mb-4 flex flex-wrap gap-2 print:hidden">
         <Button onClick={() => window.print()}>Print</Button>
         <Link href={`/dashboard/customers/${c._id}`}>
           <Button variant="secondary">Back to customer</Button>

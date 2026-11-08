@@ -161,6 +161,19 @@ describe("customers", () => {
     expect(fakeRouter(ctx.host).secrets.has("rahim")).toBe(true);
   });
 
+  it("zone list counts the customers in each zone", async () => {
+    const ctx = await setupIsp();
+    const other = await api().post("/api/v1/zones").set(ctx.auth).send({ name: "Uttara" });
+    await createCustomer(ctx);
+    await createCustomer(ctx, { phone: "01711000002", pppoeUsername: "karim" });
+    await createCustomer(ctx, { phone: "01711000003", pppoeUsername: "salam", zone: other.body.data._id });
+
+    const zones = await api().get("/api/v1/zones").set(ctx.auth);
+    const count = (id: string) => zones.body.data.find((z: { _id: string }) => z._id === id)?.customerCount;
+    expect(count(ctx.zoneId)).toBe(2);
+    expect(count(other.body.data._id)).toBe(1);
+  });
+
   it("collectors only see customers in their zones", async () => {
     const ctx = await setupIsp();
     const other = await api().post("/api/v1/zones").set(ctx.auth).send({ name: "Uttara" });
