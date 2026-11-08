@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, ErrorBox, Input, Loading, PageHeader, Select, Stat, Table } from "@/components/ui";
+import { Button, ErrorBox, Input, Loading, PageHeader, Select, StatCell, Table, statGroupClass } from "@/components/ui";
 import { downloadFile, getErrorMessage } from "@/lib/api";
 import { formatDate, formatDateTime, taka, toDateInput } from "@/lib/format";
 import { useApi } from "@/lib/hooks";
@@ -98,9 +98,9 @@ export default function ReportsPage() {
         <Loading />
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className={statGroupClass(4, "mb-4")}>
             {report.summary.map((s) => (
-              <Stat key={s.label} label={s.label} value={fmt(s.type, s.value)} />
+              <StatCell key={s.label} label={s.label} value={fmt(s.type, s.value)} />
             ))}
           </div>
           <Table

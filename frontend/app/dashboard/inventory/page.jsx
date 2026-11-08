@@ -3,7 +3,7 @@
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Table, StatCell, statGroupClass } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -77,10 +77,10 @@ export default function InventoryPage() {
       />
       {error && <ErrorBox error={error} />}
       {s && (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Stock value" value={taka(s.stockValue)} />
-          <Stat label="Items" value={s.items} />
-          <Stat label="Low stock" value={s.lowStock.length} tone={s.lowStock.length ? "red" : undefined} />
+        <div className={statGroupClass(3)}>
+          <StatCell label="Stock value" value={taka(s.stockValue)} />
+          <StatCell label="Items" value={s.items} />
+          <StatCell label="Low stock" value={s.lowStock.length} tone={s.lowStock.length ? "red" : undefined} />
         </div>
       )}
       {s?.lowStock?.length > 0 && (

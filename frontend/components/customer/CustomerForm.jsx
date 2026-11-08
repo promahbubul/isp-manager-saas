@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { Button, Card, Checkbox, Input, Select, Textarea } from "@/components/ui";
+import { SettingsList, SettingsSection } from "@/components/settings/SettingsSection";
+import { Button, Input, Select, Switch, Textarea } from "@/components/ui";
 import { api, applyFieldErrors, getErrorMessage } from "@/lib/api";
 import { toDateInput } from "@/lib/format";
 import { useApi } from "@/lib/hooks";
@@ -16,6 +18,7 @@ const clean = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => 
  */
 export default function CustomerForm({ customer, onSaved }) {
   const isEdit = Boolean(customer);
+  const router = useRouter();
   const packages = useApi(["packages", "active"], "/packages", { active: "true" });
   const zones = useApi("zones", "/zones");
   const { user, can, subscription } = useAuth();
@@ -92,51 +95,54 @@ export default function CustomerForm({ customer, onSaved }) {
   const isFree = useWatch({ control, name: "isFree" });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-      <Card title="Personal information">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Input label="Full name" required error={e.name?.message} {...register("name")} />
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <SettingsSection first title="Personal information" description="Who the customer is and where the connection is.">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input label="Full name" required className="sm:col-span-2" error={e.name?.message} {...register("name")} />
           <Input label="Mobile" required placeholder="01XXXXXXXXX" error={e.phone?.message} {...register("phone")} />
-          <Input label="Alternative mobile" error={e.altPhone?.message} {...register("altPhone")} />
-          <Input label="Email" type="email" error={e.email?.message} {...register("email")} />
-          <Input label="NID" error={e.nid?.message} {...register("nid")} />
+          <Input label="Alternative mobile" placeholder="Optional" error={e.altPhone?.message} {...register("altPhone")} />
+          <Input label="Email" type="email" placeholder="Optional" error={e.email?.message} {...register("email")} />
+          <Input label="NID" placeholder="Optional" error={e.nid?.message} {...register("nid")} />
           <Select
             label="Zone"
+            className="sm:col-span-2"
             placeholder="— No zone —"
             options={(zones.data?.data ?? []).map((z) => ({ value: z._id, label: z.parent ? `↳ ${z.name}` : z.name }))}
             error={e.zone?.message}
             {...register("zone")}
           />
-          <Textarea label="Address" className="md:col-span-2 lg:col-span-3" error={e.address?.message} {...register("address")} />
+          <Textarea label="Address" className="sm:col-span-2" error={e.address?.message} {...register("address")} />
         </div>
-      </Card>
+      </SettingsSection>
 
-      <Card title="Connection">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <SettingsSection title="Connection" description="The PPPoE account on your MikroTik and the fibre details.">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Select
             label="Package"
             required
+            className="sm:col-span-2"
             placeholder={packages.isLoading ? "Loading..." : "— Select package —"}
             options={packageList.map((p) => ({ value: p._id, label: `${p.name} — ৳${p.price}` }))}
             error={e.package?.message}
             {...register("package", { onChange: onPackageChange })}
           />
-          <Input label="PPPoE username" required error={e.pppoeUsername?.message} {...register("pppoeUsername")} />
+          <Input label="PPPoE username" required autoComplete="off" error={e.pppoeUsername?.message} {...register("pppoeUsername")} />
           <Input
             label="PPPoE password"
+            autoComplete="new-password"
             hint={isEdit ? "Leave empty to keep the current password" : "Leave empty to generate one"}
             error={e.pppoePassword?.message}
             {...register("pppoePassword")}
           />
-          <Input label="ONU MAC" {...register("onuMac")} />
+          <Input label="ONU MAC" placeholder="AA:BB:CC:DD:EE:FF" {...register("onuMac")} />
+          <Input label="Fiber length (m)" type="number" {...register("fiberLength")} />
           <Input label="Box no." {...register("boxNo")} />
           <Input label="Port" {...register("port")} />
-          <Input label="Fiber length (m)" type="number" {...register("fiberLength")} />
         </div>
-      </Card>
+      </SettingsSection>
 
-      <Card title="Billing">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <SettingsSection title="Billing" description="How much the customer pays and when the connection expires.">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input label="Monthly fee (৳)" type="number" step="0.01" hint="Defaults to the package price" error={e.monthlyFee?.message} {...register("monthlyFee")} />
           <Input label="Monthly discount (৳)" type="number" step="0.01" error={e.discount?.message} {...register("discount")} />
           <Input
@@ -162,18 +168,27 @@ export default function CustomerForm({ customer, onSaved }) {
           {resellerList.length > 0 && user?.role !== "reseller" && (
             <Select label="Reseller" placeholder="— Own customer —" options={resellerList.map((r) => ({ value: r._id, label: r.name }))} {...register("reseller")} />
           )}
-          <div className="flex flex-col gap-3 pt-1">
-            <Checkbox label="Free customer" hint="Never expires (staff, VIP)" {...register("isFree")} />
-            <Checkbox label="Auto disable on expiry" {...register("autoDisable")} />
-          </div>
-          <Textarea label="Note" className="md:col-span-2 lg:col-span-3" {...register("note")} />
         </div>
-      </Card>
+        <SettingsList className="mt-6 border-t border-line pt-5">
+          <Switch label="Free customer" hint="Never expires — for staff or VIP connections." {...register("isFree")} />
+          <Switch label="Auto-disable on expiry" hint="Cut the connection automatically when the package runs out." {...register("autoDisable")} />
+        </SettingsList>
+      </SettingsSection>
 
-      <div className="flex justify-end">
-        <Button type="submit" size="lg" loading={formState.isSubmitting}>
-          {isEdit ? "Save changes" : "Create customer"}
-        </Button>
+      <SettingsSection title="Note" description="Only your staff can see this.">
+        <Textarea aria-label="Note" placeholder="Anything your team should know…" {...register("note")} />
+      </SettingsSection>
+
+      <div className="sticky bottom-4 z-20 mt-2">
+        <div className="mx-auto flex max-w-3xl items-center justify-end gap-3 rounded-xl border border-line bg-surface/95 px-4 py-3 shadow-[var(--shadow-pop)] backdrop-blur">
+          <span className="mr-auto hidden text-sm text-muted sm:block">{isEdit ? "Changes sync to the router when you save." : "The PPPoE account is created on the router."}</span>
+          <Button variant="ghost" onClick={() => router.back()}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={formState.isSubmitting}>
+            {isEdit ? "Save changes" : "Create customer"}
+          </Button>
+        </div>
       </div>
     </form>
   );

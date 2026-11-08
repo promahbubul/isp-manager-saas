@@ -1,7 +1,7 @@
 "use client";
 
-import { Bug, Building2, CreditCard, HeartPulse, KeyRound, Landmark, Layers, LayoutDashboard, LifeBuoy, Megaphone, Newspaper, ScrollText, Settings, ShieldCheck, TicketPercent, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Bug, Building2, ChevronRight, CreditCard, HeartPulse, KeyRound, Landmark, Layers, LayoutDashboard, LifeBuoy, Megaphone, Newspaper, ScrollText, Settings, ShieldCheck, TicketPercent, Users } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import AppShell from "@/components/shell/AppShell";
 import { ShellLoading } from "@/components/ui/Skeleton";
 import { Tip } from "@/components/ui/Tip";
@@ -9,6 +9,28 @@ import UserMenu from "@/components/shell/UserMenu";
 import ThemeToggle from "@/components/shell/ThemeToggle";
 import { createContext, useContext, useEffect, useState } from "react";
 import { adminApi, refreshAdminToken, setAdminFailureHandler, setAdminToken } from "@/lib/adminApi";
+
+/** "Section / Page" in the top bar, from NAV below. */
+function AdminBreadcrumb() {
+  const pathname = usePathname();
+  for (const sec of NAV) {
+    const item = sec.items.find((i) => (i.exact ? pathname === i.href : pathname === i.href || pathname.startsWith(`${i.href}/`)));
+    if (item) {
+      const trail = sec.title && sec.title !== item.title ? [sec.title, item.title] : [item.title];
+      return (
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 truncate text-sm">
+          {trail.map((t, i) => (
+            <span key={t} className="flex items-center gap-1.5">
+              {i > 0 && <ChevronRight className="size-3.5 text-zinc-400" />}
+              <span className={i === trail.length - 1 ? "font-medium text-ink" : "text-muted"}>{t}</span>
+            </span>
+          ))}
+        </nav>
+      );
+    }
+  }
+  return null;
+}
 
 const AdminContext = createContext(null);
 export const useAdmin = () => useContext(AdminContext);
@@ -85,7 +107,9 @@ export default function AdminPanelLayout({ children }) {
   );
   const topbar = (
     <>
-      <div className="min-w-0 flex-1" />
+      <div className="min-w-0 flex-1">
+        <AdminBreadcrumb />
+      </div>
       <ThemeToggle />
       <UserMenu
         name={admin.name}

@@ -8,7 +8,7 @@ const ContainerButton = ({ title, children, onClick, type = "submit", loading = 
     onClick={onClick}
     disabled={disabled || loading}
     className={cn(
-      "inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60",
+      "inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 active:bg-primary-800 dark:hover:bg-primary-500 dark:active:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60",
       className,
     )}
   >

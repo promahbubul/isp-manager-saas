@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -37,24 +38,28 @@ function CustomerSearch({ onPick }) {
   const results = useApi(["customers", { search: debounced, limit: 8 }], "/customers", { search: debounced, limit: 8 }, { enabled: debounced.length >= 2 });
 
   return (
-    <Card title="Find customer">
+    <Card title="Find customer" className="mx-auto max-w-2xl">
+      <div className="relative">
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-muted" />
       <input
         autoFocus
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Name, mobile, customer ID or PPPoE username"
-        className="w-full rounded-md border border-zinc-300 px-3 py-2"
+        aria-label="Find customer"
+        className="h-11 w-full rounded-xl border border-line bg-surface pl-10 pr-3 text-[15px] text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
       />
-      <div className="mt-3 divide-y divide-zinc-100">
+      </div>
+      <div className="mt-3 divide-y divide-line">
         {(results.data?.data ?? []).map((c) => (
           <button
             key={c._id}
             type="button"
             onClick={() => onPick(c._id)}
-            className="flex w-full cursor-pointer items-center justify-between px-2 py-2 text-left hover:bg-primary-50"
+            className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-subtle"
           >
             <span>
-              <strong>{c.name}</strong> <span className="text-zinc-500">· {c.customerId} · {c.pppoe.username} · {c.phone}</span>
+              <span className="block font-medium text-ink">{c.name}</span> <span className="block truncate text-xs text-muted">{c.customerId} · {c.pppoe.username} · {c.phone}</span>
             </span>
             <StatusBadge status={c.status} />
           </button>

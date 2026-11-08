@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Loading, PageHeader, Table, StatCell, statGroupClass } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -37,11 +37,11 @@ export default function CollectionsPage() {
         }
       />
       {m && (
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Stat label="Cash in my hand" value={taka(m.inHand)} tone="amber" />
-          <Stat label="Collected (all time)" value={taka(m.collected)} />
-          <Stat label="Received from others" value={taka(m.received)} />
-          <Stat label="Handed over" value={`${taka(m.handedOver)}${m.pendingOut ? ` (${taka(m.pendingOut)} waiting)` : ""}`} />
+        <div className={statGroupClass(4)}>
+          <StatCell label="Cash in my hand" value={taka(m.inHand)} tone="amber" />
+          <StatCell label="Collected (all time)" value={taka(m.collected)} />
+          <StatCell label="Received from others" value={taka(m.received)} />
+          <StatCell label="Handed over" value={`${taka(m.handedOver)}${m.pendingOut ? ` (${taka(m.pendingOut)} waiting)` : ""}`} />
         </div>
       )}
 

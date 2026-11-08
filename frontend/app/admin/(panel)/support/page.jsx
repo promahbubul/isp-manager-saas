@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PRIORITY_COLOR, SUPPORT_CATEGORIES, SUPPORT_STATUS, supportCategoryLabel } from "@/components/support/supportMeta";
-import { Badge, ErrorBox, Loading, PageHeader, Select, Stat, Table } from "@/components/ui";
+import { Badge, ErrorBox, Loading, PageHeader, Select, Table, StatCell, statGroupClass } from "@/components/ui";
 
 import { usePaged } from "@/lib/usePaged";
 import { formatDateTime } from "@/lib/format";
@@ -19,10 +19,10 @@ export default function AdminSupportPage() {
   return (
     <div>
       <PageHeader title="ISP support" subtitle="Requests from ISPs to the platform team. Oldest unanswered first is a good habit." />
-      <div className="mb-4 grid grid-cols-3 gap-4">
-        <Stat label="Waiting for us" value={counts.open ?? 0} tone="red" />
-        <Stat label="Waiting for ISP" value={counts.answered ?? 0} tone="amber" />
-        <Stat label="Closed" value={counts.closed ?? 0} />
+      <div className={statGroupClass(3, "mb-4")}>
+        <StatCell label="Waiting for us" value={counts.open ?? 0} tone="red" />
+        <StatCell label="Waiting for ISP" value={counts.answered ?? 0} tone="amber" />
+        <StatCell label="Closed" value={counts.closed ?? 0} />
       </div>
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <input className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100" placeholder="Search ref or subject" value={q.search} onChange={set("search")} />

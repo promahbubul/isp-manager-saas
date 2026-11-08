@@ -67,6 +67,24 @@ export function Textarea({ label, required, error, hint, className, id, name, ..
   );
 }
 
+/** On/off toggle (a styled checkbox, so register() works). Label + hint on the left, switch on the right. */
+export function Switch({ label, hint, id, name, className, ...props }) {
+  const inputId = id || name;
+  return (
+    <label htmlFor={inputId} className={cn("flex cursor-pointer items-start justify-between gap-6", className)}>
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-ink">{label}</span>
+        {hint && <span className="mt-0.5 block text-sm text-muted">{hint}</span>}
+      </span>
+      <span className="relative mt-0.5 inline-flex shrink-0">
+        <input id={inputId} name={name} type="checkbox" role="switch" className="peer sr-only" {...props} />
+        <span className="h-5 w-9 rounded-full bg-zinc-300 transition-colors peer-checked:bg-primary-600 peer-focus-visible:ring-4 peer-focus-visible:ring-primary-100 peer-disabled:opacity-50" />
+        <span className="pointer-events-none absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-4" />
+      </span>
+    </label>
+  );
+}
+
 export function Checkbox({ label, hint, id, name, className, ...props }) {
   const inputId = id || name;
   return (

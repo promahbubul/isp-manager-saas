@@ -21,15 +21,15 @@ export default function AuthCard({ title, subtitle, children, footer }) {
         </Link>
         <div className="relative max-w-md">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight">Run your ISP from one place.</h2>
-          <ul className="mt-6 space-y-3 text-primary-100">
+          <ul className="mt-6 space-y-3 text-white/80">
             {POINTS.map((p) => (
               <li key={p} className="flex items-center gap-2.5">
-                <CheckCircle2 className="size-5 text-primary-300" /> {p}
+                <CheckCircle2 className="size-5 text-indigo-300" /> {p}
               </li>
             ))}
           </ul>
         </div>
-        <p className="relative text-sm text-primary-200/70">© {new Date().getFullYear()} {APP_NAME}</p>
+        <p className="relative text-sm text-white/50">© {new Date().getFullYear()} {APP_NAME}</p>
       </div>
 
       <div className="relative flex items-center justify-center px-4 py-10 sm:px-6">

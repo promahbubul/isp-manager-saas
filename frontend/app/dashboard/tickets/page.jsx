@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import TicketForm, { CATEGORIES } from "@/components/ticket/TicketForm";
-import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, RowActions, Select, Stat, StatusBadge, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, RowActions, Select, StatusBadge, Table, StatCell, statGroupClass } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -48,11 +48,11 @@ export default function TicketsPage() {
           </PermissionGate>
         }
       />
-      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Open" value={c?.open ?? "—"} tone="red" />
-        <Stat label="In progress" value={c?.inProgress ?? "—"} tone="amber" />
-        <Stat label="Assigned to me" value={c?.mine ?? "—"} />
-        <Stat label="SLA missed" value={c?.overdue ?? "—"} tone="red" />
+      <div className={statGroupClass(4, "mb-4")}>
+        <StatCell label="Open" value={c?.open ?? "—"} tone="red" />
+        <StatCell label="In progress" value={c?.inProgress ?? "—"} tone="amber" />
+        <StatCell label="Assigned to me" value={c?.mine ?? "—"} />
+        <StatCell label="SLA missed" value={c?.overdue ?? "—"} tone="red" />
       </div>
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <input className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100" placeholder="Search ticket no. or subject" value={q.search} onChange={set("search")} />

@@ -144,7 +144,14 @@ async function me(s: Session) {
   ]);
   return {
     phone: s.phone.startsWith("c:") ? null : s.phone,
-    company: company && { name: company.name, slug: company.slug, logo: company.logo, phone: company.phone, address: company.address },
+    company: company && {
+      name: company.name,
+      slug: company.slug,
+      logo: company.logo,
+      phone: company.phone,
+      address: company.address,
+      primaryColor: company.portalTheme?.primaryColor,
+    },
     features: { onlinePayment: features.includes("online_payment"), tickets: features.includes("ticket"), whiteLabel: features.includes("white_label") },
     payUrl: company && features.includes("online_payment") ? `${config.appUrl}/pay/${company.slug}` : null,
     accounts: list,

@@ -95,7 +95,7 @@ export function Table({
   const actionCell = (row) => cells(row).find((c) => NO_SORT.has(c.column.id) && c.column.id !== "__index");
 
   return (
-    <div className={cn("overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
+    <div data-table className={cn("overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
       {searchable && (
         <div className="flex items-center gap-2 border-b border-line px-3 py-2">
           <Search className="size-4 shrink-0 text-muted" />
@@ -322,7 +322,7 @@ export function Pagination({ meta, onPage, cursor, onLimit, className }) {
                   …
                 </span>
               ) : (
-                <button key={p} type="button" onClick={() => onPage(p)} aria-current={p === meta.page ? "page" : undefined} className={cn(pagerBtn, p === meta.page && "border-primary-600 bg-primary-600 text-white hover:bg-primary-700")}>
+                <button key={p} type="button" onClick={() => onPage(p)} aria-current={p === meta.page ? "page" : undefined} className={cn(pagerBtn, p === meta.page && "border-primary-600 bg-primary-600 text-white hover:bg-primary-700 dark:hover:bg-primary-500")}>
                   {p}
                 </button>
               ),

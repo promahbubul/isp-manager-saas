@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download, Layers, Plus, Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -8,12 +8,14 @@ import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
 import { Button, ErrorBox, Loading, PageHeader, Select, StatusBadge, Table, Tip, confirmDialog } from "@/components/ui";
 import QuickForm from "@/components/common/QuickForm";
+import { buttonVariants } from "@/components/ui/Button";
+import { cn } from "@/lib/cn";
 import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { daysUntil, formatDate, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
 import { usePaged } from "@/lib/usePaged";
 
-const STATUS_OPTIONS = ["active", "expired", "disabled", "free"].map((s) => ({ value: s, label: s }));
+const STATUS_OPTIONS = ["active", "expired", "disabled", "free"].map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1) }));
 
 function CustomersList() {
   const router = useRouter();
@@ -48,6 +50,8 @@ function CustomersList() {
   const zones = useApi("zones", "/zones");
   const packages = useApi("packages", "/packages");
   const [bulk, setBulk] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilters = ["status", "zone", "package"].filter((k) => query[k]).length;
   const bulkRun = useApiMutation((b) => api.post("/customers/bulk", b), { invalidate: ["customers"] });
 
   return (
@@ -60,19 +64,20 @@ function CustomersList() {
             <PermissionGate perm="customer.export">
               <Button
                 variant="secondary"
+                aria-label="Export Excel"
                 onClick={() => downloadFile("/customers/export", query, "customers.xlsx").catch((e) => toast.error(getErrorMessage(e)))}
               >
-                Export Excel
+                <Download /> <span className="hidden sm:inline">Export</span>
               </Button>
             </PermissionGate>
             <PermissionGate perm="customer.enable_disable">
-              <Button variant="secondary" onClick={() => setBulk(true)}>
-                Bulk action
+              <Button variant="secondary" aria-label="Bulk action" onClick={() => setBulk(true)}>
+                <Layers /> <span className="hidden sm:inline">Bulk action</span>
               </Button>
             </PermissionGate>
             <PermissionGate perm="customer.create">
-              <Link href="/dashboard/customers/create">
-                <Button>+ Add customer</Button>
+              <Link href="/dashboard/customers/create" className={buttonVariants()}>
+                <Plus /> Add customer
               </Link>
             </PermissionGate>
           </>
@@ -97,26 +102,39 @@ function CustomersList() {
         />
       )}
 
-      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, phone, ID, username..."
-          className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 md:col-span-2"
-        />
-        <Select placeholder="All statuses" options={STATUS_OPTIONS} value={query.status ?? ""} onChange={(e) => setParam("status", e.target.value)} />
-        <Select
-          placeholder="All zones"
-          options={(zones.data?.data ?? []).map((z) => ({ value: z._id, label: z.name }))}
-          value={query.zone ?? ""}
-          onChange={(e) => setParam("zone", e.target.value)}
-        />
-        <Select
-          placeholder="All packages"
-          options={(packages.data?.data ?? []).map((p) => ({ value: p._id, label: p.name }))}
-          value={query.package ?? ""}
-          onChange={(e) => setParam("package", e.target.value)}
-        />
+      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] gap-3 md:grid-cols-5">
+        <div className="relative md:col-span-2">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, phone, ID, username..."
+            aria-label="Search customers"
+            className="h-9 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm text-ink shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
+          />
+        </div>
+        {/* phones: filters live behind one button */}
+        <Button variant="secondary" className="md:hidden" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+          <SlidersHorizontal /> Filters
+          {activeFilters > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-primary-600 text-[11px] text-white">{activeFilters}</span>}
+        </Button>
+        <div className={cn("col-span-2 grid-cols-1 gap-3 sm:grid-cols-3 md:col-span-3 md:grid", filtersOpen ? "grid" : "hidden")}>
+          <Select aria-label="Status" placeholder="All statuses" options={STATUS_OPTIONS} value={query.status ?? ""} onChange={(e) => setParam("status", e.target.value)} />
+          <Select
+            aria-label="Zone"
+            placeholder="All zones"
+            options={(zones.data?.data ?? []).map((z) => ({ value: z._id, label: z.name }))}
+            value={query.zone ?? ""}
+            onChange={(e) => setParam("zone", e.target.value)}
+          />
+          <Select
+            aria-label="Package"
+            placeholder="All packages"
+            options={(packages.data?.data ?? []).map((p) => ({ value: p._id, label: p.name }))}
+            value={query.package ?? ""}
+            onChange={(e) => setParam("package", e.target.value)}
+          />
+        </div>
       </div>
 
       {error && <ErrorBox error={error} />}

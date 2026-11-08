@@ -15,16 +15,32 @@ export function PageHeader({ title, subtitle, actions, className }) {
   );
 }
 
+/**
+ * A titled panel. When its only content is a <Table>, the table goes edge to edge
+ * and drops its own border, so there is never a box inside a box.
+ */
 export function Card({ title, actions, children, className, bodyClassName }) {
   return (
-    <section className={cn("rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
+    <section
+      className={cn(
+        "rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)] has-[>div>[data-table]:only-child]:overflow-hidden",
+        className,
+      )}
+    >
       {(title || actions) && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-5">
           <h2 className="text-sm font-semibold text-ink">{title}</h2>
           {actions}
         </div>
       )}
-      <div className={cn("p-4 sm:p-5", bodyClassName)}>{children}</div>
+      <div
+        className={cn(
+          "p-4 sm:p-5 has-[>[data-table]:only-child]:p-0 [&>[data-table]:only-child]:rounded-none [&>[data-table]:only-child]:border-0 [&>[data-table]:only-child]:shadow-none",
+          bodyClassName,
+        )}
+      >
+        {children}
+      </div>
     </section>
   );
 }
@@ -105,6 +121,52 @@ export function Stat({ label, value, hint, href, tone = "slate", icon: Icon }) {
           <Icon className="size-4.5" />
         </span>
       )}
+    </div>
+  );
+  return href ? (
+    <Link href={href} className="block">
+      {body}
+    </Link>
+  ) : (
+    body
+  );
+}
+
+/**
+ * Several KPIs in one panel, split by hairlines (2 per row on phones).
+ *   <StatGroup><StatCell label="Today" value="৳500" /></StatGroup>
+ */
+const STAT_COLS = {
+  2: "grid-cols-2",
+  3: "grid-cols-2 sm:grid-cols-3",
+  4: "grid-cols-2 lg:grid-cols-4",
+  5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+  6: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
+};
+
+/** Class list for a StatGroup panel — also usable on a plain <div> wrapping <StatCell>s. */
+export const statGroupClass = (cols = 4, className) =>
+  cn(
+    "grid overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]",
+    STAT_COLS[cols] ?? STAT_COLS[4],
+    // hairlines between cells, whatever the column count (the outer edge is clipped)
+    "[&>*]:-mb-px [&>*]:-mr-px [&>*]:border-b [&>*]:border-r [&>*]:border-line",
+    className,
+  );
+
+export function StatGroup({ children, className, cols = 4 }) {
+  return <div className={statGroupClass(cols, className)}>{children}</div>;
+}
+
+export function StatCell({ label, value, hint, href, tone = "slate", icon: Icon }) {
+  const body = (
+    <div className={cn("flex h-full min-w-0 flex-col gap-1 p-4 sm:p-5", href && "transition-colors hover:bg-subtle")}>
+      <div className="flex items-center gap-2 text-muted">
+        {Icon && <Icon className="size-4 shrink-0" />}
+        <p className="truncate text-xs font-medium sm:text-[13px]">{label}</p>
+      </div>
+      <p className={cn("tabular truncate text-xl font-semibold tracking-tight sm:text-2xl", TONES[tone] ?? TONES.slate)}>{value}</p>
+      {hint && <p className="truncate text-xs text-muted">{hint}</p>}
     </div>
   );
   return href ? (

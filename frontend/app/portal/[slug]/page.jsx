@@ -3,7 +3,8 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import PortalShell from "@/components/portal/PortalShell";
-import { Button, Card, ErrorBox, Input, Loading } from "@/components/ui";
+import { UserRound } from "lucide-react";
+import { Button, ErrorBox, Input, Loading } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api";
 import { getPortalToken, portalApi, setPortalToken } from "@/lib/portalApi";
 
@@ -83,9 +84,14 @@ export default function PortalLoginPage() {
 
   return (
     <PortalShell isp={isp}>
-      <Card>
-        <h2 className="mb-1 text-xl font-bold">My account</h2>
-        <p className="mb-5 text-sm text-zinc-600">See your package, validity and payments, pay your bill and report problems.</p>
+      <div className="mb-6 mt-4 text-center">
+        <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--brand)] text-white shadow-lg">
+          <UserRound className="size-7" />
+        </span>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">Sign in to your account</h1>
+        <p className="mx-auto mt-2 max-w-xs text-sm text-muted">Check your package and validity, pay your bill and report problems.</p>
+      </div>
+      <section className="rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6">
         {step === "pppoe" ? (
           <form onSubmit={pppoeLogin} className="space-y-4">
             <Input label="PPPoE username" autoComplete="username" required value={username} onChange={(e) => setUsername(e.target.value)} />
@@ -135,9 +141,9 @@ export default function PortalLoginPage() {
             </div>
           </form>
         )}
-      </Card>
+      </section>
       {isp.onlinePayment && (
-        <p className="mt-4 text-center text-sm text-zinc-600">
+        <p className="mt-6 text-center text-sm text-muted">
           Only want to pay?{" "}
           <a className="font-semibold text-primary-700 hover:underline" href={`/pay/${slug}`}>
             Pay without logging in

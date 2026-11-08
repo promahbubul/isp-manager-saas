@@ -45,7 +45,7 @@ export default function SendSmsPage() {
   return (
     <div>
       <PageHeader title="Send SMS" subtitle="Bulk or single SMS to your customers" />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <Card title="Message" className="lg:col-span-2">
           <div className="mb-4 flex gap-2">
             {[
@@ -115,7 +115,7 @@ export default function SendSmsPage() {
         <div className="space-y-4">
           <Stat label="SMS balance" value={balance.data?.data?.balance ?? "—"} hint="credits · 1 credit = 1 SMS part" />
           <Card title="Tips">
-            <ul className="list-disc space-y-1 pl-4 text-sm text-zinc-600">
+            <ul className="list-disc space-y-1.5 pl-4 text-sm text-muted">
               <li>English SMS: 160 characters per credit. Bangla: 70 per credit.</li>
               <li>Variables like {"{name}"} are filled for each customer.</li>
               <li>Need more credits? Contact support (online purchase is coming).</li>

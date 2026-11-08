@@ -1,9 +1,11 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import GatewaySettings from "@/components/payment/GatewaySettings";
-import { Button, Card, ErrorBox, Loading, PageHeader } from "@/components/ui";
+import { SettingsSection } from "@/components/settings/SettingsSection";
+import { Button, ErrorBox, Loading } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/hooks";
 import { useAuth } from "@/providers/AuthProvider";
@@ -18,26 +20,33 @@ export default function PaymentGatewaysPage() {
   if (error) return <ErrorBox error={error} />;
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Payment gateways" subtitle="How your customers can pay their bills online. Money goes straight to your merchant account." />
-      <Card title="Your customer payment link">
-        <div className="flex flex-wrap items-center gap-3">
-          <code className="rounded bg-zinc-100 px-3 py-2 text-sm">{payLink}</code>
-          <Button size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(payLink).then(() => toast.success("Copied"))}>
-            Copy
+    <div className="pb-6">
+      <SettingsSection
+        first
+        title="Payment link"
+        description={
+          <>
+            Customers enter their customer ID (or PPPoE username) and mobile number, then pay with any method you turn on. Paid bills are recharged and reconnected automatically. Add{" "}
+            <code className="rounded bg-subtle px-1 text-xs">{"{pay_link}"}</code> to your SMS templates.
+          </>
+        }
+      >
+        <div className="flex items-center gap-2">
+          <code className="h-9 min-w-0 flex-1 truncate rounded-lg border border-line bg-subtle px-3 py-2 font-mono text-[13px] text-ink">{payLink}</code>
+          <Button variant="secondary" onClick={() => navigator.clipboard.writeText(payLink).then(() => toast.success("Link copied"))}>
+            <Copy /> Copy
           </Button>
         </div>
-        <p className="mt-2 text-xs text-zinc-500">
-          Customers enter their customer ID (or PPPoE username) and mobile number, then pay with any method you turned on. Paid bills are
-          recharged and reconnected automatically. Add <code>{"{pay_link}"}</code> to your SMS templates.
-        </p>
-      </Card>
-      <GatewaySettings
-        gateways={data.data.gateways}
-        webhookBase={data.data.webhookBase}
-        save={(gateway, body) => api.put(`/settings/payment-gateways/${gateway}`, body)}
-        onSaved={() => qc.invalidateQueries({ queryKey: ["tenant-gateways"] })}
-      />
+      </SettingsSection>
+
+      <SettingsSection title="Gateways" description="Connect your own merchant accounts. Money goes straight to you — the platform never holds it.">
+        <GatewaySettings
+          gateways={data.data.gateways}
+          webhookBase={data.data.webhookBase}
+          save={(gateway, body) => api.put(`/settings/payment-gateways/${gateway}`, body)}
+          onSaved={() => qc.invalidateQueries({ queryKey: ["tenant-gateways"] })}
+        />
+      </SettingsSection>
     </div>
   );
 }

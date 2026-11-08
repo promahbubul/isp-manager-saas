@@ -5,7 +5,7 @@ import { useState } from "react";
 import ExportButton from "@/components/common/ExportButton";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, RowActions, Select, Stat, Table, confirmDialog } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, RowActions, Select, Table, confirmDialog, StatCell, statGroupClass } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, methodLabel, taka, toDateInput } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -25,10 +25,10 @@ function ProfitLoss({ range }) {
   const p = data.data;
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Income" value={taka(p.income.total)} tone="green" />
-        <Stat label="Expenses" value={taka(p.expense.total)} tone="red" />
-        <Stat label={p.net >= 0 ? "Profit" : "Loss"} value={taka(Math.abs(p.net))} hint={p.margin != null ? `${p.net >= 0 ? "Margin" : "Loss is"} ${Math.abs(Math.round(p.margin))}% of income` : undefined} tone={p.net >= 0 ? "green" : "red"} />
+      <div className={statGroupClass(3)}>
+        <StatCell label="Income" value={taka(p.income.total)} tone="green" />
+        <StatCell label="Expenses" value={taka(p.expense.total)} tone="red" />
+        <StatCell label={p.net >= 0 ? "Profit" : "Loss"} value={taka(Math.abs(p.net))} hint={p.margin != null ? `${p.net >= 0 ? "Margin" : "Loss is"} ${Math.abs(Math.round(p.margin))}% of income` : undefined} tone={p.net >= 0 ? "green" : "red"} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Income">
@@ -57,11 +57,11 @@ function CashBook({ range }) {
   const c = data.data;
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-4">
-        <Stat label="Opening cash" value={taka(c.opening)} />
-        <Stat label="Cash in" value={taka(c.totalIn)} tone="green" />
-        <Stat label="Cash out" value={taka(c.totalOut)} tone="red" />
-        <Stat label="Closing cash" value={taka(c.closing)} />
+      <div className={statGroupClass(4)}>
+        <StatCell label="Opening cash" value={taka(c.opening)} />
+        <StatCell label="Cash in" value={taka(c.totalIn)} tone="green" />
+        <StatCell label="Cash out" value={taka(c.totalOut)} tone="red" />
+        <StatCell label="Closing cash" value={taka(c.closing)} />
       </div>
       <Table
         rowKey="date"
@@ -180,7 +180,7 @@ export default function AccountsPage() {
             ["entries", "Income & expenses"],
             ["cash", "Cash book"],
           ].map(([k, l]) => (
-            <button key={k} type="button" onClick={() => setTab(k)} className={`cursor-pointer rounded px-3 py-1.5 text-sm ${tab === k ? "bg-primary-700 text-white" : "text-zinc-700"}`}>
+            <button key={k} type="button" onClick={() => setTab(k)} className={`cursor-pointer rounded px-3 py-1.5 text-sm ${tab === k ? "bg-primary-600 text-white" : "text-zinc-700 hover:text-ink"}`}>
               {l}
             </button>
           ))}

@@ -2,64 +2,29 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
-import { api, getErrorMessage } from "@/lib/api";
+import { LockedNote, SettingsSection } from "@/components/settings/SettingsSection";
+import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Select, Switch, Table, confirmDialog } from "@/components/ui";
+import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
-import { useAuth } from "@/providers/AuthProvider";
 
 const locked = (err) => err?.response?.data?.details?.code === "feature_locked";
 
-/** Card that shows "not in your plan" instead of an error when the feature is locked. */
-function FeatureCard({ title, query, children }) {
-  if (query.isLoading) return <Card title={title}><Loading /></Card>;
-  if (locked(query.error)) {
-    return (
-      <Card title={title}>
-        <p className="text-sm text-zinc-500">🔒 {query.error.response.data.message}</p>
-      </Card>
-    );
-  }
-  if (query.error) return <Card title={title}><ErrorBox error={query.error} /></Card>;
-  return <Card title={title}>{children}</Card>;
-}
-
-function LogoCard() {
-  const { company, reload } = useAuth();
-  const [busy, setBusy] = useState(false);
-  const upload = async (file) => {
-    if (!file) return;
-    setBusy(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      await api.post("/settings/company/logo", fd);
-      toast.success("Logo updated");
-      reload();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  };
+/** Settings section that shows "not in your plan" instead of an error when the feature is locked. */
+function FeatureSection({ title, description, query, children, first }) {
+  let body = children;
+  if (query.isLoading) body = <Loading />;
+  else if (locked(query.error)) body = <LockedNote>{query.error.response.data.message}</LockedNote>;
+  else if (query.error) body = <ErrorBox error={query.error} />;
   return (
-    <Card title="Logo">
-      <div className="flex items-center gap-4">
-        {company?.logo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- uploaded file on the API host
-          <img src={company.logo} alt="Logo" className="h-16 w-16 rounded border border-zinc-200 object-contain" />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded border border-dashed border-zinc-300 text-xs text-zinc-400">no logo</div>
-        )}
-        <label className={`cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 ${busy ? "opacity-60" : ""}`}>
-          {busy ? "Uploading…" : "Upload PNG / JPG / WebP (max 1 MB)"}
-          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={busy} onChange={(e) => upload(e.target.files?.[0])} />
-        </label>
-      </div>
-      <p className="mt-2 text-xs text-zinc-500">Shown on receipts, the customer portal and the payment page.</p>
-    </Card>
+    <SettingsSection first={first} title={title} description={description}>
+      {body}
+    </SettingsSection>
   );
 }
+
+/** Small inline text input used inside tables. */
+const cellInput = "h-8 w-full rounded-md border border-line bg-surface px-2 text-sm text-ink outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100";
 
 /** Labels and help for each SMS provider's fields (the server decides which fields exist). */
 const SMS_PROVIDERS = {
@@ -121,8 +86,7 @@ function SmsGatewayCard() {
   };
 
   return (
-    <FeatureCard title="SMS gateway" query={q}>
-      <p className="mb-4 text-sm text-zinc-600">Connect your own SMS account. All your SMS (automatic, bulk and login codes) then go through it and no platform SMS credits are used.</p>
+    <FeatureSection first title="SMS gateway" description="Connect your own SMS account. All your SMS — automatic, bulk and login codes — then go through it, and no platform SMS credits are used." query={q}>
       <div className="grid gap-4 sm:grid-cols-2">
         <Select
           label="Provider"
@@ -131,30 +95,35 @@ function SmsGatewayCard() {
           onChange={(e) => setF({ ...v, provider: e.target.value, fields: e.target.value === cur?.provider ? { ...(cur?.options ?? {}) } : {} })}
           options={Object.entries(SMS_PROVIDERS).map(([value, p]) => ({ value, label: p.label }))}
         />
-        <p className="text-xs text-zinc-500 sm:col-span-2">{SMS_PROVIDERS[v.provider]?.help}</p>
+        <p className="-mt-2 text-xs text-muted sm:col-span-2">{SMS_PROVIDERS[v.provider]?.help}</p>
         {spec ? [...spec.options, ...spec.credentials].map(input) : <Loading />}
-        <div className="sm:col-span-2">
-          <Checkbox label="Send all my SMS through this gateway" checked={v.enabled} onChange={(e) => setF({ ...v, enabled: e.target.checked })} />
+        <div className="border-t border-line pt-4 sm:col-span-2">
+          <Switch label="Use this gateway" hint="Send all my SMS through this account." checked={v.enabled} onChange={(e) => setF({ ...v, enabled: e.target.checked })} />
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap items-end gap-2">
+      <div className="mt-5 flex justify-end">
         <Button loading={save.isPending} onClick={() => save.mutate(v)}>
-          Save
+          Save gateway
         </Button>
-        {cur && (
-          <>
-            <Input label="Test to" placeholder="01XXXXXXXXX" value={to} onChange={(e) => setTo(e.target.value)} />
+      </div>
+      {cur && (
+        <div className="mt-6 border-t border-line pt-5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-ink">Test the connection</p>
+            {cur.lastTestAt && <Badge color={cur.lastTestOk ? "green" : "red"} dot>{`Last test ${cur.lastTestOk ? "passed" : `failed: ${cur.lastTestError ?? ""}`} · ${formatDateTime(cur.lastTestAt)}`}</Badge>}
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <Input className="min-w-48 flex-1" aria-label="Test mobile number" placeholder="01XXXXXXXXX" value={to} onChange={(e) => setTo(e.target.value)} />
             <Button variant="secondary" loading={test.isPending} disabled={!to} onClick={() => test.mutate()}>
-              Send test
+              Send test SMS
             </Button>
-            <Button variant="secondary" loading={balance.isPending} onClick={() => balance.mutate()}>
+            <Button variant="ghost" loading={balance.isPending} onClick={() => balance.mutate()}>
               Check balance
             </Button>
-            {cur.lastTestAt && <Badge color={cur.lastTestOk ? "green" : "red"}>{`last test ${cur.lastTestOk ? "ok" : `failed: ${cur.lastTestError ?? ""}`} · ${formatDateTime(cur.lastTestAt)}`}</Badge>}
-          </>
-        )}
-      </div>
-    </FeatureCard>
+          </div>
+        </div>
+      )}
+    </FeatureSection>
   );
 }
 
@@ -190,11 +159,12 @@ function WhatsAppCard() {
       ),
     });
   return (
-    <FeatureCard title="WhatsApp notifications" query={q}>
-      <p className="mb-4 text-sm text-zinc-600">
-        Uses the official WhatsApp Cloud API. Create message templates in Meta WhatsApp Manager, wait for approval, then enter their names here. Variables fill {"{{1}}, {{2}}"}… in the order you list them.
-      </p>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <FeatureSection
+      title="WhatsApp"
+      description={<>Official WhatsApp Cloud API. Create message templates in Meta WhatsApp Manager, wait for approval, then enter their names here. Variables fill {"{{1}}, {{2}}"}… in the order you list them.</>}
+      query={q}
+    >
+      <div className="mb-5 grid gap-4 sm:grid-cols-2">
         <Input label="Phone number ID" value={v.phoneNumberId} onChange={(e) => setF({ ...v, phoneNumberId: e.target.value })} />
         <Input label="Permanent access token" type="password" placeholder={cur?.hasAccessToken ? "•••• saved" : ""} value={v.accessToken} onChange={(e) => setF({ ...v, accessToken: e.target.value })} />
       </div>
@@ -203,18 +173,20 @@ function WhatsAppCard() {
         rows={WA_EVENTS.map(([e, label]) => ({ e, label }))}
         columns={[
           { key: "label", header: "Event" },
-          { key: "t", header: "Template name", render: (r) => <input className="w-full rounded border border-zinc-300 px-2 py-1 text-sm" value={v.events[r.e].template} onChange={setEv(r.e, "template")} placeholder="payment_received_v1" /> },
-          { key: "l", header: "Language", render: (r) => <input className="w-16 rounded border border-zinc-300 px-2 py-1 text-sm" value={v.events[r.e].language} onChange={setEv(r.e, "language")} /> },
-          { key: "p", header: "Variables in order", render: (r) => <input className="w-full rounded border border-zinc-300 px-2 py-1 text-sm" value={v.events[r.e].params} onChange={setEv(r.e, "params")} placeholder="name, amount, expiry" /> },
+          { key: "t", header: "Template name", render: (r) => <input aria-label={`${r.label} template`} className={cellInput} value={v.events[r.e].template} onChange={setEv(r.e, "template")} placeholder="payment_received_v1" /> },
+          { key: "l", header: "Language", render: (r) => <input aria-label={`${r.label} language`} className={`${cellInput} w-16`} value={v.events[r.e].language} onChange={setEv(r.e, "language")} /> },
+          { key: "p", header: "Variables in order", render: (r) => <input aria-label={`${r.label} variables`} className={cellInput} value={v.events[r.e].params} onChange={setEv(r.e, "params")} placeholder="name, amount, expiry" /> },
         ]}
       />
-      <div className="mt-4 flex items-center gap-4">
-        <Checkbox label="Send WhatsApp together with the automatic SMS" checked={v.enabled} onChange={(e) => setF({ ...v, enabled: e.target.checked })} />
+      <div className="mt-5 border-t border-line pt-4">
+        <Switch label="Send WhatsApp messages" hint="Sent together with the automatic SMS for the events above." checked={v.enabled} onChange={(e) => setF({ ...v, enabled: e.target.checked })} />
+      </div>
+      <div className="mt-5 flex justify-end">
         <Button loading={save.isPending} onClick={submit}>
-          Save
+          Save WhatsApp
         </Button>
       </div>
-    </FeatureCard>
+    </FeatureSection>
   );
 }
 
@@ -228,27 +200,39 @@ function ApiKeysCard() {
   const create = useApiMutation(() => api.post("/settings/api-keys", { name, scopes }), { invalidate: ["api-keys"], onSuccess: (r) => setShown(r.data.key) });
   const revoke = useApiMutation((id) => api.delete(`/settings/api-keys/${id}`), { invalidate: ["api-keys"] });
   return (
-    <FeatureCard title="API keys" query={q}>
-      <p className="mb-4 text-sm text-zinc-600">
-        For your website, accounting software or payment kiosk. Base URL: <code>https://&lt;your API domain&gt;/api/v1/public-api/v1</code>, header <code>X-API-Key</code>. Endpoints: GET /customers, GET /customers/:id, POST /customers/:id/recharge, GET /payments, GET /packages.
-      </p>
+    <FeatureSection title="API keys" description="Connect your website, accounting software or payment kiosk. Send the key in the X-API-Key header." query={q}>
+      <div className="mb-5 rounded-lg bg-subtle px-3 py-2.5 text-xs leading-relaxed text-muted">
+        <p>
+          Base URL <code className="font-mono text-ink">https://&lt;your API domain&gt;/api/v1/public-api/v1</code>
+        </p>
+        <p className="mt-1">
+          Endpoints <code className="font-mono text-ink">GET /customers · GET /customers/:id · POST /customers/:id/recharge · GET /payments · GET /packages</code>
+        </p>
+      </div>
       {shown && (
-        <div className="mb-4 rounded bg-amber-50 p-3 text-sm">
-          <p className="font-semibold">Copy this key now — it will not be shown again:</p>
-          <code className="mt-1 block break-all">{shown}</code>
+        <div className="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <p className="font-semibold">Copy this key now — it will not be shown again.</p>
+          <code className="mt-1 block break-all font-mono">{shown}</code>
           <Button size="sm" className="mt-2" variant="secondary" onClick={() => navigator.clipboard.writeText(shown).then(() => toast.success("Copied"))}>
             Copy
           </Button>
         </div>
       )}
-      <div className="mb-4 flex flex-wrap items-end gap-3">
-        <Input label="Key name" placeholder="Website" value={name} onChange={(e) => setName(e.target.value)} />
-        {SCOPES.map((s) => (
-          <Checkbox key={s} label={s} checked={scopes.includes(s)} onChange={(e) => setScopes(e.target.checked ? [...scopes, s] : scopes.filter((x) => x !== s))} />
-        ))}
-        <Button disabled={name.trim().length < 2 || !scopes.length} loading={create.isPending} onClick={() => create.mutate()}>
-          Create key
-        </Button>
+      <div className="mb-5 space-y-4">
+        <Input label="New key name" placeholder="e.g. Website" value={name} onChange={(e) => setName(e.target.value)} />
+        <div>
+          <p className="mb-2 text-sm font-medium text-ink">Permissions</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+            {SCOPES.map((s) => (
+              <Checkbox key={s} label={<code className="font-mono text-[13px]">{s}</code>} checked={scopes.includes(s)} onChange={(e) => setScopes(e.target.checked ? [...scopes, s] : scopes.filter((x) => x !== s))} />
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button disabled={name.trim().length < 2 || !scopes.length} loading={create.isPending} onClick={() => create.mutate()}>
+            Create key
+          </Button>
+        </div>
       </div>
       <Table
         rows={q.data?.data ?? []}
@@ -272,7 +256,7 @@ function ApiKeysCard() {
           },
         ]}
       />
-    </FeatureCard>
+    </FeatureSection>
   );
 }
 
@@ -284,7 +268,7 @@ function CustomDomainCard() {
   const remove = useApiMutation(() => api.delete("/settings/custom-domain"), { invalidate: ["custom-domain"] });
   const d = q.data?.data;
   return (
-    <FeatureCard title="Custom domain for the customer portal" query={q}>
+    <FeatureSection title="Custom domain" description="Serve your customer portal on your own domain, e.g. my.speednet.com.bd. HTTPS is set up by the platform after verification." query={q}>
       {d ? (
         <div className="space-y-3 text-sm">
           <p>
@@ -313,25 +297,22 @@ function CustomDomainCard() {
               Remove
             </Button>
           </div>
-          <p className="text-xs text-zinc-500">HTTPS for your domain is set up by the platform after verification.</p>
         </div>
       ) : (
         <div className="flex items-end gap-2">
-          <Input label="Domain" placeholder="my.speednet.com.bd" value={domain} onChange={(e) => setDomain(e.target.value)} />
+          <Input label="Domain" className="flex-1" placeholder="my.speednet.com.bd" value={domain} onChange={(e) => setDomain(e.target.value)} />
           <Button loading={save.isPending} disabled={!domain} onClick={() => save.mutate()}>
             Set domain
           </Button>
         </div>
       )}
-    </FeatureCard>
+    </FeatureSection>
   );
 }
 
 export default function IntegrationsPage() {
   return (
-    <div className="max-w-4xl space-y-6">
-      <PageHeader title="Integrations" subtitle="Logo, your own SMS gateway, WhatsApp, API keys and custom domain" />
-      <LogoCard />
+    <div className="pb-6">
       <SmsGatewayCard />
       <WhatsAppCard />
       <ApiKeysCard />

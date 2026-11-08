@@ -51,7 +51,9 @@ export default function AppShell({ brand, nav, topbar, banners, footer, children
           </button>
           {topbar}
         </header>
-        <main className="scroll-thin min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 print:overflow-visible print:p-0">{children}</main>
+        <main className="scroll-thin min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 print:overflow-visible print:p-0">
+          <div className="mx-auto w-full max-w-[1400px] print:max-w-none">{children}</div>
+        </main>
       </div>
     </div>
   );

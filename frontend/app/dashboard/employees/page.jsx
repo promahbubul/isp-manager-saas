@@ -4,7 +4,7 @@ import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
 import { Pencil } from "lucide-react";
-import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, RowActions, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, RowActions, Table, StatCell, statGroupClass } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka, toDateInput, methodLabel } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -26,10 +26,10 @@ function SalarySheet() {
       <div className="mb-4 flex flex-wrap items-end gap-4">
         <Input label="Month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
         {s && (
-          <div className="grid flex-1 grid-cols-3 gap-3">
-            <Stat label="Total salary" value={taka(s.totals.monthlySalary)} />
-            <Stat label="Paid" value={taka(s.totals.paid)} tone="green" />
-            <Stat label="Remaining" value={taka(s.totals.remaining)} tone="red" />
+          <div className={statGroupClass(3, "flex-1")}>
+            <StatCell label="Total salary" value={taka(s.totals.monthlySalary)} />
+            <StatCell label="Paid" value={taka(s.totals.paid)} tone="green" />
+            <StatCell label="Remaining" value={taka(s.totals.remaining)} tone="red" />
           </div>
         )}
       </div>

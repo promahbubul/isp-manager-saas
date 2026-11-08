@@ -35,7 +35,7 @@ export const payBillSchema = lookupSchema
 
 /** Payment links use the ISP's slug; inactive/archived ISPs cannot receive payments. */
 async function companyBySlug(slug: string) {
-  const company = await Company.findOne({ slug: slug.toLowerCase(), deletedAt: null, status: { $ne: "archived" } }).select("name slug logo phone");
+  const company = await Company.findOne({ slug: slug.toLowerCase(), deletedAt: null, status: { $ne: "archived" } }).select("name slug logo phone portalTheme");
   if (!company) throw new AppError(404, "ISP not found");
   if (!(await hasFeature(company._id, "online_payment"))) throw new AppError(404, "Online payment is not available for this ISP");
   return company;
@@ -72,7 +72,7 @@ async function billFor(customer: CustomerDoc, months: number) {
 async function publicInfo(slug: string) {
   const company = await companyBySlug(slug);
   return {
-    company: { name: company.name, slug: company.slug, logo: company.logo, phone: company.phone },
+    company: { name: company.name, slug: company.slug, logo: company.logo, phone: company.phone, primaryColor: company.portalTheme?.primaryColor },
     methods: await enabledMethods(company._id),
     whiteLabel: await hasFeature(company._id, "white_label"),
   };
