@@ -3,6 +3,7 @@
 import { Eye, RotateCcw, User } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import ExportButton from "@/components/common/ExportButton";
 import RefundModal from "@/components/payment/RefundModal";
 import { Card, ErrorBox, Input, Loading, PageHeader, RowActions, Select, StatusBadge, Table } from "@/components/ui";
 import { formatDate, formatDateTime, methodLabel, taka, toDateInput } from "@/lib/format";
@@ -22,7 +23,7 @@ export default function PaymentsPage() {
 
   return (
     <div>
-      <PageHeader title="Payment history" />
+      <PageHeader title="Payment history" actions={<ExportButton report="payments" params={{ from: filters.from, to: filters.to, method: filters.method }} />} />
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <Input label="From" type="date" value={filters.from} onChange={set("from")} />
         <Input label="To" type="date" value={filters.to} onChange={set("to")} />

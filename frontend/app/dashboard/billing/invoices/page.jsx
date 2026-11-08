@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ExportButton from "@/components/common/ExportButton";
 import PermissionGate from "@/components/common/PermissionGate";
 import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -24,11 +25,14 @@ export default function InvoicesPage() {
         title="Postpaid invoices"
         subtitle="Created automatically on the 1st of each month for postpaid customers. Collect them from Billing → Recharge."
         actions={
-          <PermissionGate perm="invoice.manage">
-            <Button variant="secondary" loading={issue.isPending} onClick={() => issue.mutate()}>
-              Issue this month now
-            </Button>
-          </PermissionGate>
+          <div className="flex gap-2">
+            <ExportButton report="invoices" params={{ status: q.status }} />
+            <PermissionGate perm="invoice.manage">
+              <Button variant="secondary" loading={issue.isPending} onClick={() => issue.mutate()}>
+                Issue this month now
+              </Button>
+            </PermissionGate>
+          </div>
         }
       />
       <div className="mb-4 w-48">

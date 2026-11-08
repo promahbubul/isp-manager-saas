@@ -16,6 +16,9 @@ const REPORTS = [
   { value: "new-customers", label: "New customers", range: true },
   { value: "left-customers", label: "Customers who left", range: true },
   { value: "package-wise", label: "Package-wise" },
+  { value: "payments", label: "All payments", range: true },
+  { value: "expenses", label: "Income & expenses", range: true },
+  { value: "invoices", label: "Invoices" },
 ];
 
 const fmt = (type, v) => {

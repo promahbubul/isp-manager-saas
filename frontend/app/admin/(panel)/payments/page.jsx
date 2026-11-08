@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog, promptDialog } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminMutation } from "@/lib/adminHooks";
 import { usePaged } from "@/lib/usePaged";
@@ -63,10 +63,7 @@ export default function AdminPaymentsPage() {
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => {
-                        const reason = prompt(`Refund ${a.description}? Return the money from the gateway/bKash yourself; this records it and removes SMS credits / voids the invoice.\n\nReason:`);
-                        if (reason) refund.mutate({ id: a._id, reason });
-                      }}
+                      onClick={() => promptDialog("Return the money from the gateway/bKash yourself. This records the refund and removes SMS credits / voids the invoice.", { title: `Refund ${a.description}?`, placeholder: "Reason", minLength: 3, confirmText: "Refund" }).then((reason) => reason && refund.mutate({ id: a._id, reason }))}
                     >
                       Refund
                     </Button>
@@ -78,10 +75,7 @@ export default function AdminPaymentsPage() {
                       <Button
                         size="sm"
                         variant="danger"
-                        onClick={() => {
-                          const reason = prompt("Reason?", "Transaction not found");
-                          if (reason !== null) review.mutate({ id: a._id, approve: false, reason });
-                        }}
+                        onClick={() => promptDialog("The ISP sees this reason.", { title: "Reject this payment?", defaultValue: "Transaction not found", confirmText: "Reject" }).then((reason) => reason !== null && review.mutate({ id: a._id, approve: false, reason }))}
                       >
                         Reject
                       </Button>

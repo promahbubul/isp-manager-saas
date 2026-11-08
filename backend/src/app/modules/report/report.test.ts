@@ -43,6 +43,27 @@ describe("reports", () => {
     expect(pkg.body.data.rows[0]).toMatchObject({ package: "10 Mbps", active: 2, revenue: 1000 });
   });
 
+  it("lists payments, income/expense entries and invoices", async () => {
+    const ctx = await setupIsp();
+    const a = await createCustomer(ctx);
+    await api().post("/api/v1/payments/recharge").set(ctx.auth).send({ customer: a.body.data.customer._id, amount: 200, method: "bkash", trxId: "TX9" });
+    await api().post("/api/v1/accounts/entries").set(ctx.auth).send({ type: "expense", category: "Bandwidth", amount: 150, date: new Date() }).expect(201);
+
+    const pays = await api().get("/api/v1/reports/payments").query({ method: "bkash" }).set(ctx.auth);
+    expect(pays.status).toBe(200);
+    expect(pays.body.data.rows).toHaveLength(1);
+    expect(pays.body.data.rows[0]).toMatchObject({ customer: "Rahim Uddin", method: "bkash", trxId: "TX9", amount: 200, receivedBy: "Owner" });
+    expect((await api().get("/api/v1/reports/payments").query({ method: "cash" }).set(ctx.auth)).body.data.rows).toHaveLength(0);
+
+    const exp = await api().get("/api/v1/reports/expenses").set(ctx.auth);
+    expect(exp.body.data.rows[0]).toMatchObject({ type: "expense", category: "Bandwidth", amount: 150 });
+    expect(exp.body.data.summary[1].value).toBe(150);
+
+    const inv = await api().get("/api/v1/reports/invoices").set(ctx.auth);
+    expect(inv.status).toBe(200);
+    expect(inv.body.data.rows).toEqual([]);
+  });
+
   it("exports a report as xlsx", async () => {
     const ctx = await setupIsp();
     await createCustomer(ctx);

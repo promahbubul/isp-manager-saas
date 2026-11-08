@@ -1,9 +1,10 @@
 "use client";
 
+import { AlertTriangle, FileCode, KeyRound, Pencil, RefreshCw, Shield, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, StatusBadge, Table, confirmDialog } from "@/components/ui";
+import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, RowActions, StatusBadge, Table, Tip, confirmDialog } from "@/components/ui";
 import { api, applyFieldErrors } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -77,6 +78,7 @@ export default function RoutersPage() {
   const test = useApiMutation((id) => api.post(`/routers/${id}/test`), { invalidate: ["routers"] });
   const remove = useApiMutation((id) => api.delete(`/routers/${id}`), { invalidate: ["routers"] });
   const [vpnScript, setVpnScript] = useState(null);
+  const [vpnFor, setVpnFor] = useState(null); // router being switched to VPN mode
   const vpn = useApiMutation(({ id, type }) => api.post(`/routers/${id}/vpn`, { type }), { invalidate: ["routers"], onSuccess: (res) => setVpnScript(res.data.script) });
   const [report, setReport] = useState(null);
   const radius = useApiMutation((id) => api.post(`/routers/${id}/radius`), { invalidate: ["routers"], onSuccess: (res) => setVpnScript(res.data.script) });
@@ -119,10 +121,12 @@ export default function RoutersPage() {
               key: "lastCheckedAt",
               header: "Last check",
               render: (r) => (
-                <span title={r.lastError}>
-                  {formatDateTime(r.lastCheckedAt)}
-                  {r.lastError && <span className="ml-1 text-rose-600">⚠</span>}
-                </span>
+                <Tip content={r.lastError}>
+                  <span className="inline-flex items-center gap-1">
+                    {formatDateTime(r.lastCheckedAt)}
+                    {r.lastError && <AlertTriangle className="size-3.5 text-rose-600" aria-label={r.lastError} />}
+                  </span>
+                </Tip>
               ),
             },
             {
@@ -130,55 +134,25 @@ export default function RoutersPage() {
               header: "",
               className: "text-right",
               render: (r) => (
-                <div className="flex justify-end gap-2">
+                <div className="flex items-center justify-end gap-2">
                   <Button size="sm" variant="secondary" loading={test.isPending && test.variables === r._id} onClick={() => test.mutate(r._id)}>
                     Test
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={() => loadSessions.mutate(r)}>
-                    Online users
-                  </Button>
-                  <Button size="sm" variant="secondary" loading={loadReport.isPending && loadReport.variables === r._id} onClick={() => loadReport.mutate(r._id)}>
-                    Check sync
-                  </Button>
-                  {can("router.manage") &&
-                    (r.authMode === "radius" ? (
-                      <>
-                        <Button size="sm" variant="secondary" onClick={() => radius.mutate(r._id)}>
-                          RADIUS script
-                        </Button>
-                        <Button size="sm" variant="secondary" onClick={() => confirmDialog("Switch back to PPP secrets on the router? Then run Check sync → Fix all.").then((ok) => ok && radiusOff.mutate(r._id))}>
-                          Stop RADIUS
-                        </Button>
-                      </>
-                    ) : (
-                      <Button size="sm" variant="secondary" title="Users are checked by our RADIUS server instead of being stored on the router" onClick={() => confirmDialog(`Use RADIUS for "${r.name}"? You get a script for the router. Customers keep working: their logins are then checked by our server.`).then((ok) => ok && radius.mutate(r._id))}>
-                        Use RADIUS
-                      </Button>
-                    ))}
-                  {can("router.manage") && (
-                    <>
-                      <Button size="sm" variant="secondary" onClick={() => setEditing(r)}>
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        title="For routers without a public IP: the router connects to us over WireGuard"
-                        loading={vpn.isPending && vpn.variables?.id === r._id}
-                        onClick={() => {
-                          if (r.connectionMode === "vpn") return vpn.mutate({ id: r._id, type: r.vpn?.type ?? "wireguard" });
-                          const ans = prompt(`Switch "${r.name}" to VPN mode?
-Type 1 for WireGuard (RouterOS 7, recommended) or 2 for SSTP (RouterOS 6).`, "1");
-                          if (ans === "1" || ans === "2") vpn.mutate({ id: r._id, type: ans === "2" ? "sstp" : "wireguard" });
-                        }}
-                      >
-                        {r.connectionMode === "vpn" ? "VPN script" : "Use VPN"}
-                      </Button>
-                      <Button size="sm" variant="danger" onClick={() => confirmDialog(`Delete router "${r.name}"?`).then((ok) => ok && remove.mutate(r._id))}>
-                        Delete
-                      </Button>
-                    </>
-                  )}
+                  <RowActions
+                    items={[
+                      { label: "Online users", icon: Users, onClick: () => loadSessions.mutate(r) },
+                      { label: "Check sync", icon: RefreshCw, onClick: () => loadReport.mutate(r._id) },
+                      { label: "Edit", icon: Pencil, separator: true, onClick: () => setEditing(r), hidden: !can("router.manage") },
+                      { label: r.connectionMode === "vpn" ? "VPN script" : "Use VPN (no public IP)", icon: Shield, hidden: !can("router.manage"), onClick: () => (r.connectionMode === "vpn" ? vpn.mutate({ id: r._id, type: r.vpn?.type ?? "wireguard" }) : setVpnFor(r)) },
+                      ...(r.authMode === "radius"
+                        ? [
+                            { label: "RADIUS script", icon: FileCode, hidden: !can("router.manage"), onClick: () => radius.mutate(r._id) },
+                            { label: "Stop RADIUS", icon: KeyRound, hidden: !can("router.manage"), onClick: () => confirmDialog("Switch back to PPP secrets on the router? Then run Check sync → Fix all.").then((ok) => ok && radiusOff.mutate(r._id)) },
+                          ]
+                        : [{ label: "Use RADIUS", icon: KeyRound, hidden: !can("router.manage"), onClick: () => confirmDialog(`Use RADIUS for "${r.name}"? You get a script for the router. Customers keep working: their logins are then checked by our server.`).then((ok) => ok && radius.mutate(r._id)) }]),
+                      { label: "Delete", icon: Trash2, danger: true, separator: true, hidden: !can("router.manage"), onClick: () => confirmDialog(`Delete router "${r.name}"?`).then((ok) => ok && remove.mutate(r._id)) },
+                    ]}
+                  />
                 </div>
               ),
             },
@@ -224,6 +198,26 @@ Type 1 for WireGuard (RouterOS 7, recommended) or 2 for SSTP (RouterOS 6).`, "1"
             )}
           </div>
         )}
+      </Modal>
+      <Modal open={Boolean(vpnFor)} onClose={() => setVpnFor(null)} title={`Connect "${vpnFor?.name ?? ""}" over VPN`}>
+        <p className="mb-4 text-sm text-muted">For routers without a public IP: the router dials in to us, so the API works from anywhere. Pick the type your RouterOS supports.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            { type: "wireguard", name: "WireGuard", hint: "RouterOS 7 · recommended" },
+            { type: "sstp", name: "SSTP", hint: "RouterOS 6" },
+          ].map((o) => (
+            <button
+              key={o.type}
+              type="button"
+              disabled={vpn.isPending}
+              onClick={() => vpn.mutate({ id: vpnFor._id, type: o.type }, { onSuccess: () => setVpnFor(null) })}
+              className="cursor-pointer rounded-lg border border-line bg-surface p-4 text-left transition hover:border-primary-500 hover:bg-subtle disabled:opacity-60"
+            >
+              <span className="block font-semibold text-ink">{o.name}</span>
+              <span className="text-xs text-muted">{o.hint}</span>
+            </button>
+          ))}
+        </div>
       </Modal>
       <Modal open={Boolean(vpnScript)} onClose={() => setVpnScript(null)} title="Router setup script" size="lg">
         <p className="mb-2 text-sm text-zinc-600">Open Winbox → New Terminal on the router and paste this.</p>

@@ -4,6 +4,7 @@ import { Bug, Building2, CreditCard, HeartPulse, KeyRound, Landmark, Layers, Lay
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/shell/AppShell";
 import { ShellLoading } from "@/components/ui/Skeleton";
+import { Tip } from "@/components/ui/Tip";
 import UserMenu from "@/components/shell/UserMenu";
 import ThemeToggle from "@/components/shell/ThemeToggle";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -90,7 +91,7 @@ export default function AdminPanelLayout({ children }) {
         name={admin.name}
         subtitle={admin.role.replace("_", " ")}
         onLogout={logout}
-        warning={!admin.twoFactor?.enabled && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" title="Two-factor authentication is off">2FA off</span>}
+        warning={!admin.twoFactor?.enabled && <Tip content="Two-factor login is off. Turn it on from your profile."><span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">2FA off</span></Tip>}
         links={[{ title: "My account & 2FA", href: "/admin/account", icon: KeyRound }]}
       />
     </>

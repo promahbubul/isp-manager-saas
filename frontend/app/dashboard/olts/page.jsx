@@ -1,10 +1,11 @@
 "use client";
 
+import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, Table, confirmDialog } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, RowActions, Table, Tip, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -52,7 +53,7 @@ export default function OltsPage() {
             { key: "vendor", header: "Type", render: (o) => o.vendor.replace("_", " ") },
             { key: "onuCount", header: "ONUs", render: (o) => o.onuCount ?? "—" },
             { key: "weakCount", header: "Weak", render: (o) => (o.weakCount ? <Badge color="amber">{o.weakCount}</Badge> : "—") },
-            { key: "lastPollAt", header: "Last read", render: (o) => <span title={o.lastError}>{formatDateTime(o.lastPollAt)}{o.lastError && <span className="ml-1 text-rose-600">⚠</span>}</span> },
+            { key: "lastPollAt", header: "Last read", render: (o) => <Tip content={o.lastError}><span className="inline-flex items-center gap-1">{formatDateTime(o.lastPollAt)}{o.lastError && <AlertTriangle className="size-3.5 text-rose-600" aria-label={o.lastError} />}</span></Tip> },
             {
               key: "x",
               header: "",
@@ -62,12 +63,12 @@ export default function OltsPage() {
                     Read now
                   </Button>
                   <PermissionGate perm="router.manage">
-                    <Button size="sm" variant="secondary" onClick={() => setEditing(o)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => confirmDialog(`Remove ${o.name}?`).then((ok) => ok && remove.mutate(o._id))}>
-                      Delete
-                    </Button>
+                    <RowActions
+                      items={[
+                        { label: "Edit", icon: Pencil, onClick: () => setEditing(o) },
+                        { label: "Delete", icon: Trash2, danger: true, separator: true, onClick: () => confirmDialog(`Remove ${o.name}?`).then((ok) => ok && remove.mutate(o._id)) },
+                      ]}
+                    />
                   </PermissionGate>
                 </div>
               ),

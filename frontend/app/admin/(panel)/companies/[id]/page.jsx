@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge, Button, Card, ErrorBox, InfoList, Input, Loading, Modal, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, InfoList, Input, Loading, Modal, PageHeader, Select, Table, confirmDialog, promptDialog } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
 import { getErrorMessage } from "@/lib/api";
@@ -160,10 +160,7 @@ export default function CompanyDetailPage() {
             ) : (
               <Button
                 variant="danger"
-                onClick={() => {
-                  const reason = prompt("Reason for suspending (sent to the owner):");
-                  if (reason !== null) status.mutate({ s: "suspended", reason });
-                }}
+                onClick={() => promptDialog("The owner sees this reason.", { title: `Suspend ${c.name}?`, placeholder: "Reason for suspending", confirmText: "Suspend" }).then((reason) => reason !== null && status.mutate({ s: "suspended", reason }))}
               >
                 Suspend
               </Button>

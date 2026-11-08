@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, StatusBadge, Table, confirmDialog } from "@/components/ui";
+import { Pencil, Trash2 } from "lucide-react";
+import { Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, RowActions, Select, StatusBadge, Table, confirmDialog } from "@/components/ui";
 import { api, applyFieldErrors } from "@/lib/api";
 import { taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -144,14 +145,12 @@ export default function PackagesPage() {
               className: "text-right",
               render: (p) =>
                 can("package.manage") && (
-                  <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => setEditing(p)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => confirmDialog(`Delete package "${p.name}"?`).then((ok) => ok && remove.mutate(p._id))}>
-                      Delete
-                    </Button>
-                  </div>
+                  <RowActions
+                    items={[
+                      { label: "Edit", icon: Pencil, onClick: () => setEditing(p) },
+                      { label: "Delete", icon: Trash2, danger: true, separator: true, onClick: () => confirmDialog(`Delete package "${p.name}"?`).then((ok) => ok && remove.mutate(p._id)) },
+                    ]}
+                  />
                 ),
             },
           ]}

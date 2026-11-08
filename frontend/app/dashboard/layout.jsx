@@ -1,17 +1,21 @@
 "use client";
 
-import { Wifi } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ShieldOff, Wifi } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useDashboardNav } from "@/components/dashboard/Sidebar";
+import { pagePermission, useDashboardNav } from "@/components/dashboard/Sidebar";
+import { buttonVariants } from "@/components/ui/Button";
+import { Empty } from "@/components/ui";
 import Topbar, { DashboardBanners } from "@/components/dashboard/Topbar";
 import AppShell from "@/components/shell/AppShell";
 import { ShellLoading } from "@/components/ui/Skeleton";
 import { useAuth } from "@/providers/AuthProvider";
 
 export default function DashboardLayout({ children }) {
-  const { status, company } = useAuth();
+  const { status, company, can } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const nav = useDashboardNav();
 
   useEffect(() => {
@@ -41,7 +45,20 @@ export default function DashboardLayout({ children }) {
 
   return (
     <AppShell brand={brand} nav={nav} banners={<DashboardBanners />} topbar={<Topbar />}>
-      {children}
+      {pagePermission(pathname) && !can(pagePermission(pathname)) ? (
+        <Empty
+          icon={ShieldOff}
+          action={
+            <Link href="/dashboard" className={buttonVariants({ variant: "secondary" })}>
+              Go to dashboard
+            </Link>
+          }
+        >
+          You do not have access to this page. Ask the owner to give your role this permission.
+        </Empty>
+      ) : (
+        children
+      )}
     </AppShell>
   );
 }

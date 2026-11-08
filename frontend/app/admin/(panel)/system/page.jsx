@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Badge, Button, Card, ErrorBox, InfoList, Loading, PageHeader, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, InfoList, Loading, PageHeader, Table, Tip } from "@/components/ui";
 import { useAdminApi } from "@/lib/adminHooks";
 import { formatDateTime } from "@/lib/format";
 
@@ -87,7 +87,7 @@ export default function SystemHealthPage() {
           columns={[
             { key: "name", header: "Job", render: (j) => <strong>{j.name}</strong> },
             { key: "schedule", header: "Schedule", render: (j) => <code className="text-xs">{j.schedule}</code> },
-            { key: "last", header: "Last run", render: (j) => <span title={formatDateTime(j.lastFinishedAt)}>{ago(j.lastFinishedAt)}</span> },
+            { key: "last", header: "Last run", render: (j) => <Tip content={j.lastFinishedAt ? formatDateTime(j.lastFinishedAt) : null}><span>{ago(j.lastFinishedAt)}</span></Tip> },
             { key: "dur", header: "Took", render: (j) => (j.lastDurationMs != null ? `${j.lastDurationMs} ms` : "—") },
             {
               key: "state",

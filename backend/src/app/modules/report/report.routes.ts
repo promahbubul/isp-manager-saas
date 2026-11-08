@@ -4,7 +4,7 @@ import { auth, authorize } from "../../middlewares/auth";
 import { buildXlsx, sendXlsx, XlsxColumn } from "../../services/excel/excel.service";
 import sendResponse from "../../utils/sendResponse";
 import { Actor } from "../customer/customer.service";
-import { REPORT_TYPES, ReportService, ReportType } from "./report.service";
+import { REPORT_PERMISSION, REPORT_TYPES, ReportService, ReportType } from "./report.service";
 
 const router = Router();
 router.use(auth());
@@ -12,6 +12,8 @@ router.use(auth());
 router.get("/:type", authorize("report.view"), async (req: Request, res: Response) => {
   const type = String(req.params.type) as ReportType;
   if (!REPORT_TYPES.includes(type)) throw new AppError(404, "Unknown report");
+  const need = REPORT_PERMISSION[type];
+  if (need && !req.user!.permissions.includes(need)) throw new AppError(403, "You do not have permission for this report");
   const actor: Actor = { id: req.user!.id, role: req.user!.role, company: req.user!.company, zones: req.user!.zones, reseller: req.user!.reseller };
   const report = await ReportService.buildReport(actor, type, req.query as Record<string, unknown>);
 

@@ -1,9 +1,12 @@
 import mongoose from "mongoose";
+import { Permission } from "../../constants/permissions";
 import AppError from "../../errors/AppError";
 import { parseDay, startOfDhakaDay, startOfDhakaMonth } from "../../utils/date";
 import { addDays } from "../../utils/duration";
 import { Customer } from "../customer/customer.model";
 import { Actor, customerScope } from "../customer/customer.service";
+import { LedgerEntry } from "../accounts/ledger.model";
+import { CustomerInvoice } from "../invoice/invoice.model";
 import { Payment } from "../payment/payment.model";
 
 export type ColumnType = "text" | "money" | "date" | "datetime" | "number";
@@ -23,7 +26,16 @@ export const REPORT_TYPES = [
   "new-customers",
   "left-customers",
   "package-wise",
+  "payments",
+  "expenses",
+  "invoices",
 ] as const;
+/** Detailed lists that need the module's own view permission besides report.view. */
+export const REPORT_PERMISSION: Partial<Record<(typeof REPORT_TYPES)[number], Permission>> = {
+  payments: "payment.view",
+  expenses: "expense.view",
+  invoices: "invoice.view",
+};
 export type ReportType = (typeof REPORT_TYPES)[number];
 
 const MAX_ROWS = 10_000;
@@ -130,11 +142,139 @@ async function collection(actor: Actor, q: Record<string, unknown>): Promise<Rep
   };
 }
 
+const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+type Named = { name?: string; customerId?: string } | undefined;
+
+async function payments(actor: Actor, q: Record<string, unknown>): Promise<Report> {
+  const { from, to } = range(q);
+  const filter: Record<string, unknown> = { createdAt: { $gte: from, $lt: to } };
+  if (actor.role === "collector") filter.receivedBy = actor.id;
+  for (const k of ["method", "type", "status"]) if (str(q[k])) filter[k] = str(q[k]);
+  const list = await Payment.find(filter)
+    .sort("-createdAt")
+    .limit(MAX_ROWS)
+    .populate({ path: "customer", select: "name customerId" })
+    .populate({ path: "receivedBy", select: "name" })
+    .lean();
+  const rows = list.map((p) => ({
+    receiptNo: p.receiptNo,
+    createdAt: (p as { createdAt?: Date }).createdAt,
+    customerId: (p.customer as unknown as Named)?.customerId ?? "",
+    customer: (p.customer as unknown as Named)?.name ?? "",
+    type: p.type.replace("_", " "),
+    months: p.months,
+    method: p.method,
+    trxId: p.trxId ?? "",
+    amount: p.amount,
+    receivedBy: (p.receivedBy as unknown as Named)?.name ?? (p.source === "staff" ? "" : "Online"),
+    status: p.status,
+  }));
+  const ok = rows.filter((r) => r.status === "success");
+  return {
+    title: "Payments",
+    columns: [
+      { key: "receiptNo", header: "Receipt" },
+      { key: "createdAt", header: "Time", type: "datetime" },
+      { key: "customerId", header: "Customer ID" },
+      { key: "customer", header: "Customer" },
+      { key: "type", header: "Type" },
+      { key: "months", header: "Months", type: "number" },
+      { key: "method", header: "Method" },
+      { key: "trxId", header: "Trx ID" },
+      { key: "amount", header: "Amount", type: "money" },
+      { key: "receivedBy", header: "Received by" },
+      { key: "status", header: "Status" },
+    ],
+    rows,
+    summary: [
+      { label: "Collected", value: ok.reduce((n, r) => n + r.amount, 0), type: "money" },
+      { label: "Payments", value: ok.length, type: "number" },
+    ],
+  };
+}
+
+async function expenses(q: Record<string, unknown>): Promise<Report> {
+  const { from, to } = range(q);
+  const filter: Record<string, unknown> = { date: { $gte: from, $lt: to } };
+  if (q.type === "income" || q.type === "expense") filter.type = q.type;
+  const list = await LedgerEntry.find(filter).sort("-date").limit(MAX_ROWS).populate({ path: "createdBy", select: "name" }).lean();
+  const rows = list.map((e) => ({
+    date: e.date,
+    type: e.type,
+    category: e.category,
+    amount: e.amount,
+    method: e.method,
+    note: e.note ?? "",
+    source: e.source === "manual" ? ((e.createdBy as unknown as Named)?.name ?? "manual") : e.source.replace("_", " "),
+  }));
+  const sum = (t: string) => rows.filter((r) => r.type === t).reduce((n, r) => n + r.amount, 0);
+  return {
+    title: "Income & expenses",
+    columns: [
+      { key: "date", header: "Date", type: "date" },
+      { key: "type", header: "Type" },
+      { key: "category", header: "Category" },
+      { key: "amount", header: "Amount", type: "money" },
+      { key: "method", header: "Paid by" },
+      { key: "note", header: "Note" },
+      { key: "source", header: "From" },
+    ],
+    rows,
+    summary: [
+      { label: "Other income", value: sum("income"), type: "money" },
+      { label: "Expenses", value: sum("expense"), type: "money" },
+    ],
+  };
+}
+
+async function invoices(q: Record<string, unknown>): Promise<Report> {
+  const filter: Record<string, unknown> = {};
+  if (str(q.status)) filter.status = q.status;
+  if (typeof q.period === "string" && /^\d{4}-\d{2}$/.test(q.period)) filter.period = q.period;
+  const list = await CustomerInvoice.find(filter).sort("-issuedAt").limit(MAX_ROWS).populate({ path: "customer", select: "name customerId" }).lean();
+  const rows = list.map((i) => ({
+    invoiceNo: i.invoiceNo,
+    period: i.period,
+    customerId: (i.customer as unknown as Named)?.customerId ?? "",
+    customer: (i.customer as unknown as Named)?.name ?? "",
+    amount: i.amount,
+    paid: i.paid,
+    left: i.status === "void" ? 0 : Math.max(0, i.amount - i.paid),
+    dueDate: i.dueDate,
+    status: i.status,
+  }));
+  return {
+    title: "Invoices",
+    columns: [
+      { key: "invoiceNo", header: "Invoice" },
+      { key: "period", header: "Month" },
+      { key: "customerId", header: "Customer ID" },
+      { key: "customer", header: "Customer" },
+      { key: "amount", header: "Amount", type: "money" },
+      { key: "paid", header: "Paid", type: "money" },
+      { key: "left", header: "Unpaid", type: "money" },
+      { key: "dueDate", header: "Due date", type: "date" },
+      { key: "status", header: "Status" },
+    ],
+    rows,
+    summary: [
+      { label: "Invoices", value: rows.length, type: "number" },
+      { label: "Unpaid", value: rows.reduce((n, r) => n + r.left, 0), type: "money" },
+    ],
+  };
+}
+
 async function buildReport(actor: Actor, type: ReportType, q: Record<string, unknown>): Promise<Report> {
   const scope = customerScope(actor);
   switch (type) {
     case "collection":
       return collection(actor, q);
+    case "payments":
+      return payments(actor, q);
+    case "expenses":
+      return expenses(q);
+    case "invoices":
+      return invoices(q);
 
     case "due": {
       const rows = await customerRows({ ...scope, dueAmount: { $gt: 0 } }, "-dueAmount");

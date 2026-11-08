@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Toaster } from "sonner";
 import { ConfirmHost } from "@/components/ui/Confirm";
 import { SkeletonProvider } from "@/components/ui/Skeleton";
+import { TipProvider } from "@/components/ui/Tip";
 import { AuthProvider } from "@/providers/AuthProvider";
 
 /** Toasts follow the app theme. */
@@ -29,7 +30,9 @@ export default function Providers({ children }) {
       <NextTopLoader color="#6366f1" height={3} showSpinner={false} shadow="0 0 10px #6366f1,0 0 5px #6366f1" />
       <QueryClientProvider client={queryClient}>
         <SkeletonProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <TipProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </TipProvider>
         </SkeletonProvider>
         <ThemedToaster />
         <ConfirmHost />

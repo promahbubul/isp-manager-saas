@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, ErrorBox, Loading, PageHeader, Select, StatusBadge, Table, confirmDialog } from "@/components/ui";
+import { Button, ErrorBox, Loading, PageHeader, Select, StatusBadge, Table, Tip, confirmDialog } from "@/components/ui";
 import QuickForm from "@/components/common/QuickForm";
 import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { daysUntil, formatDate, taka } from "@/lib/format";
@@ -163,9 +163,11 @@ function CustomersList() {
                   <div className="flex items-center gap-1">
                     <StatusBadge status={c.status} />
                     {c.syncStatus !== "synced" && (
-                      <span title={c.syncError ?? "Not synced with the router yet"} className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
-                        <AlertTriangle className="size-3" /> {c.syncStatus === "failed" ? "router" : "syncing"}
-                      </span>
+                      <Tip content={c.syncError ?? "Not synced with the router yet"}>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                          <AlertTriangle className="size-3" /> {c.syncStatus === "failed" ? "router" : "syncing"}
+                        </span>
+                      </Tip>
                     )}
                   </div>
                 ),

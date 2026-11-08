@@ -6,6 +6,25 @@ import { useAuth } from "@/providers/AuthProvider";
 
 const UPGRADE = "/dashboard/billing/subscription";
 
+/** Every nav route with the permission it needs (children inherit the parent's). */
+const ROUTES = sidebarSections
+  .flatMap((s) => s.items.flatMap((m) => [m, ...(m.children ?? []).map((c) => ({ ...c, perm: c.perm ?? m.perm }))]))
+  .filter((r) => r.path && r.perm);
+
+/**
+ * The permission a dashboard page needs: the nav route that matches the URL best
+ * (so /dashboard/customers/123 needs customer.view). Pages outside the nav need none.
+ */
+export function pagePermission(pathname) {
+  let best = null;
+  for (const r of ROUTES) {
+    // "exact" only matters for highlighting; /dashboard itself must not cover every page
+    const hit = r.path === "/dashboard" ? pathname === r.path : pathname === r.path || pathname.startsWith(`${r.path}/`);
+    if (hit && (!best || r.path.length > best.path.length)) best = r;
+  }
+  return best?.perm ?? null;
+}
+
 /**
  * The dashboard nav for this user: hides what their permissions do not allow and
  * shows plan-locked features with a lock that leads to the upgrade page.

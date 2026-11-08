@@ -2,6 +2,7 @@
 
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import ExportButton from "@/components/common/ExportButton";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
 import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, RowActions, Select, Stat, Table, confirmDialog } from "@/components/ui";
@@ -100,14 +101,15 @@ function Entries({ range }) {
             Income {taka(totals.income)} · Expense {taka(totals.expense)}
           </p>
         )}
-        <PermissionGate perm="expense.manage">
-          <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2">
+          <ExportButton report="expenses" params={{ ...range, type: q.type }} />
+          <PermissionGate perm="expense.manage">
             <Button variant="secondary" onClick={() => setAdding({ type: "income" })}>
               + Income
             </Button>
             <Button onClick={() => setAdding({ type: "expense" })}>+ Expense</Button>
-          </div>
-        </PermissionGate>
+          </PermissionGate>
+        </div>
       </div>
       {error && <ErrorBox error={error} />}
       {isLoading ? (

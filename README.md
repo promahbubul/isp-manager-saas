@@ -288,7 +288,12 @@ Not built (need hardware or a separate project): mobile app, RADIUS, OLT, Nagad 
   (`PlanCards.jsx`). One-click light/dark button (`components/shell/ThemeToggle.jsx`; follows the OS until clicked).
 - **UI kit extras**: `confirmDialog()` (promise-based, replaces window.confirm), `RowActions` ("⋯" menu per row),
   skeleton loading (`react-loading-skeleton`), route progress bar (`nextjs-toploader`), quick search + phone card view
-  built into `Table`, custom 404 / error pages.
+  built into `Table`, custom 404 / error pages. `promptDialog()` asks for a reason (replaces window.prompt), `Tip`
+  is a Radix tooltip.
+- **Page permissions**: the dashboard layout blocks a page when the user lacks the permission its sidebar entry needs
+  (`pagePermission()` in `components/dashboard/Sidebar.jsx`), so typing the URL shows "no access" instead of the page.
+- **Excel export**: `ExportButton` on Payments, Invoices and Accounts downloads `/reports/payments|invoices|expenses`
+  with the page's filters (needs `report.export` plus the module's view permission).
 - **Payment refund**: `POST /payments/:id/refund` (permission `payment.refund`, reason required) — only the customer's
   latest payment; validity, due and advance go back to what they were. `POST /sms/logs/:id/resend` for failed SMS.
 - **One login page** `/login` for every role: ISP staff → `/dashboard`, platform staff → `/admin` (2FA step inline).

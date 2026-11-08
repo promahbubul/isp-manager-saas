@@ -8,5 +8,6 @@ export { Input, Select, Textarea, Checkbox } from "./Field";
 export { PageHeader, Card, Badge, StatusBadge, Stat, Empty, ErrorBox, InfoList } from "./Display";
 export { Loading, ShellLoading, Skeleton, SkeletonProvider } from "./Skeleton";
 export { Table, Pagination } from "./Table";
-export { confirmDialog, ConfirmHost } from "./Confirm";
+export { confirmDialog, promptDialog, ConfirmHost } from "./Confirm";
 export { RowActions } from "./RowActions";
+export { Tip } from "./Tip";

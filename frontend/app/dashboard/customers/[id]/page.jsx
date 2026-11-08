@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, Card, ErrorBox, InfoList, Loading, Modal, PageHeader, StatusBadge, Table, confirmDialog } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, InfoList, Loading, Modal, PageHeader, StatusBadge, Table, Tip, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { daysUntil, formatDate, formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -148,9 +148,11 @@ export default function CustomerDetailPage() {
                   (c.device.onuRx == null ? (
                     <Badge color="slate">offline</Badge>
                   ) : (
-                    <span title={`read ${formatDateTime(c.device.onuRxAt)}`}>
-                      <Badge color={c.device.onuRx >= -24 ? "green" : c.device.onuRx >= -27 ? "blue" : c.device.onuRx >= -30 ? "amber" : "red"}>{`${c.device.onuRx} dBm`}</Badge>
-                    </span>
+                    <Tip content={`Read ${formatDateTime(c.device.onuRxAt)}`}>
+                      <span>
+                        <Badge color={c.device.onuRx >= -24 ? "green" : c.device.onuRx >= -27 ? "blue" : c.device.onuRx >= -30 ? "amber" : "red"}>{`${c.device.onuRx} dBm`}</Badge>
+                      </span>
+                    </Tip>
                   )),
               },
               { label: "Fiber length", value: c.device?.fiberLength ? `${c.device.fiberLength} m` : undefined },

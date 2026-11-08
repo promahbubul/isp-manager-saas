@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog, promptDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka, methodLabel } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -90,10 +90,7 @@ export default function OnlinePaymentsPage() {
                         <Button
                           size="sm"
                           variant="danger"
-                          onClick={() => {
-                            const reason = prompt("Reason for rejecting?", "Transaction not found");
-                            if (reason !== null) reject.mutate({ id: a._id, reason });
-                          }}
+                          onClick={() => promptDialog("The customer sees this reason.", { title: "Reject this payment?", defaultValue: "Transaction not found", confirmText: "Reject" }).then((reason) => reason !== null && reject.mutate({ id: a._id, reason }))}
                         >
                           Reject
                         </Button>

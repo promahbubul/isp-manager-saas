@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, StatusBadge, Table } from "@/components/ui";
+import { Pencil, UserCheck, UserX } from "lucide-react";
+import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, RowActions, Select, StatusBadge, Table, confirmDialog } from "@/components/ui";
 import { api, applyFieldErrors } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -115,18 +116,14 @@ export default function StaffPage() {
               render: (s) =>
                 s.role !== "owner" &&
                 s._id !== user._id && (
-                  <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => setEditing(s)}>
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={s.isActive ? "danger" : "success"}
-                      onClick={() => toggle.mutate({ id: s._id, isActive: !s.isActive })}
-                    >
-                      {s.isActive ? "Deactivate" : "Activate"}
-                    </Button>
-                  </div>
+                  <RowActions
+                    items={[
+                      { label: "Edit", icon: Pencil, onClick: () => setEditing(s) },
+                      s.isActive
+                        ? { label: "Deactivate (block login)", icon: UserX, danger: true, separator: true, onClick: () => confirmDialog(`Deactivate ${s.name}? They can no longer log in.`).then((ok) => ok && toggle.mutate({ id: s._id, isActive: false })) }
+                        : { label: "Activate", icon: UserCheck, separator: true, onClick: () => toggle.mutate({ id: s._id, isActive: true }) },
+                    ]}
+                  />
                 ),
             },
           ]}

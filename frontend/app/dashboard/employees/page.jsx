@@ -3,7 +3,8 @@
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Stat, Table } from "@/components/ui";
+import { Pencil } from "lucide-react";
+import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, RowActions, Stat, Table } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka, toDateInput, methodLabel } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -120,6 +121,9 @@ export default function EmployeesPage() {
               { key: "joinDate", header: "Joined", render: (e) => formatDate(e.joinDate) },
               { key: "user", header: "Login", render: (e) => e.user?.name ?? "—" },
               { key: "isActive", header: "", render: (e) => <Badge color={e.isActive ? "green" : "slate"}>{e.isActive ? "active" : "left"}</Badge> },
+              ...(can("employee.manage")
+                ? [{ key: "actions", header: "", className: "text-right", render: (e) => <RowActions items={[{ label: "Edit", icon: Pencil, onClick: () => setEditing(e) }]} /> }]
+                : []),
             ]}
           />
         </>
