@@ -7,6 +7,7 @@ import { SaveBar, SettingsSection } from "@/components/settings/SettingsSection"
 import { Button, ErrorBox, Input, Loading, PageHeader, Switch } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
+import { site } from "@/lib/site";
 
 const toForm = (s) => ({
   smsCreditPriceBDT: s.smsCreditPriceBDT ?? "",
@@ -90,7 +91,7 @@ export default function AdminSettingsPage() {
                 {...register("smtp.pass")}
               />
             </div>
-            <Input label="From address" placeholder="ISP Manager <no-reply@yourdomain.com>" {...register("smtp.from")} />
+            <Input label="From address" placeholder={`${site.name} <no-reply@yourdomain.com>`} {...register("smtp.from")} />
 
             <div className="border-t border-line pt-5">
               <p className="text-sm font-medium text-ink">Send a test email</p>

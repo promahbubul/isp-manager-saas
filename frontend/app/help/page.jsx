@@ -2,8 +2,9 @@ import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { fetchList } from "@/components/marketing/Article";
 import { PageHero, SitePage } from "@/components/marketing/SiteLayout";
+import { site } from "@/lib/site";
 
-export const metadata = { title: "Help Center", description: "How to set up and use ISP Manager: routers, customers, billing, SMS and payments." };
+export const metadata = { title: "Help Center", description: `How to set up and use ${site.name}: routers, customers, billing, SMS and payments.` };
 
 export default async function HelpPage() {
   const articles = await fetchList("help");

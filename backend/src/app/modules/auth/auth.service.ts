@@ -259,7 +259,7 @@ async function twoFactorSetup(id: string) {
   const secret = generateTotpSecret();
   admin.set("twoFactor.pendingSecret", encrypt(secret));
   await admin.save();
-  return { secret, otpauthUrl: otpauthUrl(secret, admin.email, "ISP Manager Admin") };
+  return { secret, otpauthUrl: otpauthUrl(secret, admin.email, `${config.appName} Admin`) };
 }
 
 async function twoFactorEnable(id: string, code: string) {

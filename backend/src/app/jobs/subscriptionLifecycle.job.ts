@@ -76,7 +76,7 @@ export async function runSubscriptionLifecycle(now = new Date()): Promise<Lifecy
       if (company?.email) {
         void sendEmail({
           to: company.email,
-          subject: `Your ISP Manager subscription renews in ${days} day${days > 1 ? "s" : ""}`,
+          subject: `Your ${config.appName} subscription renews in ${days} day${days > 1 ? "s" : ""}`,
           html: emailLayout(`Subscription renews in ${days} day${days > 1 ? "s" : ""}`, [["Company", company.name], ["Paid until", s.currentPeriodEnd.toISOString().slice(0, 10)]], { text: "Renew now", url: `${config.appUrl}/dashboard/billing/subscription` }),
         });
       }

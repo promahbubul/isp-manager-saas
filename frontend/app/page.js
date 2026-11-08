@@ -13,6 +13,7 @@ import paymentsDark from "@/public/screens/payments-dark.png";
 import paymentsLight from "@/public/screens/payments-light.png";
 import portalDark from "@/public/screens/portal-dark.png";
 import portalLight from "@/public/screens/portal-light.png";
+import { site } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -81,7 +82,7 @@ export default async function Home() {
           </div>
 
           <div className="relative mt-14 animate-pop-in [animation-delay:360ms]">
-            <Screenshot light={dashboardLight} dark={dashboardDark} alt="ISP Manager dashboard with collection, dues and customer status" priority className="rounded-b-none border-b-0" />
+            <Screenshot light={dashboardLight} dark={dashboardDark} alt={`${site.name} dashboard with collection, dues and customer status`} priority className="rounded-b-none border-b-0" />
             <div className="absolute -left-2 top-1/3 hidden animate-float rounded-xl border border-line bg-surface p-3 shadow-[var(--shadow-pop)] md:block lg:-left-10">
               <p className="text-xs text-muted">Payment received · bKash</p>
               <p className="tabular mt-0.5 text-sm font-semibold text-ink">৳800 — Selina Akter</p>

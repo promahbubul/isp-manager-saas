@@ -191,7 +191,7 @@ router.get("/settings", async (_req: Request, res: Response) => {
 });
 
 router.post("/settings/test-email", platformAuth("super_admin"), validateBody(z.object({ to: z.email() })), async (req: Request, res: Response) => {
-  const r = await sendEmail({ to: req.body.to, subject: "ISP Manager test email", html: emailLayout("SMTP works", [["Sent at", new Date().toISOString()]]) });
+  const r = await sendEmail({ to: req.body.to, subject: `${config.appName} test email`, html: emailLayout("SMTP works", [["Sent at", new Date().toISOString()]]) });
   if (!r.ok) throw new AppError(400, `Email failed: ${r.error}`);
   sendResponse(res, { message: `Test email sent to ${req.body.to}` });
 });

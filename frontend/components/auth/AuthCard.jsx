@@ -1,8 +1,9 @@
 import { CheckCircle2, Wifi } from "lucide-react";
 import Link from "next/link";
 import ThemeToggle from "@/components/shell/ThemeToggle";
+import { site } from "@/lib/site";
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "ISP Manager";
+const APP_NAME = site.name;
 
 const POINTS = ["MikroTik auto enable / disable", "Bills, SMS reminders and online payment", "Customer portal, tickets and reports"];
 

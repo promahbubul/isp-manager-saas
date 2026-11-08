@@ -9,6 +9,7 @@ import UserMenu from "@/components/shell/UserMenu";
 import ThemeToggle from "@/components/shell/ThemeToggle";
 import { createContext, useContext, useEffect, useState } from "react";
 import { adminApi, refreshAdminToken, setAdminFailureHandler, setAdminToken } from "@/lib/adminApi";
+import { site } from "@/lib/site";
 
 /** "Section / Page" in the top bar, from NAV below. */
 function AdminBreadcrumb() {
@@ -105,7 +106,7 @@ export default function AdminPanelLayout({ children }) {
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold text-ink">Platform admin</span>
-        <span className="block truncate text-xs text-muted">ISP Manager</span>
+        <span className="block truncate text-xs text-muted">{site.name}</span>
       </span>
     </>
   );

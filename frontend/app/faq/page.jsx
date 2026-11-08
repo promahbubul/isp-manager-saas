@@ -1,8 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { PageHero, SitePage } from "@/components/marketing/SiteLayout";
+import { site } from "@/lib/site";
 
-export const metadata = { title: "FAQ", description: "Common questions about ISP Manager: MikroTik, payments, SMS, data and pricing." };
+export const metadata = { title: "FAQ", description: `Common questions about ${site.name}: MikroTik, payments, SMS, data and pricing.` };
 
 const FAQ = [
   ["Which routers are supported?", "MikroTik RouterOS 6 and 7 over the RouterOS API (port 8728, or 8729 with SSL). Routers without a public IP can connect over our VPN (WireGuard for RouterOS 7, SSTP for RouterOS 6)."],

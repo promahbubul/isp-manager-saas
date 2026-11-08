@@ -11,6 +11,7 @@ import Topbar, { DashboardBanners } from "@/components/dashboard/Topbar";
 import AppShell from "@/components/shell/AppShell";
 import { ShellLoading } from "@/components/ui/Skeleton";
 import { useAuth } from "@/providers/AuthProvider";
+import { site } from "@/lib/site";
 
 export default function DashboardLayout({ children }) {
   const { status, company, can } = useAuth();
@@ -37,8 +38,8 @@ export default function DashboardLayout({ children }) {
         </span>
       )}
       <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold text-ink">{company?.name ?? "ISP Manager"}</span>
-        <span className="block truncate text-xs text-muted">ISP Manager</span>
+        <span className="block truncate text-sm font-semibold text-ink">{company?.name ?? site.name}</span>
+        <span className="block truncate text-xs text-muted">{site.name}</span>
       </span>
     </>
   );

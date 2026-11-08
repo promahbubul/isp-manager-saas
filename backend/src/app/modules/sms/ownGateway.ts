@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
 import { model, Schema, Types } from "mongoose";
 import { z } from "zod";
+import config from "../../config";
 import AppError from "../../errors/AppError";
 import { auth, authorize, requireWritableTenant } from "../../middlewares/auth";
 import { validateBody } from "../../middlewares/validateRequest";
@@ -129,7 +130,7 @@ ownGatewayRoutes.post("/test", validateBody(z.object({ to: z.string() })), async
   if (!to) throw new AppError(400, "Enter a valid mobile number");
   const gw = await OwnSmsGateway.findOne().select("+credentials");
   if (!gw) throw new AppError(400, "Save the gateway first");
-  const r = await buildGateway(toConfig(gw)).send(to, "Test SMS from ISP Manager: your SMS gateway works.");
+  const r = await buildGateway(toConfig(gw)).send(to, `Test SMS from ${config.appName}: your SMS gateway works.`);
   gw.set({ lastTestAt: new Date(), lastTestOk: r.ok, lastTestError: r.ok ? undefined : r.error });
   await gw.save();
   sendResponse(res, { message: r.ok ? "Test SMS sent" : `Failed: ${r.error}`, data: { ok: r.ok, response: r.response?.slice(0, 300) } });

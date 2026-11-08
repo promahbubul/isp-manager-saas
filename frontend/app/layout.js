@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
+import { site } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: process.env.NEXT_PUBLIC_APP_NAME || "ISP Manager",
+  title: site.name,
   description: "ISP billing & management — MikroTik, auto billing, SMS, online payment",
 };
 

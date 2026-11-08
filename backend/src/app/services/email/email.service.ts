@@ -21,7 +21,7 @@ export async function sendEmail(m: EmailMessage): Promise<{ ok: boolean; error?:
     const s = await PlatformSetting.findById("global").select("+smtp.pass");
     const smtp = s?.smtp;
     if (!override && (!smtp?.host || !smtp.enabled)) return { ok: false, error: "SMTP is not configured" };
-    const from = smtp?.from || `ISP Manager <no-reply@${new URL(config.appUrl).hostname}>`;
+    const from = smtp?.from || `${config.appName} <no-reply@${new URL(config.appUrl).hostname}>`;
     if (override) {
       await override({ ...m, from });
       return { ok: true };

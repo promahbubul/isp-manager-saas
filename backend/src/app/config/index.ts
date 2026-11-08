@@ -7,6 +7,8 @@ dotenv.config({ path: path.join(process.cwd(), ".env"), quiet: true });
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().int().positive().default(5000),
+  /** product name shown in emails, SMS tests, Excel files and the 2FA app */
+  APP_NAME: z.string().trim().min(1).default("ISP ERP"),
   DB_URL: z.string().min(1, "DB_URL is required"),
   CORS_ORIGINS: z.string().default("http://localhost:3000"),
   /** where payment gateways send callbacks/IPN — must be reachable from the internet in production */
@@ -96,6 +98,7 @@ const config = {
   isProd: env.NODE_ENV === "production",
   isTest: env.NODE_ENV === "test",
   port: env.PORT,
+  appName: env.APP_NAME,
   dbUrl: env.DB_URL,
   corsOrigins: env.CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean),
   cookieDomain: env.COOKIE_DOMAIN || undefined,

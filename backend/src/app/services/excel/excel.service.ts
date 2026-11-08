@@ -1,12 +1,13 @@
 import ExcelJS from "exceljs";
 import { Response } from "express";
+import config from "../../config";
 
 export type XlsxColumn = { header: string; key: string; width?: number; numFmt?: string };
 
 /** Build a single-sheet workbook with a bold, frozen header row. */
 export async function buildXlsx(sheetName: string, columns: XlsxColumn[], rows: Record<string, unknown>[]) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "ISP Manager";
+  wb.creator = config.appName;
   const ws = wb.addWorksheet(sheetName.slice(0, 31));
   ws.columns = columns.map((c) => ({ header: c.header, key: c.key, width: c.width ?? 16, style: c.numFmt ? { numFmt: c.numFmt } : {} }));
   ws.getRow(1).font = { bold: true };

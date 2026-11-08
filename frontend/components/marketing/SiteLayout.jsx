@@ -61,7 +61,7 @@ export function SiteFooter() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
-            © {new Date().getFullYear()} {site.legalName}. All rights reserved.
+            © {new Date().getFullYear()} {site.legalName.replace(/\.$/, "")}. All rights reserved.
           </p>
           <p>Payments: SSLCommerz (Visa, Mastercard, bKash, Nagad, Rocket) · bKash · Stripe</p>
         </div>
