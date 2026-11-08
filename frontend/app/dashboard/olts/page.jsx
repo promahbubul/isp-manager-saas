@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, Table, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -65,7 +65,7 @@ export default function OltsPage() {
                     <Button size="sm" variant="secondary" onClick={() => setEditing(o)}>
                       Edit
                     </Button>
-                    <Button size="sm" variant="danger" onClick={() => confirm(`Remove ${o.name}?`) && remove.mutate(o._id)}>
+                    <Button size="sm" variant="danger" onClick={() => confirmDialog(`Remove ${o.name}?`).then((ok) => ok && remove.mutate(o._id))}>
                       Delete
                     </Button>
                   </PermissionGate>

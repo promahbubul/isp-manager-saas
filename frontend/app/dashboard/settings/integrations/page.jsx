@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, PageHeader, Select, Table } from "@/components/ui";
+import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
 import { api, getErrorMessage } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -265,7 +265,7 @@ function ApiKeysCard() {
               k.revokedAt ? (
                 <Badge>revoked</Badge>
               ) : (
-                <Button size="sm" variant="danger" onClick={() => confirm(`Revoke "${k.name}"? Anything using it stops working.`) && revoke.mutate(k._id)}>
+                <Button size="sm" variant="danger" onClick={() => confirmDialog(`Revoke "${k.name}"? Anything using it stops working.`).then((ok) => ok && revoke.mutate(k._id))}>
                   Revoke
                 </Button>
               ),
@@ -309,7 +309,7 @@ function CustomDomainCard() {
                 Verify
               </Button>
             )}
-            <Button variant="danger" onClick={() => confirm("Remove the custom domain?") && remove.mutate()}>
+            <Button variant="danger" onClick={() => confirmDialog("Remove the custom domain?").then((ok) => ok && remove.mutate())}>
               Remove
             </Button>
           </div>

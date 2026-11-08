@@ -164,7 +164,7 @@ function MikrotikImport() {
                 key: "package",
                 header: "Package",
                 render: (s) => (
-                  <select className="rounded border border-zinc-300 px-2 py-1 text-sm" value={pkgOf(s)} onChange={(e) => setPkgFor({ ...pkgFor, [s.username]: e.target.value })}>
+                  <select className="h-8 cursor-pointer rounded-md border border-line bg-surface px-2 text-sm text-ink" value={pkgOf(s)} onChange={(e) => setPkgFor({ ...pkgFor, [s.username]: e.target.value })}>
                     <option value="">— choose —</option>
                     {packages.map((p) => (
                       <option key={p._id} value={p._id}>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, Card, ErrorBox, InfoList, Loading, Modal, PageHeader, StatusBadge, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, InfoList, Loading, Modal, PageHeader, StatusBadge, Table, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { daysUntil, formatDate, formatDateTime, taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -169,7 +169,7 @@ export default function CustomerDetailPage() {
                   Enable
                 </Button>
               ) : (
-                <Button size="sm" variant="danger" loading={disable.isPending} onClick={() => confirm("Disable this connection?") && disable.mutate()}>
+                <Button size="sm" variant="danger" loading={disable.isPending} onClick={() => confirmDialog("Disable this connection?").then((ok) => ok && disable.mutate())}>
                   Disable
                 </Button>
               )}
@@ -227,7 +227,7 @@ export default function CustomerDetailPage() {
           <Button
             variant="ghost"
             className="text-rose-600"
-            onClick={() => confirm(`Mark ${c.name} as left? The PPPoE account will be removed from the router.`) && remove.mutate()}
+            onClick={() => confirmDialog(`Mark ${c.name} as left? The PPPoE account will be removed from the router.`).then((ok) => ok && remove.mutate())}
           >
             Customer left — remove
           </Button>

@@ -1,11 +1,12 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, ErrorBox, Loading, PageHeader, Select, StatusBadge, Table } from "@/components/ui";
+import { Button, ErrorBox, Loading, PageHeader, Select, StatusBadge, Table, confirmDialog } from "@/components/ui";
 import QuickForm from "@/components/common/QuickForm";
 import { api, downloadFile, getErrorMessage } from "@/lib/api";
 import { daysUntil, formatDate, taka } from "@/lib/format";
@@ -88,8 +89,8 @@ function CustomersList() {
             { name: "action", label: "Action", type: "select", options: [{ value: "disable", label: "Disable all" }, { value: "enable", label: "Enable all (manually disabled ones)" }, { value: "package", label: "Move all to a package" }] },
             { name: "package", label: "Package (for “Move”)", type: "select", placeholder: "—", options: (packages.data?.data ?? []).map((p) => ({ value: p._id, label: p.name })) },
           ]}
-          onSubmit={(v) => {
-            if (!confirm("Apply to every customer in this zone (max 500)?")) return Promise.reject(new Error("cancelled"));
+          onSubmit={async (v) => {
+            if (!(await confirmDialog("Apply to every customer in this zone (max 500)?", { danger: true }))) throw new Error("cancelled");
             return bulkRun.mutateAsync({ zone: v.zone, action: v.action, package: v.action === "package" ? v.package : undefined });
           }}
           onClose={() => setBulk(false)}
@@ -161,7 +162,11 @@ function CustomersList() {
                 render: (c) => (
                   <div className="flex items-center gap-1">
                     <StatusBadge status={c.status} />
-                    {c.syncStatus !== "synced" && <span title={c.syncError ?? "Not synced with router"}>⚠️</span>}
+                    {c.syncStatus !== "synced" && (
+                      <span title={c.syncError ?? "Not synced with the router yet"} className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+                        <AlertTriangle className="size-3" /> {c.syncStatus === "failed" ? "router" : "syncing"}
+                      </span>
+                    )}
                   </div>
                 ),
               },

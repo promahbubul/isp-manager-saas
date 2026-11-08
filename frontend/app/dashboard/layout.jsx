@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useDashboardNav } from "@/components/dashboard/Sidebar";
 import Topbar, { DashboardBanners } from "@/components/dashboard/Topbar";
 import AppShell from "@/components/shell/AppShell";
+import { ShellLoading } from "@/components/ui/Skeleton";
 import { useAuth } from "@/providers/AuthProvider";
 
 export default function DashboardLayout({ children }) {
@@ -18,11 +19,7 @@ export default function DashboardLayout({ children }) {
   }, [status, router]);
 
   if (status !== "authenticated") {
-    return (
-      <div className="flex h-dvh items-center justify-center bg-canvas">
-        <div className="size-8 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" role="status" aria-label="Loading" />
-      </div>
-    );
+    return <ShellLoading />;
   }
 
   const brand = (

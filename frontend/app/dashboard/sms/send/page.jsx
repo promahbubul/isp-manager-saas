@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, PageHeader, Select, Stat, Textarea } from "@/components/ui";
+import { Button, Card, PageHeader, Select, Stat, Textarea, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useApi, useApiMutation } from "@/lib/hooks";
 import { SegmentHint } from "@/lib/sms";
@@ -39,7 +39,7 @@ export default function SendSmsPage() {
       mode === "numbers"
         ? { type: "numbers", numbers: numbers.split(/[\s,;]+/).filter(Boolean) }
         : { type: "filter", ...Object.fromEntries(Object.entries(filter).filter(([, v]) => v)) };
-    if (confirm("Send this SMS now? Credits will be deducted.")) send.mutate({ message, target });
+    confirmDialog("Send this SMS now? Credits will be deducted.", { confirmText: "Send SMS" }).then((ok) => ok && send.mutate({ message, target }));
   };
 
   return (

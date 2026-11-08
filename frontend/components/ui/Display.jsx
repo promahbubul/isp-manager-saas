@@ -76,6 +76,9 @@ const STATUS_COLORS = {
   suspended: "red",
   cancelled: "slate",
   queued: "amber",
+  refunded: "slate",
+  pending_review: "amber",
+  initiated: "slate",
 };
 
 export function StatusBadge({ status }) {
@@ -126,17 +129,6 @@ export function Empty({ children = "Nothing here yet.", icon: Icon = Inbox, acti
 }
 
 /** Skeleton placeholder while a page or table loads. */
-export function Loading({ rows = 6, className }) {
-  return (
-    <div className={cn("space-y-3 rounded-[var(--radius-card)] border border-line bg-surface p-4", className)} role="status" aria-label="Loading">
-      <div className="h-4 w-1/3 animate-pulse rounded bg-subtle" />
-      {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="h-9 animate-pulse rounded-md bg-subtle" style={{ opacity: 1 - i * 0.12 }} />
-      ))}
-    </div>
-  );
-}
-
 export function ErrorBox({ error, children, className }) {
   return (
     <div role="alert" className={cn("flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800", className)}>

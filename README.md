@@ -286,6 +286,11 @@ Not built (need hardware or a separate project): mobile app, RADIUS, OLT, Nagad 
 - **Marketing site**: real app screenshots (`public/screens/*-light|dark.png`, switched with the theme) in
   `components/marketing/Screenshot.jsx`, scroll reveal + typing headline (`Motion.jsx`), per-plan colours
   (`PlanCards.jsx`). One-click light/dark button (`components/shell/ThemeToggle.jsx`; follows the OS until clicked).
+- **UI kit extras**: `confirmDialog()` (promise-based, replaces window.confirm), `RowActions` ("⋯" menu per row),
+  skeleton loading (`react-loading-skeleton`), route progress bar (`nextjs-toploader`), quick search + phone card view
+  built into `Table`, custom 404 / error pages.
+- **Payment refund**: `POST /payments/:id/refund` (permission `payment.refund`, reason required) — only the customer's
+  latest payment; validity, due and advance go back to what they were. `POST /sms/logs/:id/resend` for failed SMS.
 - **One login page** `/login` for every role: ISP staff → `/dashboard`, platform staff → `/admin` (2FA step inline).
 - **App shell** `components/shell/AppShell.jsx`: sidebar on desktop, drawer on phones, sticky top bar, user menu — used by
   the ISP dashboard and the platform admin. Icons: lucide-react. Toasts: sonner. Charts: recharts.

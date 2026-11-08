@@ -20,3 +20,5 @@ export const rechargeSchema = z
   });
 
 export type RechargeInput = z.infer<typeof rechargeSchema>;
+
+export const refundSchema = z.object({ reason: z.string().trim().min(3, "Write why the payment is refunded").max(300) });

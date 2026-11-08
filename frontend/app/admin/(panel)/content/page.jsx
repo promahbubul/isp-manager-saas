@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, Table, Textarea } from "@/components/ui";
+import { Badge, Button, Card, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, Table, Textarea, confirmDialog } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
 import { usePaged } from "@/lib/usePaged";
@@ -68,7 +68,7 @@ export default function ContentPage() {
                   key: "x",
                   header: "",
                   render: (p) => (
-                    <Button size="sm" variant="danger" onClick={(e) => (e.stopPropagation(), confirm(`Delete "${p.title}"?`) && remove.mutate(p._id))}>
+                    <Button size="sm" variant="danger" onClick={(e) => (e.stopPropagation(), confirmDialog(`Delete "${p.title}"?`).then((ok) => ok && remove.mutate(p._id)))}>
                       Delete
                     </Button>
                   ),

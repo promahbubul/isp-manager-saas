@@ -1,12 +1,15 @@
 "use client";
 
+import { CheckCircle2, Eye, Lock, PlayCircle, RotateCcw, UserCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import TicketForm, { CATEGORIES } from "@/components/ticket/TicketForm";
-import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, Select, Stat, StatusBadge, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, Modal, PageHeader, RowActions, Select, Stat, StatusBadge, Table } from "@/components/ui";
+import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
-import { useApi } from "@/lib/hooks";
+import { useApi, useApiMutation } from "@/lib/hooks";
+import { useAuth } from "@/providers/AuthProvider";
 import { usePaged } from "@/lib/usePaged";
 
 const STATUS = [
@@ -28,6 +31,10 @@ export default function TicketsPage() {
   const list = usePaged("tickets", "/tickets", { ...q, page: undefined });
   const { data, isLoading, error } = list;
   const counts = useApi("ticket-counts", "/tickets/counts");
+  const { user, can } = useAuth();
+  const inv = { invalidate: ["tickets", "ticket-counts"] };
+  const setStatus = useApiMutation(({ id, status }) => api.patch(`/tickets/${id}/status`, { status }), inv);
+  const assignMe = useApiMutation((id) => api.patch(`/tickets/${id}/assign`, { assignedTo: user?._id ?? user?.id }), inv);
   const set = (k) => (e) => setQ((s) => ({ ...s, [k]: e.target.value, page: 1 }));
   const c = counts.data?.data;
 
@@ -78,6 +85,26 @@ export default function TicketsPage() {
               { key: "assignedTo", header: "Assigned", render: (t) => t.assignedTo?.name ?? <span className="text-zinc-400">—</span> },
               { key: "status", header: "Status", render: (t) => <StatusBadge status={t.status} /> },
               { key: "createdAt", header: "Created", render: (t) => formatDateTime(t.createdAt) },
+              {
+                key: "actions",
+                header: "",
+                render: (t) => {
+                  const done = t.status === "solved" || t.status === "closed";
+                  const solve = !can("ticket.solve");
+                  return (
+                    <RowActions
+                      items={[
+                        { label: "Open ticket", icon: Eye, href: `/dashboard/tickets/${t._id}` },
+                        { label: "Assign to me", icon: UserCheck, separator: true, onClick: () => assignMe.mutate(t._id), hidden: !can("ticket.assign") || done || String(t.assignedTo?._id ?? "") === String(user?._id ?? user?.id) },
+                        { label: "Start work", icon: PlayCircle, onClick: () => setStatus.mutate({ id: t._id, status: "in_progress" }), hidden: solve || t.status !== "open" },
+                        { label: "Mark solved", icon: CheckCircle2, onClick: () => setStatus.mutate({ id: t._id, status: "solved" }), hidden: solve || done },
+                        { label: "Close", icon: Lock, onClick: () => setStatus.mutate({ id: t._id, status: "closed" }), hidden: solve || t.status === "closed" },
+                        { label: "Reopen", icon: RotateCcw, onClick: () => setStatus.mutate({ id: t._id, status: "open" }), hidden: solve || !done },
+                      ]}
+                    />
+                  );
+                },
+              },
             ]}
           />
         </>

@@ -3,6 +3,7 @@
 import { Bug, Building2, CreditCard, HeartPulse, KeyRound, Landmark, Layers, LayoutDashboard, LifeBuoy, Megaphone, Newspaper, ScrollText, Settings, ShieldCheck, TicketPercent, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/shell/AppShell";
+import { ShellLoading } from "@/components/ui/Skeleton";
 import UserMenu from "@/components/shell/UserMenu";
 import ThemeToggle from "@/components/shell/ThemeToggle";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -66,11 +67,7 @@ export default function AdminPanelLayout({ children }) {
   };
 
   if (status !== "ready") {
-    return (
-      <div className="flex h-dvh items-center justify-center bg-canvas">
-        <div className="size-8 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" role="status" aria-label="Loading" />
-      </div>
-    );
+    return <ShellLoading />;
   }
 
   const nav = NAV.map((sec) => ({ ...sec, items: sec.items.filter((n) => !n.superOnly || admin.role === "super_admin") })).filter((sec) => sec.items.length);

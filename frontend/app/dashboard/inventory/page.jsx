@@ -165,7 +165,7 @@ export default function InventoryPage() {
             { name: "unit", label: "Unit", type: "select", options: UNITS },
             { name: "sku", label: "SKU / model" },
             { name: "minStock", label: "Warn when stock is at or below", type: "number" },
-            ...(editing._id ? [] : [{ name: "trackSerials", label: "Track serial/MAC numbers (devices)", type: "checkbox" }]),
+            ...(editing._id ? [{ name: "isActive", label: "Still in use (untick to archive — hidden from the list, history kept)", type: "checkbox" }] : [{ name: "trackSerials", label: "Track serial/MAC numbers (devices)", type: "checkbox" }]),
             { name: "note", label: "Note" },
           ]}
           onSubmit={(v) => save.mutateAsync(v)}

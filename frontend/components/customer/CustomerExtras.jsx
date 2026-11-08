@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, Loading } from "@/components/ui";
+import { Badge, Button, Card, Loading, Skeleton } from "@/components/ui";
 import { api, getErrorMessage } from "@/lib/api";
-import { formatDateTime, taka } from "@/lib/format";
+import { formatDateTime, taka, methodLabel } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
 
 const KIND_COLOR = { payment: "green", ticket: "amber", sms: "blue", change: "slate" };
@@ -57,7 +57,7 @@ function PrivateImage({ id, kind, version }) {
       if (href) URL.revokeObjectURL(href);
     };
   }, [id, kind, version]);
-  if (url === null) return <div className="h-28 w-40 animate-pulse rounded bg-zinc-100" />;
+  if (url === null) return <Skeleton width={160} height={112} borderRadius={6} />;
   if (!url) return <div className="flex h-28 w-40 items-center justify-center rounded border border-dashed text-xs text-zinc-400">not uploaded</div>;
   return (
     <a href={url} target="_blank" rel="noreferrer">
@@ -161,7 +161,7 @@ export function CustomerActions({ customer }) {
             { name: "type", label: "Type", type: "select", options: [{ value: "connection_fee", label: "Connection / installation fee" }, { value: "other", label: "Device sale or other" }] },
             { name: "amount", label: "Amount (৳)", type: "number", required: true },
             { name: "note", label: "What for", required: true, placeholder: "e.g. ONU + 50 m fiber" },
-            { name: "method", label: "Paid by", type: "select", options: ["cash", "bkash", "nagad", "rocket", "bank"].map((m) => ({ value: m, label: m })) },
+            { name: "method", label: "Paid by", type: "select", options: ["cash", "bkash", "nagad", "rocket", "bank"].map((m) => ({ value: m, label: methodLabel(m) })) },
             { name: "trxId", label: "TrxID (bKash/Nagad)" },
             { name: "addToDue", label: "Not paid now — add to the customer's due", type: "checkbox" },
           ]}

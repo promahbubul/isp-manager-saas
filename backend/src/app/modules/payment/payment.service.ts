@@ -123,6 +123,7 @@ export async function applyRecharge(input: ApplyRechargeInput) {
       const now = new Date();
       const previousExpiry = customer.expiryDate;
       const previousDue = customer.dueAmount;
+      const previousBalance = customer.balance;
       const base = previousExpiry > now ? previousExpiry : now;
       const newExpiry = postpaid ? previousExpiry : addDays(base, input.months * pkg.validityDays);
 
@@ -160,6 +161,7 @@ export async function applyRecharge(input: ApplyRechargeInput) {
             previousExpiry,
             newExpiry,
             previousDue,
+            previousBalance,
             dueAfter: calc.dueAfter,
             receivedBy: input.receivedBy,
             source: input.source ?? "staff",
@@ -260,6 +262,52 @@ async function list(actor: Actor, query: Record<string, unknown>) {
   return { ...result, totals: { amount: totals[0]?.amount ?? 0, count: totals[0]?.count ?? 0 } };
 }
 
+/**
+ * Refund (reverse) a payment taken by mistake. Only the customer's latest successful payment can be
+ * refunded, so validity, due and advance can be put back exactly as they were before it.
+ * Postpaid payments that settled invoices are refused (void the invoice instead).
+ */
+async function refund(actor: Actor, id: string, reason: string) {
+  if (!isValidObjectId(id)) throw new AppError(400, "Invalid payment id");
+  const payment = await Payment.findById(id);
+  if (!payment) throw new AppError(404, "Payment not found");
+  if (payment.status === "refunded") throw new AppError(400, "This payment is already refunded");
+  if (payment.invoices?.length) throw new AppError(400, "This payment settled postpaid invoices — void the invoices instead");
+  const latest = await Payment.findOne({ customer: payment.customer, status: "success" }).sort({ createdAt: -1, _id: -1 }).select("_id");
+  if (String(latest?._id) !== String(payment._id)) throw new AppError(400, "Only the customer's latest payment can be refunded. Refund the newer ones first.");
+
+  const session = await mongoose.startSession();
+  let disconnect = false;
+  try {
+    await session.withTransaction(async () => {
+      const customer = await Customer.findById(payment.customer).session(session).orFail();
+      const update: Record<string, unknown> = { dueAmount: payment.previousDue };
+      if (payment.previousExpiry) update.expiryDate = payment.previousExpiry;
+      if (payment.previousBalance !== undefined) update.balance = payment.previousBalance;
+      const expiry = (update.expiryDate as Date | undefined) ?? customer.expiryDate;
+      if (customer.status === "active" && customer.billingType === "prepaid" && expiry < new Date()) {
+        update.status = "expired";
+        disconnect = true;
+      }
+      customer.set(update);
+      await customer.save({ session });
+      payment.set({ status: "refunded", refundedAt: new Date(), refundedBy: actor.id, refundReason: reason });
+      await payment.save({ session });
+      if (payment.reseller && payment.resellerCost) {
+        await changeResellerBalance(payment.reseller, { type: "refund", amount: payment.resellerCost, customer: customer._id, payment: payment._id, note: `Refund ${payment.receiptNo}`, by: new mongoose.Types.ObjectId(actor.id) }, session);
+      }
+    });
+  } finally {
+    await session.endSession();
+  }
+  let sync;
+  if (disconnect) {
+    const customer = await loadCustomerWithSecret(payment.customer);
+    if (customer) sync = await syncCustomer(customer);
+  }
+  return { payment: await receipt(actor, id), sync };
+}
+
 /** Everything needed to print a money receipt. */
 async function receipt(actor: Actor, id: string) {
   if (!isValidObjectId(id)) throw new AppError(400, "Invalid payment id");
@@ -277,4 +325,4 @@ async function receipt(actor: Actor, id: string) {
   return { ...payment.toJSON(), company, receiptText: settings.receipt };
 }
 
-export const PaymentService = { recharge, list, receipt };
+export const PaymentService = { recharge, list, receipt, refund };

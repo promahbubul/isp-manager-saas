@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
           {companies && (
             <div className="mb-5 flex flex-col gap-1">
               <label className="font-semibold text-zinc-700">Company</label>
-              <select className="rounded-md border border-zinc-300 px-4 py-2.5" value={companySlug} onChange={(e) => setCompanySlug(e.target.value)}>
+              <select className="rounded-md border border-line bg-surface px-4 py-2.5 text-ink" value={companySlug} onChange={(e) => setCompanySlug(e.target.value)}>
                 {companies.map((c) => (
                   <option key={c.slug} value={c.slug}>
                     {c.name}

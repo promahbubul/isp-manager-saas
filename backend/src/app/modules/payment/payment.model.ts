@@ -35,6 +35,11 @@ export interface IPayment {
   resellerCost?: number;
   /** postpaid: invoices this payment settled */
   invoices?: Types.ObjectId[];
+  /** customer advance balance before this payment (lets a refund restore it) */
+  previousBalance?: number;
+  refundedAt?: Date;
+  refundedBy?: Types.ObjectId;
+  refundReason?: string;
 }
 
 export type PaymentDoc = HydratedDocument<IPayment>;
@@ -59,6 +64,10 @@ const paymentSchema = new Schema<IPayment>(
     source: { type: String, enum: ["staff", "online", "manual_online"], default: "staff" },
     onlinePayment: { type: Schema.Types.ObjectId, ref: "PaymentAttempt" },
     status: { type: String, enum: ["success", "refunded"], default: "success" },
+    previousBalance: Number,
+    refundedAt: Date,
+    refundedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    refundReason: { type: String, maxlength: 300 },
     note: String,
     reseller: { type: Schema.Types.ObjectId, ref: "Reseller", default: null },
     resellerCost: Number,

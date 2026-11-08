@@ -6,7 +6,7 @@ import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
 import { Badge, Button, Card, ErrorBox, InfoList, Loading, PageHeader, Table } from "@/components/ui";
 import { api } from "@/lib/api";
-import { formatDateTime, taka } from "@/lib/format";
+import { formatDateTime, taka, methodLabel } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
 import { usePaged } from "@/lib/usePaged";
 
@@ -101,7 +101,7 @@ export default function ResellerDetailPage() {
           initial={{ method: "cash" }}
           fields={[
             { name: "amount", label: "Amount received (৳)", type: "number", required: true },
-            { name: "method", label: "Received by", type: "select", options: ["cash", "bank", "bkash", "nagad", "rocket", "other"].map((m) => ({ value: m, label: m })) },
+            { name: "method", label: "Received by", type: "select", options: ["cash", "bank", "bkash", "nagad", "rocket", "other"].map((m) => ({ value: m, label: methodLabel(m) })) },
             { name: "note", label: "Note" },
           ]}
           onSubmit={(v) => deposit.mutateAsync(v)}

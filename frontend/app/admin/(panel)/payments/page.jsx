@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminMutation } from "@/lib/adminHooks";
 import { usePaged } from "@/lib/usePaged";
@@ -72,7 +72,7 @@ export default function AdminPaymentsPage() {
                     </Button>
                   ) : a.status === "pending_review" && (
                     <div className="flex gap-2">
-                      <Button size="sm" variant="success" onClick={() => confirm(`Approve ${a.description}?`) && review.mutate({ id: a._id, approve: true })}>
+                      <Button size="sm" variant="success" onClick={() => confirmDialog(`Approve ${a.description}?`).then((ok) => ok && review.mutate({ id: a._id, approve: true }))}>
                         Approve
                       </Button>
                       <Button

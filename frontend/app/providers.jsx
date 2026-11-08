@@ -2,8 +2,11 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, useTheme } from "next-themes";
+import NextTopLoader from "nextjs-toploader";
 import { useState } from "react";
 import { Toaster } from "sonner";
+import { ConfirmHost } from "@/components/ui/Confirm";
+import { SkeletonProvider } from "@/components/ui/Skeleton";
 import { AuthProvider } from "@/providers/AuthProvider";
 
 /** Toasts follow the app theme. */
@@ -22,9 +25,14 @@ export default function Providers({ children }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      {/* thin progress bar at the top while moving between pages */}
+      <NextTopLoader color="#6366f1" height={3} showSpinner={false} shadow="0 0 10px #6366f1,0 0 5px #6366f1" />
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>{children}</AuthProvider>
+        <SkeletonProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </SkeletonProvider>
         <ThemedToaster />
+        <ConfirmHost />
       </QueryClientProvider>
     </ThemeProvider>
   );

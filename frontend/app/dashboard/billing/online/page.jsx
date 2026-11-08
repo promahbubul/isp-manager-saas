@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
-import { formatDateTime, taka } from "@/lib/format";
+import { formatDateTime, taka, methodLabel } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
 import { usePaged } from "@/lib/usePaged";
 
@@ -61,7 +61,7 @@ export default function OnlinePaymentsPage() {
               {
                 key: "gateway",
                 header: "Method",
-                render: (a) => (a.gateway === "manual" ? `${a.manual?.method ?? "manual"} (manual)` : a.gateway),
+                render: (a) => (a.gateway === "manual" ? `${methodLabel(a.manual?.method ?? "manual")} (Send Money)` : methodLabel(a.gateway)),
               },
               { key: "trx", header: "TrxID / sender", render: (a) => [a.gatewayTrxId, a.manual?.senderNumber].filter(Boolean).join(" · ") || "—" },
               { key: "status", header: "Status", render: (a) => <Badge color={STATUS_COLOR[a.status]}>{a.status.replace("_", " ")}</Badge> },
@@ -84,7 +84,7 @@ export default function OnlinePaymentsPage() {
                   a.status === "pending_review" && (
                     <PermissionGate perm="payment.recharge">
                       <div className="flex gap-2">
-                        <Button size="sm" variant="success" onClick={() => confirm(`Approve ${a.amount} Tk (TrxID ${a.gatewayTrxId})? The customer will be recharged.`) && approve.mutate(a._id)}>
+                        <Button size="sm" variant="success" onClick={() => confirmDialog(`Approve ${a.amount} Tk (TrxID ${a.gatewayTrxId})? The customer will be recharged.`).then((ok) => ok && approve.mutate(a._id))}>
                           Approve
                         </Button>
                         <Button

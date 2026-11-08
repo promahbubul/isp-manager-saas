@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button, ErrorBox, Loading } from "@/components/ui";
-import { formatDate, formatDateTime, taka } from "@/lib/format";
+import { formatDate, formatDateTime, taka, methodLabel } from "@/lib/format";
 import { usePortal } from "@/lib/portalHooks";
 
 /** Money receipt the customer can print or save as PDF (browser → Save as PDF). */
@@ -22,7 +22,7 @@ export default function PortalReceiptPage() {
     ["Bill", taka(r.billAmount)],
     ...(r.vat ? [["of which VAT", taka(r.vat)]] : []),
     ["Paid", taka(r.amount)],
-    ["Method", `${r.method}${r.trxId ? ` · ${r.trxId}` : ""}`],
+    ["Method", `${methodLabel(r.method)}${r.trxId ? ` · ${r.trxId}` : ""}`],
     ...(r.newExpiry && r.type === "recharge" ? [["Valid until", formatDate(r.newExpiry)]] : []),
     ["Due after", taka(r.dueAfter)],
   ];

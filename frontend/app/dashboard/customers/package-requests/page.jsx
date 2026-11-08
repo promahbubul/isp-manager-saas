@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime, taka } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -33,7 +34,7 @@ export default function PackageRequestsPage() {
             empty="No requests."
             columns={[
               { key: "createdAt", header: "Requested", render: (r) => formatDateTime(r.createdAt) },
-              { key: "customer", header: "Customer", render: (r) => (r.customer ? `${r.customer.name} (${r.customer.customerId})` : "—") },
+              { key: "customer", header: "Customer", render: (r) => (r.customer ? <Link className="font-medium text-primary-600 hover:underline dark:text-primary-400" href={`/dashboard/customers/${r.customer._id}`}>{r.customer.name} ({r.customer.customerId})</Link> : "—") },
               { key: "phone", header: "Mobile", render: (r) => r.customer?.phone },
               { key: "from", header: "From", render: (r) => `${r.fromPackage?.name} · ${taka(r.fromPackage?.price)}` },
               { key: "to", header: "To", render: (r) => <strong>{`${r.toPackage?.name} · ${taka(r.toPackage?.price)}`}</strong> },
@@ -49,7 +50,7 @@ export default function PackageRequestsPage() {
                         <Button size="sm" variant="success" loading={decide.isPending} onClick={() => decide.mutate({ id: r._id, approve: true })}>
                           Approve
                         </Button>
-                        <Button size="sm" variant="danger" onClick={() => decide.mutate({ id: r._id, approve: false })}>
+                        <Button size="sm" variant="danger" onClick={() => confirmDialog(`Reject ${r.customer?.name ?? "this"}'s request to move to ${r.toPackage?.name}?`).then((ok) => ok && decide.mutate({ id: r._id, approve: false }))}>
                           Reject
                         </Button>
                       </div>

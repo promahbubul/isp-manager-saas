@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, ErrorBox, Input, Loading, Modal, PageHeader, Select, Table, Textarea } from "@/components/ui";
+import { Button, ErrorBox, Input, Loading, Modal, PageHeader, Select, Table, Textarea, confirmDialog } from "@/components/ui";
 import { api, applyFieldErrors } from "@/lib/api";
 import { useApi, useApiMutation } from "@/lib/hooks";
 import { useAuth } from "@/providers/AuthProvider";
@@ -97,7 +97,7 @@ export default function ZonesPage() {
                     <Button
                       size="sm"
                       variant="danger"
-                      onClick={() => confirm(`Delete zone "${z.name}"?`) && remove.mutate(z._id)}
+                      onClick={() => confirmDialog(`Delete zone "${z.name}"?`).then((ok) => ok && remove.mutate(z._id))}
                     >
                       Delete
                     </Button>

@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge, Button, Card, ErrorBox, InfoList, Input, Loading, Modal, PageHeader, Select, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, InfoList, Input, Loading, Modal, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
 import { getErrorMessage } from "@/lib/api";
@@ -111,7 +111,7 @@ export default function CompanyDetailPage() {
   };
 
   const impersonate = async () => {
-    if (!confirm(`Open ${c.name}'s panel as the owner? The session lasts 1 hour and every action is logged.`)) return;
+    if (!(await confirmDialog(`Open ${c.name}'s panel as the owner? The session lasts 1 hour and every action is logged.`, { confirmText: "Open panel" }))) return;
     try {
       await adminApi.post(`/admin/companies/${id}/impersonate`);
       window.open("/dashboard", "_blank", "noopener");
@@ -149,7 +149,7 @@ export default function CompanyDetailPage() {
             <Button
               variant="secondary"
               loading={archive.isPending}
-              onClick={() => confirm(`Archive ${c.name}? Everyone is signed out, the panel and payment page stop working and jobs skip it. Data is kept and you can restore it.`) && archive.mutate(false)}
+              onClick={() => confirmDialog(`Archive ${c.name}? Everyone is signed out, the panel and payment page stop working and jobs skip it. Data is kept and you can restore it.`).then((ok) => ok && archive.mutate(false))}
             >
               Archive
             </Button>

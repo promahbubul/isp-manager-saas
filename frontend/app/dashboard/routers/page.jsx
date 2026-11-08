@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, StatusBadge, Table } from "@/components/ui";
+import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, StatusBadge, Table, confirmDialog } from "@/components/ui";
 import { api, applyFieldErrors } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -146,12 +146,12 @@ export default function RoutersPage() {
                         <Button size="sm" variant="secondary" onClick={() => radius.mutate(r._id)}>
                           RADIUS script
                         </Button>
-                        <Button size="sm" variant="secondary" onClick={() => confirm("Switch back to PPP secrets on the router? Then run Check sync → Fix all.") && radiusOff.mutate(r._id)}>
+                        <Button size="sm" variant="secondary" onClick={() => confirmDialog("Switch back to PPP secrets on the router? Then run Check sync → Fix all.").then((ok) => ok && radiusOff.mutate(r._id))}>
                           Stop RADIUS
                         </Button>
                       </>
                     ) : (
-                      <Button size="sm" variant="secondary" title="Users are checked by our RADIUS server instead of being stored on the router" onClick={() => confirm(`Use RADIUS for "${r.name}"? You get a script for the router. Customers keep working: their logins are then checked by our server.`) && radius.mutate(r._id)}>
+                      <Button size="sm" variant="secondary" title="Users are checked by our RADIUS server instead of being stored on the router" onClick={() => confirmDialog(`Use RADIUS for "${r.name}"? You get a script for the router. Customers keep working: their logins are then checked by our server.`).then((ok) => ok && radius.mutate(r._id))}>
                         Use RADIUS
                       </Button>
                     ))}
@@ -174,7 +174,7 @@ Type 1 for WireGuard (RouterOS 7, recommended) or 2 for SSTP (RouterOS 6).`, "1"
                       >
                         {r.connectionMode === "vpn" ? "VPN script" : "Use VPN"}
                       </Button>
-                      <Button size="sm" variant="danger" onClick={() => confirm(`Delete router "${r.name}"?`) && remove.mutate(r._id)}>
+                      <Button size="sm" variant="danger" onClick={() => confirmDialog(`Delete router "${r.name}"?`).then((ok) => ok && remove.mutate(r._id))}>
                         Delete
                       </Button>
                     </>

@@ -200,3 +200,37 @@ body {
     background: #fff;
   }
 }
+
+/* Native form controls follow the theme (dropdown lists, date pickers, scrollbars). */
+.dark :where(input, select, textarea) {
+  color-scheme: dark;
+}
+:where(select) option,
+:where(select) optgroup {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* Receipts and other printouts are always black on white, whatever the theme. */
+@media print {
+  .dark {
+    color-scheme: light;
+    --color-canvas: #ffffff;
+    --color-surface: #ffffff;
+    --color-subtle: #f4f4f5;
+    --color-line: #d4d4d8;
+    --color-ink: #18181b;
+    --color-muted: #52525b;
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f4f4f5;
+    --color-zinc-200: #e4e4e7;
+    --color-zinc-300: #d4d4d8;
+    --color-zinc-400: #a1a1aa;
+    --color-zinc-500: #71717a;
+    --color-zinc-600: #52525b;
+    --color-zinc-700: #3f3f46;
+    --color-zinc-800: #27272a;
+    --color-zinc-900: #18181b;
+    --color-zinc-950: #09090b;
+  }
+}

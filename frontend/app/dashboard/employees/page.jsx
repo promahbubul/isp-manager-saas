@@ -5,7 +5,7 @@ import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
 import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Stat, Table } from "@/components/ui";
 import { api } from "@/lib/api";
-import { formatDate, taka, toDateInput } from "@/lib/format";
+import { formatDate, taka, toDateInput, methodLabel } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
 import { usePaged } from "@/lib/usePaged";
 import { useAuth } from "@/providers/AuthProvider";
@@ -72,7 +72,7 @@ function SalarySheet() {
             { name: "type", label: "Type", type: "select", options: [{ value: "salary", label: "Salary" }, { value: "advance", label: "Advance" }, { value: "bonus", label: "Bonus" }] },
             { name: "amount", label: "Amount (৳)", type: "number", required: true },
             { name: "deduction", label: "Deduction (৳)", type: "number", hint: "Late, absence or advance recovery" },
-            { name: "method", label: "Paid by", type: "select", options: ["cash", "bank", "bkash", "nagad", "rocket", "other"].map((m) => ({ value: m, label: m })) },
+            { name: "method", label: "Paid by", type: "select", options: ["cash", "bank", "bkash", "nagad", "rocket", "other"].map((m) => ({ value: m, label: methodLabel(m) })) },
             { name: "paidAt", label: "Date", type: "date", required: true },
             { name: "note", label: "Note" },
           ]}

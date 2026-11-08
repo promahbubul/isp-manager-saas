@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table } from "@/components/ui";
+import { Badge, Button, ErrorBox, Loading, PageHeader, Select, Table, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, taka } from "@/lib/format";
 import { useApiMutation } from "@/lib/hooks";
@@ -57,7 +57,7 @@ export default function InvoicesPage() {
                 render: (i) =>
                   i.status === "unpaid" && (
                     <PermissionGate perm="invoice.manage">
-                      <Button size="sm" variant="danger" onClick={() => confirm(`Void ${i.invoiceNo}? Its amount is removed from the customer's due.`) && voidIt.mutate(i._id)}>
+                      <Button size="sm" variant="danger" onClick={() => confirmDialog(`Void ${i.invoiceNo}? Its amount is removed from the customer's due.`).then((ok) => ok && voidIt.mutate(i._id))}>
                         Void
                       </Button>
                     </PermissionGate>

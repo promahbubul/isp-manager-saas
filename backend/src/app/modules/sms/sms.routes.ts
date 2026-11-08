@@ -124,6 +124,19 @@ router.post(
   },
 );
 
+/** Send a failed SMS again (new log entry; credits are charged again). */
+router.post("/logs/:id/resend", authorize("sms.send"), audit("sms.resend", "sms"), async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  if (!isValidObjectId(id)) throw new AppError(400, "Invalid SMS id");
+  const log = await SmsLog.findById(id);
+  if (!log) throw new AppError(404, "SMS not found");
+  if (log.status !== "failed") throw new AppError(400, "Only failed SMS can be sent again");
+  const a = actor(req);
+  await assertBalance(a.company, countSegments(log.message).segments);
+  const result = await sendSms(a.company, { to: log.to, message: log.message, event: log.event, customer: log.customer ? String(log.customer) : undefined, sentBy: a.id });
+  sendResponse(res, { message: "SMS sent again", data: result });
+});
+
 router.get("/logs", authorize("sms.view"), async (req: Request, res: Response) => {
   const q = req.query as Record<string, unknown>;
   const filter: Record<string, unknown> = {};

@@ -5,7 +5,7 @@ import sendResponse from "../../utils/sendResponse";
 import { Actor } from "../customer/customer.service";
 import { audit } from "../activityLog/activityLog.service";
 import { PaymentService } from "./payment.service";
-import { rechargeSchema } from "./payment.validation";
+import { refundSchema, rechargeSchema } from "./payment.validation";
 
 const actor = (req: Request): Actor => ({
   id: req.user!.id,
@@ -25,6 +25,11 @@ const PaymentController = {
     const { data, meta, totals } = await PaymentService.list(actor(req), req.query as Record<string, unknown>);
     res.json({ success: true, message: "Payments", meta, totals, data });
   },
+  refund: async (req: Request, res: Response) => {
+    const data = await PaymentService.refund(actor(req), String(req.params.id), req.body.reason);
+    const msg = data.sync && !data.sync.ok ? `Refunded, but router sync failed: ${data.sync.error}` : "Payment refunded";
+    sendResponse(res, { message: msg, data });
+  },
   receipt: async (req: Request, res: Response) => {
     sendResponse(res, { message: "Receipt", data: await PaymentService.receipt(actor(req), String(req.params.id)) });
   },
@@ -36,5 +41,6 @@ router.use(auth(), requireWritableTenant);
 router.post("/recharge", authorize("payment.recharge"), validateBody(rechargeSchema), audit("payment.recharge", "payment"), PaymentController.recharge);
 router.get("/", authorize("payment.view"), PaymentController.list);
 router.get("/:id", authorize("payment.view"), PaymentController.receipt);
+router.post("/:id/refund", authorize("payment.refund"), validateBody(refundSchema), audit("payment.refund", "payment"), PaymentController.refund);
 
 export default router;

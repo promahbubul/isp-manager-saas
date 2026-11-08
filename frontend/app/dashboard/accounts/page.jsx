@@ -1,16 +1,17 @@
 "use client";
 
+import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import PermissionGate from "@/components/common/PermissionGate";
 import QuickForm from "@/components/common/QuickForm";
-import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, Select, Stat, Table } from "@/components/ui";
+import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, RowActions, Select, Stat, Table, confirmDialog } from "@/components/ui";
 import { api } from "@/lib/api";
-import { formatDate, taka, toDateInput } from "@/lib/format";
+import { formatDate, methodLabel, taka, toDateInput } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
 import { usePaged } from "@/lib/usePaged";
 import { IncomeExpenseChart } from "@/components/charts/Charts";
 
-const METHODS = ["cash", "bank", "bkash", "nagad", "rocket", "other"].map((m) => ({ value: m, label: m }));
+const METHODS = ["cash", "bank", "bkash", "nagad", "rocket", "other"].map((m) => ({ value: m, label: methodLabel(m) }));
 const monthStart = () => {
   const d = new Date();
   return toDateInput(new Date(d.getFullYear(), d.getMonth(), 1));
@@ -26,7 +27,7 @@ function ProfitLoss({ range }) {
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Income" value={taka(p.income.total)} tone="green" />
         <Stat label="Expenses" value={taka(p.expense.total)} tone="red" />
-        <Stat label={p.net >= 0 ? "Profit" : "Loss"} value={`${taka(p.net)}${p.margin != null ? ` · ${p.margin}%` : ""}`} tone={p.net >= 0 ? "green" : "red"} />
+        <Stat label={p.net >= 0 ? "Profit" : "Loss"} value={taka(Math.abs(p.net))} hint={p.margin != null ? `${p.net >= 0 ? "Margin" : "Loss is"} ${Math.abs(Math.round(p.margin))}% of income` : undefined} tone={p.net >= 0 ? "green" : "red"} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Income">
@@ -84,7 +85,7 @@ function Entries({ range }) {
   const list = usePaged("ledger", "/accounts/entries", { ...range, ...q, page: undefined });
   const { data, isLoading, error } = list;
   const cats = useApi("ledger-categories", "/accounts/categories");
-  const save = useApiMutation((body) => api.post("/accounts/entries", body), { invalidate: ["ledger", "pnl", "ledger-categories"] });
+  const save = useApiMutation((body) => (adding?.entry ? api.patch(`/accounts/entries/${adding.entry._id}`, body) : api.post("/accounts/entries", body)), { invalidate: ["ledger", "pnl", "ledger-categories"] });
   const remove = useApiMutation((id) => api.delete(`/accounts/entries/${id}`), { invalidate: ["ledger", "pnl"] });
   const totals = data?.data?.totals;
 
@@ -101,10 +102,10 @@ function Entries({ range }) {
         )}
         <PermissionGate perm="expense.manage">
           <div className="ml-auto flex gap-2">
-            <Button variant="secondary" onClick={() => setAdding("income")}>
+            <Button variant="secondary" onClick={() => setAdding({ type: "income" })}>
               + Income
             </Button>
-            <Button onClick={() => setAdding("expense")}>+ Expense</Button>
+            <Button onClick={() => setAdding({ type: "expense" })}>+ Expense</Button>
           </div>
         </PermissionGate>
       </div>
@@ -122,7 +123,7 @@ function Entries({ range }) {
               { key: "type", header: "Type", render: (e) => <Badge color={e.type === "expense" ? "red" : "green"}>{e.type}</Badge> },
               { key: "category", header: "Category" },
               { key: "amount", header: "Amount", render: (e) => taka(e.amount) },
-              { key: "method", header: "Paid by" },
+              { key: "method", header: "Paid by", render: (e) => methodLabel(e.method) },
               { key: "note", header: "Note", className: "max-w-xs truncate" },
               { key: "source", header: "From", render: (e) => (e.source === "manual" ? e.createdBy?.name : <Badge>{e.source.replace("_", " ")}</Badge>) },
               {
@@ -131,9 +132,12 @@ function Entries({ range }) {
                 render: (e) =>
                   e.source === "manual" && (
                     <PermissionGate perm="expense.manage">
-                      <Button size="sm" variant="danger" onClick={() => confirm("Delete this entry?") && remove.mutate(e._id)}>
-                        Delete
-                      </Button>
+                      <RowActions
+                        items={[
+                          { label: "Edit", icon: Pencil, onClick: () => setAdding({ type: e.type, entry: e }) },
+                          { label: "Delete", icon: Trash2, danger: true, separator: true, onClick: () => confirmDialog(`Delete this ${e.type} of ${taka(e.amount)}?`).then((ok) => ok && remove.mutate(e._id)) },
+                        ]}
+                      />
                     </PermissionGate>
                   ),
               },
@@ -143,17 +147,17 @@ function Entries({ range }) {
       )}
       {adding && (
         <QuickForm
-          title={adding === "expense" ? "Add expense" : "Add other income"}
+          title={`${adding.entry ? "Edit" : "Add"} ${adding.type === "expense" ? "expense" : "other income"}`}
           loading={save.isPending}
-          initial={{ date: toDateInput(new Date()), method: "cash" }}
+          initial={adding.entry ? { category: adding.entry.category, amount: adding.entry.amount, date: toDateInput(adding.entry.date), method: adding.entry.method, note: adding.entry.note ?? "" } : { date: toDateInput(new Date()), method: "cash" }}
           fields={[
-            { name: "category", label: "Category", type: "select", required: true, placeholder: "— choose —", options: (cats.data?.data?.[adding] ?? []).map((c) => ({ value: c, label: c })) },
+            { name: "category", label: "Category", type: "select", required: true, placeholder: "— choose —", options: [...new Set([...(cats.data?.data?.[adding.type] ?? []), ...(adding.entry ? [adding.entry.category] : [])])].map((c) => ({ value: c, label: c })) },
             { name: "amount", label: "Amount (৳)", type: "number", required: true },
             { name: "date", label: "Date", type: "date", required: true },
             { name: "method", label: "Paid / received by", type: "select", options: METHODS },
             { name: "note", label: "Note", type: "textarea" },
           ]}
-          onSubmit={(v) => save.mutateAsync({ ...v, type: adding, date: new Date(`${v.date}T12:00:00+06:00`) })}
+          onSubmit={(v) => save.mutateAsync({ ...v, ...(adding.entry ? {} : { type: adding.type }), date: new Date(`${v.date}T12:00:00+06:00`) })}
           onClose={() => setAdding(null)}
         />
       )}

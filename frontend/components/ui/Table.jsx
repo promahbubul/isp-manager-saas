@@ -1,13 +1,26 @@
 "use client";
 
-import { flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsUpDown, Inbox } from "lucide-react";
+import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsUpDown, Inbox, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
+import { Skeleton } from "./Skeleton";
 
 const PAGE_SIZES = [10, 25, 50, 100];
 const NO_SORT = new Set(["__index", "actions", "act", "x", "pay"]);
 const sortable = (v) => typeof v === "number" || (typeof v === "string" && v !== "");
+
+/** Text of a row for the quick search: its values and those of nested objects (customer, package...). */
+function rowText(row, depth = 0) {
+  if (row == null) return "";
+  if (typeof row !== "object") return String(row);
+  if (depth > 1) return "";
+  return Object.entries(row)
+    .filter(([k]) => !k.startsWith("_") && k !== "password")
+    .map(([, v]) => rowText(v, depth + 1))
+    .join(" ");
+}
+const globalSearch = (row, _id, value) => rowText(row.original).toLowerCase().includes(String(value).trim().toLowerCase());
 
 /**
  * Data table (TanStack Table).
@@ -35,10 +48,14 @@ export function Table({
   pager,
   pageSize: initialPageSize = 10,
   paginate = true,
+  search,
 }) {
   const server = Boolean(pager);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: initialPageSize });
+  const [query, setQuery] = useState("");
+  // Quick search box for lists loaded in full (server lists have their own filters).
+  const searchable = !server && (search ?? rows.length > 8);
 
   const defs = useMemo(() => {
     const sample = rows.find(Boolean) ?? {};
@@ -58,7 +75,9 @@ export function Table({
   const table = useReactTable({
     data: rows,
     columns: defs,
-    state: { sorting, ...(clientPaging ? { pagination } : {}) },
+    state: { sorting, globalFilter: query, ...(clientPaging ? { pagination } : {}) },
+    globalFilterFn: globalSearch,
+    getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
@@ -68,12 +87,73 @@ export function Table({
   });
 
   const visible = table.getRowModel().rows;
+  const matched = table.getFilteredRowModel().rows.length;
   const firstIndex = server ? indexOffset : clientPaging ? pagination.pageIndex * pagination.pageSize : indexOffset;
   const hasFooter = server || clientPaging;
 
+  const cells = (row) => row.getVisibleCells().filter((c) => c.column.id !== "__index");
+  const actionCell = (row) => cells(row).find((c) => NO_SORT.has(c.column.id) && c.column.id !== "__index");
+
   return (
     <div className={cn("overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
-      <div className={cn("scroll-thin relative overflow-auto", height === "screen" && (hasFooter ? "max-h-[calc(100dvh-var(--topbar-h)-5.5rem)]" : "max-h-[calc(100dvh-var(--topbar-h)-2rem)]"))}>
+      {searchable && (
+        <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+          <Search className="size-4 shrink-0 text-muted" />
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPagination((p) => ({ ...p, pageIndex: 0 }));
+            }}
+            placeholder="Search in this list…"
+            className="h-8 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-zinc-400"
+          />
+          {query && <span className="shrink-0 text-xs text-muted">{matched} found</span>}
+        </div>
+      )}
+
+      {/* Phones: one card per row */}
+      <div className="divide-y divide-line sm:hidden">
+        {loading ? (
+          Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="space-y-2 p-4">
+              <Skeleton height={14} width="60%" />
+              <Skeleton height={12} width="80%" />
+            </div>
+          ))
+        ) : visible.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-4 py-12 text-muted">
+            <Inbox className="size-6 text-zinc-300" />
+            <span className="text-sm">{query ? "Nothing matches your search." : empty}</span>
+          </div>
+        ) : (
+          visible.map((row) => {
+            const [first, ...rest] = cells(row).filter((c) => c !== actionCell(row));
+            const act = actionCell(row);
+            return (
+              <div key={row.id} onClick={onRowClick ? () => onRowClick(row.original) : undefined} className={cn("p-4", onRowClick && "cursor-pointer active:bg-subtle")}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 font-medium text-ink">{first && flexRender(first.column.columnDef.cell, first.getContext())}</div>
+                  {act && <div className="-mr-2 -mt-1 shrink-0">{flexRender(act.column.columnDef.cell, act.getContext())}</div>}
+                </div>
+                <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                  {rest.map((c) => {
+                    const h = c.column.columnDef.header;
+                    return (
+                      <div key={c.id} className={cn("min-w-0", !h && "col-span-2")}>
+                        {h && <dt className="text-[11px] font-medium uppercase tracking-wide text-muted">{h}</dt>}
+                        <dd className="truncate text-ink">{flexRender(c.column.columnDef.cell, c.getContext())}</dd>
+                      </div>
+                    );
+                  })}
+                </dl>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className={cn("scroll-thin relative hidden overflow-auto sm:block", height === "screen" && (hasFooter ? "max-h-[calc(100dvh-var(--topbar-h)-5.5rem)]" : "max-h-[calc(100dvh-var(--topbar-h)-2rem)]"))}>
         <table className="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
             {table.getHeaderGroups().map((hg) => (
@@ -113,7 +193,7 @@ export function Table({
                 <tr key={i}>
                   {defs.map((c) => (
                     <td key={c.id} className="border-b border-line/70 px-4 py-3">
-                      <div className="h-4 animate-pulse rounded bg-subtle" />
+                      <Skeleton height={14} width={c.id === "__index" ? 18 : `${55 + ((i * 7 + c.id.length * 13) % 40)}%`} />
                     </td>
                   ))}
                 </tr>
@@ -123,7 +203,7 @@ export function Table({
                 <td colSpan={defs.length} className="px-4 py-14 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted">
                     <Inbox className="size-6 text-zinc-300" />
-                    <span className="text-sm">{empty}</span>
+                    <span className="text-sm">{query ? "Nothing matches your search." : empty}</span>
                   </div>
                 </td>
               </tr>
@@ -153,7 +233,7 @@ export function Table({
       {clientPaging && (
         <Pagination
           className="mt-0 border-t border-line px-4 py-2.5"
-          meta={{ page: pagination.pageIndex + 1, totalPages: table.getPageCount(), total: rows.length, limit: pagination.pageSize, count: visible.length }}
+          meta={{ page: pagination.pageIndex + 1, totalPages: table.getPageCount(), total: matched, limit: pagination.pageSize, count: visible.length }}
           onPage={(p) => table.setPageIndex(p - 1)}
           onLimit={(n) => setPagination({ pageIndex: 0, pageSize: n })}
         />

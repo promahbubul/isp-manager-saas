@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import PortalShell from "@/components/portal/PortalShell";
 import { CATEGORIES } from "@/components/ticket/TicketForm";
 import { Badge, Button, Card, ErrorBox, Input, Loading, Modal, Select, Textarea } from "@/components/ui";
-import { daysUntil, formatDate, formatDateTime, taka } from "@/lib/format";
+import { daysUntil, formatDate, formatDateTime, taka, methodLabel } from "@/lib/format";
 import { getPortalToken, setPortalToken } from "@/lib/portalApi";
 import { usePortal, usePortalMutation } from "@/lib/portalHooks";
 
@@ -31,7 +31,7 @@ function Payments({ slug, account }) {
           <div>
             <p className="font-medium">{taka(p.amount)}</p>
             <p className="text-xs text-zinc-500">
-              {formatDateTime(p.createdAt)} · {p.method}
+              {formatDateTime(p.createdAt)} · {methodLabel(p.method)}
               {p.trxId ? ` · ${p.trxId}` : ""}
             </p>
           </div>

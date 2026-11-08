@@ -1,7 +1,7 @@
 "use client";
 
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { taka } from "@/lib/format";
+import { monthLabel, taka } from "@/lib/format";
 
 const PRIMARY = "#4f46e5";
 const GREEN = "#10b981";
@@ -51,12 +51,13 @@ export function CollectionChart({ data }) {
 
 /** Monthly income vs expense. data: [{ month: "2026-11", income, expense }] */
 export function IncomeExpenseChart({ data }) {
+  const rows = data.map((d) => ({ ...d, label: monthLabel(d.month) }));
   return (
     <div className="h-64 w-full sm:h-72">
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }} barGap={2}>
+        <BarChart data={rows} margin={{ top: 8, right: 8, left: -12, bottom: 0 }} barGap={2}>
           <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="month" tick={TICK} tickLine={false} axisLine={false} />
+          <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} />
           <YAxis tick={TICK} tickLine={false} axisLine={false} tickFormatter={compact} width={48} />
           <Tooltip content={<TooltipBox />} cursor={{ fill: "var(--color-subtle)" }} />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />

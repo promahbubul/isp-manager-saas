@@ -1,12 +1,13 @@
 "use client";
 
+import { Pencil, Power } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, Table } from "@/components/ui";
+import { Badge, Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, RowActions, Select, Table } from "@/components/ui";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminApi, useAdminMutation } from "@/lib/adminHooks";
 import { applyFieldErrors } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, toDateInput } from "@/lib/format";
 
 function CouponForm({ onDone }) {
   const plans = useAdminApi("public-plans", "/public/plans");
@@ -65,7 +66,41 @@ function CouponForm({ onDone }) {
   );
 }
 
+/** Code, type and value are fixed once ISPs may have used the coupon — only these can change. */
+function CouponEdit({ coupon, onDone }) {
+  const [f, setF] = useState({ description: coupon.description ?? "", maxUses: coupon.maxUses ?? 0, validTo: coupon.validTo ? toDateInput(coupon.validTo) : "" });
+  const save = useAdminMutation(
+    () => adminApi.patch(`/admin/coupons/${coupon._id}`, { description: f.description || undefined, maxUses: Number(f.maxUses), validTo: f.validTo ? new Date(`${f.validTo}T23:59:59+06:00`) : null }),
+    { invalidate: ["coupons"], onSuccess: onDone },
+  );
+  return (
+    <Modal
+      open
+      onClose={onDone}
+      title={`Edit ${coupon.code}`}
+      description="The code and the discount cannot change after the coupon is created."
+      footer={
+        <>
+          <Button variant="secondary" onClick={onDone}>
+            Cancel
+          </Button>
+          <Button loading={save.isPending} onClick={() => save.mutate()}>
+            Save
+          </Button>
+        </>
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input label="Description" className="sm:col-span-2" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
+        <Input label="Max uses (0 = unlimited)" type="number" value={f.maxUses} onChange={(e) => setF({ ...f, maxUses: e.target.value })} />
+        <Input label="Valid until (empty = no end)" type="date" value={f.validTo} onChange={(e) => setF({ ...f, validTo: e.target.value })} />
+      </div>
+    </Modal>
+  );
+}
+
 export default function AdminCouponsPage() {
+  const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
   const { data, isLoading, error } = useAdminApi("coupons", "/admin/coupons");
   const toggle = useAdminMutation(({ id, isActive }) => adminApi.patch(`/admin/coupons/${id}`, { isActive }), { invalidate: ["coupons"] });
@@ -92,14 +127,18 @@ export default function AdminCouponsPage() {
               key: "actions",
               header: "",
               render: (c) => (
-                <Button size="sm" variant={c.isActive ? "danger" : "success"} onClick={() => toggle.mutate({ id: c._id, isActive: !c.isActive })}>
-                  {c.isActive ? "Disable" : "Enable"}
-                </Button>
+                <RowActions
+                  items={[
+                    { label: "Edit", icon: Pencil, onClick: () => setEditing(c) },
+                    { label: c.isActive ? "Disable" : "Enable", icon: Power, danger: c.isActive, onClick: () => toggle.mutate({ id: c._id, isActive: !c.isActive }) },
+                  ]}
+                />
               ),
             },
           ]}
         />
       )}
+      {editing && <CouponEdit coupon={editing} onDone={() => setEditing(null)} />}
       <Modal open={creating} onClose={() => setCreating(false)} title="New coupon" size="lg">
         {creating && <CouponForm onDone={() => setCreating(false)} />}
       </Modal>

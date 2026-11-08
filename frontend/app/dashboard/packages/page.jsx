@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import PermissionGate from "@/components/common/PermissionGate";
-import { Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, StatusBadge, Table } from "@/components/ui";
+import { Button, Checkbox, ErrorBox, Input, Loading, Modal, PageHeader, Select, StatusBadge, Table, confirmDialog } from "@/components/ui";
 import { api, applyFieldErrors } from "@/lib/api";
 import { taka } from "@/lib/format";
 import { useApi, useApiMutation } from "@/lib/hooks";
@@ -148,7 +148,7 @@ export default function PackagesPage() {
                     <Button size="sm" variant="secondary" onClick={() => setEditing(p)}>
                       Edit
                     </Button>
-                    <Button size="sm" variant="danger" onClick={() => confirm(`Delete package "${p.name}"?`) && remove.mutate(p._id)}>
+                    <Button size="sm" variant="danger" onClick={() => confirmDialog(`Delete package "${p.name}"?`).then((ok) => ok && remove.mutate(p._id))}>
                       Delete
                     </Button>
                   </div>

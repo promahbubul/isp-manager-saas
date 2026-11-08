@@ -1,19 +1,23 @@
 "use client";
 
+import { Eye, RotateCcw, User } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Card, ErrorBox, Input, Loading, PageHeader, Select, Table } from "@/components/ui";
-import { formatDate, formatDateTime, taka, toDateInput } from "@/lib/format";
-
+import RefundModal from "@/components/payment/RefundModal";
+import { Card, ErrorBox, Input, Loading, PageHeader, RowActions, Select, StatusBadge, Table } from "@/components/ui";
+import { formatDate, formatDateTime, methodLabel, taka, toDateInput } from "@/lib/format";
+import { useAuth } from "@/providers/AuthProvider";
 import { usePaged } from "@/lib/usePaged";
 
-const METHODS = ["cash", "bkash", "nagad", "rocket", "bank", "online"].map((m) => ({ value: m, label: m }));
+const METHODS = ["cash", "bkash", "nagad", "rocket", "bank", "online", "sslcommerz", "stripe"].map((m) => ({ value: m, label: methodLabel(m) }));
 
 export default function PaymentsPage() {
   const today = toDateInput(new Date());
   const [filters, setFilters] = useState({ from: today, to: today, method: "", page: 1 });
   const list = usePaged("payments", "/payments", { ...filters, page: undefined });
   const { data, isLoading, error } = list;
+  const { can } = useAuth();
+  const [refunding, setRefunding] = useState(null);
   const set = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value, page: 1 }));
 
   return (
@@ -61,14 +65,29 @@ export default function PaymentsPage() {
               },
               { key: "amount", header: "Paid", render: (p) => <strong>{taka(p.amount)}</strong> },
               { key: "months", header: "Months" },
-              { key: "method", header: "Method", render: (p) => `${p.method}${p.trxId ? ` · ${p.trxId}` : ""}` },
+              { key: "method", header: "Method", render: (p) => `${methodLabel(p.method)}${p.trxId ? ` · ${p.trxId}` : ""}` },
               { key: "dueAfter", header: "Due after", render: (p) => (p.dueAfter ? taka(p.dueAfter) : "—") },
               { key: "newExpiry", header: "Valid until", render: (p) => formatDate(p.newExpiry) },
-              { key: "receivedBy", header: "Collected by", render: (p) => p.receivedBy?.name },
+              { key: "receivedBy", header: "Collected by", render: (p) => p.receivedBy?.name ?? (p.source === "online" ? "Online" : "—") },
+              { key: "status", header: "Status", render: (p) => <StatusBadge status={p.status} /> },
+              {
+                key: "actions",
+                header: "",
+                render: (p) => (
+                  <RowActions
+                    items={[
+                      { label: "View receipt", icon: Eye, href: `/dashboard/billing/receipt/${p._id}` },
+                      { label: "Open customer", icon: User, href: p.customer ? `/dashboard/customers/${p.customer._id}` : undefined, hidden: !p.customer },
+                      { label: "Refund", icon: RotateCcw, danger: true, separator: true, onClick: () => setRefunding(p), hidden: !can("payment.refund") || p.status !== "success" },
+                    ]}
+                  />
+                ),
+              },
             ]}
           />
         </>
       )}
+      {refunding && <RefundModal payment={refunding} onClose={() => setRefunding(null)} />}
     </div>
   );
 }
