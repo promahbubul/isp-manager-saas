@@ -3,31 +3,27 @@
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, LogOut } from "lucide-react";
 import Link from "next/link";
-
-const initials = (name = "") =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("") || "?";
+import Avatar from "@/components/ui/Avatar";
 
 /** Avatar + name button with a dropdown (links + log out). */
-export default function UserMenu({ name, subtitle, links = [], onLogout, warning }) {
+export default function UserMenu({ name, subtitle, image, links = [], onLogout, warning, compact = false }) {
   return (
     <Menu.Root>
-      <Menu.Trigger className="flex cursor-pointer items-center gap-2 rounded-lg p-1 pr-2 outline-none transition hover:bg-subtle data-[state=open]:bg-subtle">
-        <span className="flex size-8 items-center justify-center rounded-full bg-primary-600 text-xs font-semibold text-white">{initials(name)}</span>
-        <span className="hidden text-left leading-tight md:block">
+      <Menu.Trigger
+        aria-label="Account menu"
+        className="flex cursor-pointer items-center gap-2 rounded-lg p-1 pr-2 outline-none transition hover:bg-subtle data-[state=open]:bg-subtle"
+      >
+        <Avatar name={name} src={image} />
+        <span className={compact ? "hidden" : "hidden text-left leading-tight md:block"}>
           <span className="block max-w-40 truncate text-sm font-medium text-ink">{name}</span>
           <span className="block max-w-40 truncate text-xs capitalize text-muted">{subtitle}</span>
         </span>
         {warning}
-        <ChevronDown className="hidden size-4 text-muted md:block" />
+        <ChevronDown className={compact ? "hidden" : "hidden size-4 text-muted md:block"} />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Content align="end" sideOffset={6} className="z-50 min-w-52 animate-fade-in rounded-lg border border-line bg-surface p-1 shadow-[var(--shadow-pop)]">
-          <div className="px-2.5 py-2 md:hidden">
+          <div className={compact ? "border-b border-line px-2.5 pb-2.5 pt-2 mb-1" : "px-2.5 py-2 md:hidden"}>
             <p className="truncate text-sm font-medium text-ink">{name}</p>
             <p className="truncate text-xs capitalize text-muted">{subtitle}</p>
           </div>

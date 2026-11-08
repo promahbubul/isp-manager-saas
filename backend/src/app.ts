@@ -15,6 +15,7 @@ import fs from "node:fs";
 
 const UPLOAD_DIR = config.uploadDir;
 fs.mkdirSync(`${UPLOAD_DIR}/logos`, { recursive: true });
+fs.mkdirSync(`${UPLOAD_DIR}/avatars`, { recursive: true });
 
 const app = express();
 

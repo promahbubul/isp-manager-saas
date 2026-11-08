@@ -2,6 +2,7 @@ import { Building2, Check, Rocket, Sprout, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import TrialLink from "./TrialLink";
 
 const limit = (n) => (n === -1 ? "Unlimited" : n.toLocaleString("en-IN"));
 const fmt = (n) => `৳${Number(n).toLocaleString("en-IN")}`;
@@ -65,9 +66,15 @@ export function PlanCards({ plans }) {
                 {paid && <span className="text-base font-normal text-muted"> /month</span>}
               </p>
               <p className="mt-1 h-5 text-sm text-muted">{p.priceBDT.yearly > 0 ? `${fmt(p.priceBDT.yearly)} billed yearly` : "Talk to us for a quote"}</p>
-              <Link href={paid ? "/signup" : "/contact"} className={cn("mt-6 rounded-lg py-2.5 text-center text-sm font-semibold text-white shadow-sm transition", t.btn)}>
-                {paid ? "Start free trial" : "Contact sales"}
-              </Link>
+              {paid ? (
+                <TrialLink className={cn("mt-6 rounded-lg py-2.5 text-center text-sm font-semibold text-white shadow-sm transition", t.btn)} signedInLabel="Upgrade to this plan" signedInHref="/dashboard/billing/subscription">
+                  Start free trial
+                </TrialLink>
+              ) : (
+                <Link href="/contact" className={cn("mt-6 rounded-lg py-2.5 text-center text-sm font-semibold text-white shadow-sm transition", t.btn)}>
+                  Contact sales
+                </Link>
+              )}
               <ul className="mt-6 flex-1 space-y-2.5 border-t border-line pt-6 text-sm text-ink">
                 {features.map((f) => (
                   <li key={f} className="flex gap-2">

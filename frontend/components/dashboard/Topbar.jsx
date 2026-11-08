@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, CreditCard, Settings } from "lucide-react";
+import { ChevronRight, CreditCard, Settings, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import sidebarSections from "@/app/constant/dashboard/sidebar";
@@ -93,8 +93,10 @@ export default function Topbar() {
       <UserMenu
         name={user?.name}
         subtitle={user?.role}
+        image={user?.avatar}
         onLogout={logout}
         links={[
+          { title: "My profile", href: "/dashboard/profile", icon: UserRound },
           ...(can("subscription.manage") ? [{ title: "My subscription", href: "/dashboard/billing/subscription", icon: CreditCard }] : []),
           ...(can("setting.manage") ? [{ title: "Settings", href: "/dashboard/settings", icon: Settings }] : []),
         ]}

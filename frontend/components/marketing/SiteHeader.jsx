@@ -1,10 +1,13 @@
 "use client";
 
-import { Menu, Wifi, X } from "lucide-react";
+import { LayoutDashboard, Menu, UserRound, Wifi, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import ThemeToggle from "@/components/shell/ThemeToggle";
+import UserMenu from "@/components/shell/UserMenu";
+import Avatar from "@/components/ui/Avatar";
+import { useSiteSession } from "./useSiteSession";
 import { cn } from "@/lib/cn";
 import { site } from "@/lib/site";
 
@@ -32,6 +35,19 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const active = (href) => !href.includes("#") && pathname.startsWith(href);
+  const session = useSiteSession();
+  const signedIn = session.kind === "isp" || session.kind === "admin";
+  const home = session.kind === "admin" ? { href: "/admin", label: "Admin panel" } : { href: "/dashboard", label: "Dashboard" };
+  const menuLinks =
+    session.kind === "admin"
+      ? [
+          { title: "Admin panel", href: "/admin", icon: LayoutDashboard },
+          { title: "My account", href: "/admin/account", icon: UserRound },
+        ]
+      : [
+          { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+          { title: "My profile", href: "/dashboard/profile", icon: UserRound },
+        ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface/80 backdrop-blur-lg">
@@ -46,12 +62,23 @@ export default function SiteHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-1.5 md:ml-0">
           <ThemeToggle />
-          <Link href="/login" className="hidden rounded-md px-3 py-2 text-sm font-medium text-ink transition hover:bg-subtle sm:block">
-            Log in
-          </Link>
-          <Link href="/signup" className="hidden rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-500 sm:block">
-            Start free trial
-          </Link>
+          {signedIn ? (
+            <>
+              <Link href={home.href} className="hidden rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-500 sm:block">
+                {home.label}
+              </Link>
+              <UserMenu compact name={session.name} subtitle={session.subtitle} image={session.avatar} links={menuLinks} onLogout={session.logout} />
+            </>
+          ) : (
+            <div className={cn("hidden items-center gap-1.5 sm:flex", session.kind === "pending" && "invisible")}>
+              <Link href="/login" className="rounded-md px-3 py-2 text-sm font-medium text-ink transition hover:bg-subtle">
+                Log in
+              </Link>
+              <Link href="/signup" className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-500">
+                Start free trial
+              </Link>
+            </div>
+          )}
           <button type="button" onClick={() => setOpen((o) => !o)} className="cursor-pointer rounded-lg p-2 text-muted hover:bg-subtle hover:text-ink md:hidden" aria-label="Menu" aria-expanded={open}>
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -66,14 +93,41 @@ export default function SiteHeader() {
               </Link>
             ))}
           </nav>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/login" className="rounded-lg border border-line py-2.5 text-center text-sm font-medium text-ink">
-              Log in
-            </Link>
-            <Link href="/signup" className="rounded-lg bg-primary-600 py-2.5 text-center text-sm font-semibold text-white">
-              Free trial
-            </Link>
-          </div>
+          {signedIn ? (
+            <div className="space-y-2 border-t border-line pt-3">
+              <div className="flex items-center gap-3 px-1">
+                <Avatar name={session.name} src={session.avatar} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">{session.name}</p>
+                  <p className="truncate text-xs text-muted">{session.subtitle}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Link href={home.href} onClick={() => setOpen(false)} className="rounded-lg bg-primary-600 py-2.5 text-center text-sm font-semibold text-white">
+                  {home.label}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    session.logout();
+                  }}
+                  className="cursor-pointer rounded-lg border border-line py-2.5 text-center text-sm font-medium text-ink"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={cn("grid grid-cols-2 gap-2", session.kind === "pending" && "invisible")}>
+              <Link href="/login" className="rounded-lg border border-line py-2.5 text-center text-sm font-medium text-ink">
+                Log in
+              </Link>
+              <Link href="/signup" className="rounded-lg bg-primary-600 py-2.5 text-center text-sm font-semibold text-white">
+                Free trial
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </header>

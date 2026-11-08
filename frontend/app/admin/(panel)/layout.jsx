@@ -73,20 +73,20 @@ export default function AdminPanelLayout({ children }) {
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
-    setAdminFailureHandler(() => router.replace("/login"));
+    setAdminFailureHandler(() => router.replace("/login?session=expired"));
     refreshAdminToken()
       .then(() => adminApi.get("/auth/admin/me"))
       .then((r) => {
         setAdmin(r.data.data);
         setStatus("ready");
       })
-      .catch(() => router.replace("/login"));
+      .catch(() => router.replace("/login?session=expired"));
   }, [router]);
 
   const logout = async () => {
     await adminApi.post("/auth/admin/logout").catch(() => undefined);
     setAdminToken(null);
-    router.replace("/login");
+    router.replace("/login?session=ended");
   };
 
   if (status !== "ready") {

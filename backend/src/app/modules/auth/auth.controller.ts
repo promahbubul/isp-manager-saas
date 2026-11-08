@@ -15,8 +15,17 @@ const cookieOptions: CookieOptions = {
   maxAge: durationToMs(config.jwt.refreshExpires),
 };
 
-const setRefresh = (res: Response, name: string, token: string, maxAge = cookieOptions.maxAge) =>
+/**
+ * Next to each httpOnly refresh cookie we set "<name>_on=1", readable by the browser.
+ * It holds no secret — it only tells public pages (website header) that a session exists,
+ * so they skip the refresh call for visitors who are not logged in.
+ */
+const hintName = (name: string) => `${name}_on`;
+
+const setRefresh = (res: Response, name: string, token: string, maxAge = cookieOptions.maxAge) => {
   res.cookie(name, token, { ...cookieOptions, maxAge });
+  res.cookie(hintName(name), "1", { ...cookieOptions, httpOnly: false, maxAge });
+};
 
 /** Used by the super-admin impersonation endpoint (short-lived tenant session). */
 export const setTenantRefreshCookie = (res: Response, token: string, maxAgeMs: number) =>
@@ -28,6 +37,7 @@ const noImpersonation = (req: Request) => {
 const clearRefresh = (res: Response, name: string) => {
   const { maxAge: _maxAge, ...opts } = cookieOptions;
   res.clearCookie(name, opts);
+  res.clearCookie(hintName(name), { ...opts, httpOnly: false });
 };
 
 /* ───────────────────────── Tenant ───────────────────────── */

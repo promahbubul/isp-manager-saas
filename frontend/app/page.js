@@ -1,6 +1,7 @@
 import { ArrowRight, BarChart3, Check, CreditCard, Headset, RadioTower, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { Reveal, TypeWords } from "@/components/marketing/Motion";
+import TrialLink, { GuestOnly } from "@/components/marketing/TrialLink";
 import { getPlans, PlanCards } from "@/components/marketing/PlanCards";
 import { PhoneShot, Screenshot } from "@/components/marketing/Screenshot";
 import { SitePage } from "@/components/marketing/SiteLayout";
@@ -70,10 +71,12 @@ export default async function Home() {
               <br className="hidden sm:block" /> for your MikroTik network — built for ISPs in Bangladesh.
             </p>
             <div className="mt-8 flex animate-pop-in flex-wrap items-center gap-3 [animation-delay:240ms]">
-              <Link href="/signup" className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-500">
-                Start 1-year free trial <ArrowRight className="size-4" />
-              </Link>
-              <span className="text-sm text-muted">No card required</span>
+              <TrialLink className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-500" icon={<ArrowRight className="size-4" />}>
+                Start 1-year free trial
+              </TrialLink>
+              <GuestOnly>
+                <span className="text-sm text-muted">No card required</span>
+              </GuestOnly>
             </div>
           </div>
 
@@ -180,9 +183,7 @@ export default async function Home() {
             <p className="mt-2 text-[#a1a1aa]">Import from MikroTik or Excel, connect your router and start billing.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/signup" className="rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#18181b] transition hover:bg-[#e4e4e7]">
-              Start free trial
-            </Link>
+            <TrialLink className="rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#18181b] transition hover:bg-[#e4e4e7]">Start free trial</TrialLink>
             <Link href="/contact" className="rounded-lg px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/10">
               Talk to us
             </Link>

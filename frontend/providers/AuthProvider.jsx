@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api, refreshAccessToken, setAccessToken, setAuthFailureHandler } from "@/lib/api";
+import { hasTenantSession } from "@/lib/session";
 
 const AuthContext = createContext(null);
 
@@ -32,6 +33,13 @@ export function AuthProvider({ children }) {
       clear();
       router.replace("/login");
     });
+    // Public pages (website, login) skip the refresh call when no session hint cookie
+    // exists, so logged-out visitors do not trigger a 401 on every page. The dashboard
+    // always tries, which also covers sessions created before the hint cookie existed.
+    if (!hasTenantSession() && !window.location.pathname.startsWith("/dashboard")) {
+      clear();
+      return;
+    }
     refreshAccessToken()
       .then(loadProfile)
       .catch(clear);
@@ -55,11 +63,15 @@ export function AuthProvider({ children }) {
     [loadProfile],
   );
 
-  const logout = useCallback(async () => {
-    await api.post("/auth/logout").catch(() => undefined);
-    clear();
-    router.replace("/login");
-  }, [clear, router]);
+  /** Log out; `redirect: false` keeps the visitor on the current page (website header). */
+  const logout = useCallback(
+    async ({ redirect = true } = {}) => {
+      await api.post("/auth/logout").catch(() => undefined);
+      clear();
+      if (redirect) router.replace("/login");
+    },
+    [clear, router],
+  );
 
   const can = useCallback((perm) => session.permissions.includes(perm), [session.permissions]);
 

@@ -85,6 +85,12 @@ export async function proxy(request) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
+  // A logged-in platform admin opening /login goes straight to the admin panel —
+  // unless the panel itself sent them here (?session=expired|ended), which would loop.
+  if (pathname === "/login" && hasAdminSession && !request.nextUrl.searchParams.has("session")) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
   return NextResponse.next();
 }
 

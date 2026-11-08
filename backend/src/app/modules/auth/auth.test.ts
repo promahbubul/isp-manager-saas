@@ -156,3 +156,39 @@ describe("health", () => {
     expect(res.body.data.db).toBe("up");
   });
 });
+
+describe("session hint cookie and profile photo", () => {
+  // 1×1 transparent PNG
+  const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+
+  it("sets a readable rt_on cookie next to the httpOnly one and clears both on logout", async () => {
+    const t = await signupTenant();
+    const hint = t.cookies.find((c) => c.startsWith("rt_on="));
+    expect(hint).toBeDefined();
+    expect(hint).not.toContain("HttpOnly");
+    expect(hint).toContain("rt_on=1");
+
+    const out = await api().post("/api/v1/auth/logout").set("Cookie", t.cookies.map((c) => c.split(";")[0]).join("; "));
+    const cleared = (out.headers["set-cookie"] as unknown as string[]).map((c) => c.split("=")[0]);
+    expect(cleared).toEqual(expect.arrayContaining(["rt", "rt_on"]));
+  });
+
+  it("uploads, returns and removes the profile photo", async () => {
+    const t = await signupTenant();
+    const auth = { Authorization: `Bearer ${t.token}` };
+
+    const bad = await api().post("/api/v1/auth/me/avatar").set(auth).attach("file", Buffer.from("not an image"), "x.png");
+    expect(bad.status).toBe(400);
+
+    const up = await api().post("/api/v1/auth/me/avatar").set(auth).attach("file", PNG, "me.png");
+    expect(up.status).toBe(200);
+    expect(up.body.data.avatar).toMatch(/\/uploads\/avatars\/.+\.png$/);
+
+    const me = await api().get("/api/v1/auth/me").set(auth);
+    expect(me.body.data.user.avatar).toBe(up.body.data.avatar);
+
+    const del = await api().delete("/api/v1/auth/me/avatar").set(auth);
+    expect(del.status).toBe(200);
+    expect((await User.findById(t.userId))?.avatar).toBeUndefined();
+  });
+});
